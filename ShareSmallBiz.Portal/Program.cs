@@ -3,8 +3,10 @@ using HttpClientUtility.RequestResult;
 using HttpClientUtility.StringConverter;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.SemanticKernel;
+using ScottPlot.Statistics;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Logging;
+using ShareSmallBiz.Portal.Infrastructure.Services;
 using ShareSmallBiz.Portal.Interfaces;
 using ShareSmallBiz.Portal.Models;
 using System.Reflection;
@@ -72,6 +74,9 @@ RegisterHttpClientUtilities(builder);
 //  ========================
 builder.Services.AddEndpointsApiExplorer();
 
+builder.Services.AddSingleton<IStorageProvider, StorageProvider>();
+builder.Services.AddSingleton<IMenuProvider, MenuProvider>();
+builder.Services.AddSingleton<IPostProvider, PostProvider>();
 
 // ========================
 // Application Services
