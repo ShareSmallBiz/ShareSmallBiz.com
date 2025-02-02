@@ -1,0 +1,16 @@
+{
+  "menuItems": [
+    {
+      "text": "Home",
+      "url": "/"
+    },
+    {
+      "text": "Roles",
+      "url": "/admin/RoleManager"
+    },
+    {
+      "text": "User-Roles",
+      "url": "/admin/UserRoles"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+// 
+// Color overrides
+//
+
+// Bootstrap Color Overrides
+
+$primary: #c3d7da; // Main brand color
+$secondary: #c4d9db; // Supporting color
+$success: #c6dadc; // Success messages, notifications
+$info: #c4d9da; // Informational elements
+$warning: #c3d8da; // Warnings
+$danger: #c3d7d9; // Errors, alerts
+
+// Additional UI Colors
+$light: lighten($primary, 20%);
+$dark: darken($primary, 20%);
+
+// Theme color mapping
+$theme-colors: (
+  "primary": $primary,
+  "secondary": $secondary,
+  "success": $success,
+  "info": $info,
+  "warning": $warning,
+  "danger": $danger,
+  "light": $light,
+  "dark": $dark
+);

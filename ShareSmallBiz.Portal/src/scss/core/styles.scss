@@ -1,0 +1,89 @@
+// * * * * * * * * * * * * *
+// * * Import variables  * *
+// * * * * * * * * * * * * *
+
+@import './variables';
+
+// * * * * * * * * * * *
+// * * Import mixins * *
+// * * * * * * * * * * *
+
+@import './mixins';
+
+// * * * * * * * * * * * * *
+// * * Import Bootstrap  * *
+// * * * * * * * * * * * * *
+
+// Import Bootstrap variables first to ensure availability to Bootswatch
+@import "../../../node_modules/bootstrap/scss/bootstrap";
+
+// Import Bootstrap Icons
+@import "../../../node_modules/bootstrap-icons/font/bootstrap-icons";
+
+// Import Font Awesome 
+@import "../../../node_modules/fontawesome-free/css/all"; // Import Font Awesome
+
+// Import DataTables Bootstrap 5 styling
+@import "../../../node_modules/datatables.net-bs5/css/dataTables.bootstrap5";
+
+// Import DataTables extensions styling
+@import "../../../node_modules/datatables.net-responsive-bs5/css/responsive.bootstrap5";
+@import "../../../node_modules/datatables.net-colreorder-bs5/css/colReorder.bootstrap5";
+
+// Import PrismJS base styles
+@import "../../../node_modules/prismjs/themes/prism";
+
+// If you want to use a specific theme (e.g., "prism-okaidia"), import it instead:
+@import "../../../node_modules/prismjs/themes/prism-coy";
+
+
+// * * * * * * * * * * * * * * *
+// * * Import global styling * *
+// * * * * * * * * * * * * * * *
+
+@import './global';
+
+// * * * * * * * * * * * *
+// * * Import layouts  * *
+// * * * * * * * * * * * *
+
+@import './layout/authentication';
+@import './layout/error';
+
+// * * * * * * * * * * * * *
+// * * Import utilities  * *
+// * * * * * * * * * * * * *
+
+@import './utilities/animation';
+@import './utilities/background';
+@import './utilities/border';
+@import './utilities/dropdown';
+@import './utilities/general';
+@import './utilities/lift';
+@import './utilities/overflow';
+@import './utilities/shadow';
+@import './utilities/skew';
+@import './utilities/text';
+@import './utilities/zindex';
+
+// * * * * * * * * * * * * * * * *
+// * * Import component styles * *
+// * * * * * * * * * * * * * * * *
+
+@import './components/alerts';
+@import './components/avatars';
+@import './components/buttons';
+@import './components/cards';
+@import './components/dropdowns';
+@import './components/icons';
+@import './components/badges';
+@import './components/timeline';
+@import './components/step';
+
+// * * * * * * * * * * * * * *
+// * * Import form styles  * *
+// * * * * * * * * * * * * * *
+
+@import './forms/checkboxes';
+@import './forms/form-control';
+@import './forms/input-group';

@@ -1,0 +1,30 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    @await Html.PartialAsync("Sections/Meta/_metatags")
+
+    <link href="/dist/css/ShareSmallBiz.min.css" rel="stylesheet" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+
+    @await RenderSectionAsync("Styles", required: false)
+    @await RenderSectionAsync("PageStyles", required: false)
+    @await RenderSectionAsync("HeadScripts", required: false)
+</head>
+<body>
+    <main>
+        @await Html.PartialAsync("Sections/NavBar/_navbar")
+        <section class="bg-white py-10 container-fluid">
+            @await Html.PartialAsync("Sections/NavBar/_nav_area")
+
+            @RenderBody()
+        </section>
+        <hr class="m-0" />
+    </main>
+
+    @await Html.PartialAsync("Sections/Footer/_footer")
+    @await Html.PartialAsync("Sections/Footer/_footer_scripts")
+
+    @await RenderSectionAsync("Scripts", required: false)
+    @await RenderSectionAsync("PageScripts", required: false)
+</body>
+</html>

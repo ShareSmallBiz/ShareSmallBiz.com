@@ -1,0 +1,45 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using ShareSmallBiz.Portal.Data
+
+@inject SignInManager<ShareSmallBizUser> SignInManager
+@inject UserManager<ShareSmallBizUser> UserManager
+
+<ul class="navbar-nav">
+    @if (SignInManager.IsSignedIn(User))
+    {
+        var user = UserManager.GetUserAsync(User).Result;
+
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                @if (user.ProfilePicture != null)
+                {
+                    <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
+                         src="data:image/*;base64,@(Convert.ToBase64String(user.ProfilePicture))" alt="User Profile">
+                }
+                <span>Hello, @user.UserName!</span>
+            </a>
+
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li><a class="dropdown-item" asp-area="" asp-controller="Posts" asp-action="Index"><i class="bi bi-pencil-square"></i> Posts</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="Followers" asp-action="Index"><i class="bi bi-people"></i> Followers</a></li>
+                <li><a class="dropdown-item" asp-area="" asp-controller="Following" asp-action="Index"><i class="bi bi-person-check"></i> Following</a></li>
+                <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index"><i class="bi bi-person-circle"></i> Profile</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })">
+                        <button id="logout" type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right"></i> Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </li>
+    }
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link" id="register" asp-area="Identity" asp-page="/Account/Register"><i class="bi bi-person-plus"></i> Register</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="login" asp-area="Identity" asp-page="/Account/Login"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+        </li>
+    }
+</ul>

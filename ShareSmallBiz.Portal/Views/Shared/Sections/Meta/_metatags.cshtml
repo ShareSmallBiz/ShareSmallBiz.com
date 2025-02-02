@@ -1,0 +1,127 @@
+﻿@using System.IO
+@using System.Text.Json
+@using System.Text.RegularExpressions
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Environment
+@{
+    // Retrieve the necessary parts of the URL from the request
+    var request = ViewContext.HttpContext.Request;
+    var scheme = request.Scheme;
+    var host = request.Host;
+    var path = request.Path;
+    var queryString = request.QueryString;
+
+    // Construct the canonical URL based on the current path
+    var canonicalUrl = $"{scheme}://{host}{path}{queryString}";
+
+
+    // Safely retrieve route data values and handle potential nulls
+    var areaName = ViewContext.RouteData.Values["area"]?.ToString() ?? string.Empty;
+    var controllerName = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var actionName = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+    var idName = ViewContext.RouteData.Values["id"]?.ToString() ?? string.Empty;
+    actionName = actionName == "Index" ? string.Empty : actionName;
+    controllerName = controllerName == "Home" ? string.Empty : controllerName;
+    // Construct the current path based on area, controller, and action
+    var currentPath = !string.IsNullOrEmpty(areaName)
+        ? $"/{areaName}/{controllerName}/{actionName}/{idName}"
+        : $"/{controllerName}/{actionName}/{idName}";
+
+    currentPath = Regex.Replace(currentPath, "/+", "/");
+
+    // Path to the navigation JSON file
+    var jsonFile = !string.IsNullOrEmpty(areaName)
+        ? System.IO.Path.Combine(Environment.ContentRootPath, "Areas", areaName, "Views", "Shared", "navigation.json")
+        : System.IO.Path.Combine(Environment.ContentRootPath, "Views", "Shared", "navigation.json");
+
+    NavigationMenu? menuItems = null; // Initialize as nullable to check for null later
+    try
+    {
+        // Check if the JSON file exists
+        if (File.Exists(jsonFile))
+        {
+            string json = File.ReadAllText(jsonFile);
+            try
+            {
+                // Attempt to parse the JSON file
+                menuItems = JsonSerializer.Deserialize<NavigationMenu>(json);
+            }
+            catch (JsonException jsonEx)
+            {
+                // Handle JSON parsing errors
+                Console.WriteLine($"Error parsing JSON: {jsonEx.Message}");
+                menuItems = null; // Set to null if parsing fails
+            }
+        }
+        else
+        {
+            // Log or handle the missing file scenario if needed
+            Console.WriteLine($"JSON file not found: {jsonFile}");
+        }
+    }
+    catch (IOException ioEx)
+    {
+        // Handle errors related to file I/O
+        Console.WriteLine($"Error reading JSON file: {ioEx.Message}");
+    }
+
+    // Initialize meta tags with default values
+    var Title = ViewData["Title"] as string ?? "ShareSmallBiz Page";
+    var Description = ViewData["Description"] as string ?? $"The ShareSmallBiz {Title} page.";
+    var Keywords = ViewData["Keywords"] as string ?? "ASP.NET, Web Development";
+
+    // If menu items are available, try to find matching data
+    if (menuItems != null && menuItems?.MenuItems != null)
+    {
+        try
+        {
+            foreach (var item in menuItems.MenuItems)
+            {
+                // Safely check for properties and update Title and Description if found
+                if (currentPath.StartsWith(item.Url))
+                {
+                    Title = item.Text ?? Title; // Fallback to existing Title if null
+                    Description = item.Description ?? Description; // Fallback to existing Description if null
+                    break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any unexpected errors when enumerating or accessing properties
+            Console.WriteLine($"Error processing menu items: {ex.Message}");
+        }
+    }
+    // ViewData overrides for Title and Description
+    Title = ViewData["Title"] as string ?? Title;
+    Description = ViewData["Description"] as string ?? Description;
+    Keywords = ViewData["Keywords"] as string ?? "ASP.NET, Web Development";
+}
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-75XXTZ5TQJ"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-75XXTZ5TQJ');
+</script>
+
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>@Title - ShareSmallBiz</title>
+<meta name="description" content="@Description" />
+<meta name="keywords" content="@Keywords" />
+<meta name="robots" content="index, follow" />
+<meta name="author" content="Mark Hazleton" />
+<link rel="canonical" href="@canonicalUrl" />
+<meta property="og:title" content="@Title" />
+<meta property="og:description" content="@Description" />
+<meta property="og:image" content="https://ShareSmallBiz.markhazleton.com/MarkHazleton.jpg" />
+<meta property="og:url" content="@canonicalUrl" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="@Title" />
+<meta name="twitter:description" content="@Description" />
+<meta name="twitter:image" content="https://ShareSmallBiz.markhazleton.com/MarkHazleton.jpg" />
