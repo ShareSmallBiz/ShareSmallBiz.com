@@ -6,7 +6,7 @@ public abstract class BaseEntity
     public int Id { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime ModifiedDate { get; set; }
-    public int? ModifiedID { get; set; }
-    public int? CreatedID { get; set; }
+    public string? ModifiedID { get; set; }
+    public string? CreatedID { get; set; }
 }
 

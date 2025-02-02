@@ -49,4 +49,8 @@
 	<ItemGroup>
 		<ProjectReference Include="..\HttpClientUtility\HttpClientUtility.csproj" />
 	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Areas\Forum\Data\" />
+	  <Folder Include="Areas\Forum\Models\" />
+	</ItemGroup>
 </Project>

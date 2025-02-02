@@ -1,0 +1,116 @@
+﻿@model PostModel
+@using Microsoft.AspNetCore.Identity
+
+@inject SignInManager<ShareSmallBizUser> SignInManager
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<section class="container my-5">
+    <!-- Post Header -->
+    <div class="card shadow-lg">
+        <div class="card-body">
+            <h1 class="card-title">@Model.Title</h1>
+            <p class="text-muted">
+                <i class="bi bi-person-circle"></i> <strong>@(Model?.Author?.UserName ?? "Unknown Author")</strong>
+                | <i class="bi bi-eye"></i> @Model.PostViews views
+                | <i class="bi bi-calendar"></i> @Model.Published.ToString("MMM d, yyyy")
+            </p>
+            <hr />
+
+            <!-- Post Content -->
+            <div class="mb-3">
+                @Html.Raw(Model.Content)
+            </div>
+
+            <!-- Like & Comment Buttons (Only for Logged-in Users) -->
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="/Forum/Post/Like/@Model.Id" class="btn btn-outline-primary">
+                            <i class="bi bi-hand-thumbs-up"></i> Like
+                        </a>
+                        <a href="#comments" class="btn btn-outline-secondary">
+                            <i class="bi bi-chat-left-text"></i> Comment
+                        </a>
+                    </div>
+                    <span class="badge bg-info text-dark">@Model.PostType</span>
+                </div>
+            }
+            else
+            {
+                <!-- Call to Action for Guests -->
+                <div class="alert alert-info text-center mt-4">
+                    <p><strong>Want to join the conversation?</strong></p>
+                    <p>
+                        <a href="/Account/Login" class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
+                        or <a href="/Account/Register" class="btn btn-success"><i class="bi bi-person-plus-fill"></i> Sign Up</a> to like and comment.
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Comments Section -->
+    <section class="mt-5" id="comments">
+        <h3><i class="bi bi-chat-dots"></i> Comments</h3>
+        <hr />
+
+        @if (SignInManager.IsSignedIn(User))
+        {
+            <!-- Comment Form for Logged-in Users -->
+            <div class="mb-4">
+                <h5>Leave a Comment</h5>
+                <form method="post" action="/Forum/Post/Comment/@Model.Id">
+                    <div class="mb-3">
+                        <textarea class="form-control" name="commentText" rows="3" placeholder="Write a comment..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send"></i> Post Comment
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <!-- Call to Action for Guests -->
+            <div class="alert alert-warning text-center">
+                <p><strong>Want to leave a comment?</strong></p>
+                <p>
+                    <a href="/Account/Login" class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
+                    or <a href="/Account/Register" class="btn btn-success"><i class="bi bi-person-plus-fill"></i> Sign Up</a> to participate.
+                </p>
+            </div>
+        }
+
+        <!-- Comments List -->
+        @if (Model.Comments != null && Model.Comments.Any())
+        {
+            <ul class="list-group">
+                @foreach (var comment in Model.Comments)
+                {
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <strong><i class="bi bi-person-circle"></i> @(comment.CreatedUser?.UserName ?? "Anonymous")</strong>
+                            <small class="text-muted"><i class="bi bi-clock"></i> @comment.CreatedDate.ToString("MMM d, yyyy")</small>
+                        </div>
+                        <p class="mb-2">@comment.Content</p>
+
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <a href="/Forum/Post/Comment/Like/@comment.Id" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-hand-thumbs-up"></i> Like
+                            </a>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="text-muted">No comments yet. Be the first to share your thoughts!</p>
+        }
+    </section>
+</section>

@@ -67,8 +67,8 @@ public class MenuProvider(ShareSmallBizUserContext webDomainContext)
             PageContent = menu.PageContent,
             CreatedDate = DateTime.UtcNow,
             ModifiedDate = DateTime.UtcNow,
-            ModifiedID = 99,
-            CreatedID = 99,
+            ModifiedID = string.Empty,
+            CreatedID = string.Empty
         };
         var dbDomain = webDomainContext.WebSites.Where(w => w.Id == menu.DomainID).FirstOrDefault();
         dbMenu.Domain = dbDomain;

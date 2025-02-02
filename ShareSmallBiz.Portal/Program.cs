@@ -75,8 +75,9 @@ RegisterHttpClientUtilities(builder);
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSingleton<IStorageProvider, StorageProvider>();
-builder.Services.AddSingleton<IMenuProvider, MenuProvider>();
-builder.Services.AddSingleton<IPostProvider, PostProvider>();
+builder.Services.AddScoped<IMenuProvider, MenuProvider>();
+builder.Services.AddScoped<IPostProvider, PostProvider>();
+
 
 // ========================
 // Application Services

@@ -1,3 +1,12 @@
 ﻿{
-  "menuItems": []
+  "menuItems": [
+    {
+      "text": "Home",
+      "url": "/"
+    },
+    {
+      "text": "Forum",
+      "url": "/Forum/Home/"
+    }
+  ]
 }

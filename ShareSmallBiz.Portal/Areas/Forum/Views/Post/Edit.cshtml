@@ -1,0 +1,55 @@
+﻿@model PostModel
+
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Create Post" : "Edit Post";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="bi bi-pencil-square"></i> @ViewData["Title"]</h2>
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Posts</a>
+    </div>
+
+    <form asp-action="@(Model.Id == 0 ? "Create" : "Edit")" method="post">
+        <input type="hidden" asp-for="Id" />
+
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label">Title</label>
+            <input asp-for="Title" class="form-control" placeholder="Enter post title" required />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label">Description</label>
+            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter a brief description" required></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Content" class="form-label">Content</label>
+            <textarea asp-for="Content" class="form-control" rows="6" placeholder="Enter full content" required></textarea>
+            <span asp-validation-for="Content" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Cover" class="form-label">Cover Image URL</label>
+            <input asp-for="Cover" class="form-control" placeholder="Enter cover image URL" />
+        </div>
+
+        <div class="mb-3 form-check">
+            <input asp-for="IsPublic" class="form-check-input" />
+            <label asp-for="IsPublic" class="form-check-label">Make Post Public</label>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Published" class="form-label">Publish Date</label>
+            <input asp-for="Published" type="date" class="form-control" required />
+        </div>
+
+        <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Save Post</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

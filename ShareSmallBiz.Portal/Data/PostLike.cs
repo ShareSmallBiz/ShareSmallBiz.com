@@ -1,11 +1,16 @@
-﻿namespace ShareSmallBiz.Portal.Data
+﻿namespace ShareSmallBiz.Portal.Data;
+
+public class PostLike : BaseEntity
 {
-    public class PostLike : BaseEntity
-    {
-        public string UserId { get; set; }
-        public ShareSmallBizUser User { get; set; }
-        public int PostId { get; set; }
-        public Post Post { get; set; }
-    }
+    public string UserId { get; set; }
+    public ShareSmallBizUser User { get; set; }
+    public int PostId { get; set; }
+    public Post Post { get; set; }
 }
 
+public class PostCommentLike : BaseEntity
+{
+    public ShareSmallBizUser User { get; set; }
+    public int PostCommentId { get; set; }
+    public PostComment PostComment { get; set; }
+}

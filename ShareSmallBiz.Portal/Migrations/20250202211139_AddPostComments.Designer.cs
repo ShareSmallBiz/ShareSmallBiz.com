@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShareSmallBiz.Portal.Data;
 
@@ -10,9 +11,11 @@ using ShareSmallBiz.Portal.Data;
 namespace ShareSmallBiz.Portal.Migrations
 {
     [DbContext(typeof(ShareSmallBizUserContext))]
-    partial class ShareSmallBizUserContextModelSnapshot : ModelSnapshot
+    [Migration("20250202211139_AddPostComments")]
+    partial class AddPostComments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
@@ -413,9 +416,6 @@ namespace ShareSmallBiz.Portal.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("AuthorId")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -443,8 +443,6 @@ namespace ShareSmallBiz.Portal.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AuthorId");
 
                     b.HasIndex("ParentPostId");
 
@@ -839,10 +837,6 @@ namespace ShareSmallBiz.Portal.Migrations
 
             modelBuilder.Entity("ShareSmallBiz.Portal.Data.PostComment", b =>
                 {
-                    b.HasOne("ShareSmallBiz.Portal.Data.ShareSmallBizUser", "Author")
-                        .WithMany()
-                        .HasForeignKey("AuthorId");
-
                     b.HasOne("ShareSmallBiz.Portal.Data.Post", "ParentPost")
                         .WithMany()
                         .HasForeignKey("ParentPostId")
@@ -857,8 +851,6 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.HasOne("ShareSmallBiz.Portal.Data.Post", null)
                         .WithMany("PostComments")
                         .HasForeignKey("PostId1");
-
-                    b.Navigation("Author");
 
                     b.Navigation("ParentPost");
 

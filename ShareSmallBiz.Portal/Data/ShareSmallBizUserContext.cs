@@ -1,28 +1,32 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using System.Reflection.Emit;
 
 namespace ShareSmallBiz.Portal.Data;
+
 public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUserContext> options)
     : IdentityDbContext<ShareSmallBizUser>(options)
 {
-    protected readonly DbContextOptions<ShareSmallBizUserContext> _options = options;
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
-
     public virtual DbSet<WebSite> WebSites { get; set; }
     public virtual DbSet<ContentPart> ContentParts { get; set; }
     public virtual DbSet<Keyword> Keywords { get; set; }
     public virtual DbSet<Menu> Menus { get; set; }
     public virtual DbSet<Post> Posts { get; set; }
     public virtual DbSet<PostLike> PostLikes { get; set; }
+    public virtual DbSet<PostComment> PostComments { get; set; }
+    public virtual DbSet<PostCommentLike> PostCommentLikes { get; set; }
     public virtual DbSet<UserFollow> UserFollows { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        // Configure relationships
+        ConfigureRelationships(builder);
+        ConfigureEntities(builder);
+        ConfigureManyToMany(builder);
+    }
+
+    private void ConfigureRelationships(ModelBuilder builder)
+    {
         builder.Entity<PostLike>()
             .HasOne(pl => pl.User)
             .WithMany(u => u.LikedPosts)
@@ -33,6 +37,16 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
             .WithMany(p => p.Likes)
             .HasForeignKey(pl => pl.PostId);
 
+        builder.Entity<PostCommentLike>()
+            .HasOne(pcl => pcl.User)
+            .WithMany(u => u.LikedPostComments)
+            .HasForeignKey(pcl => pcl.CreatedID);
+
+        builder.Entity<PostCommentLike>()
+            .HasOne(pcl => pcl.PostComment)
+            .WithMany(pc => pc.Likes)
+            .HasForeignKey(pcl => pcl.PostCommentId);
+
         builder.Entity<UserFollow>()
             .HasOne(uf => uf.Follower)
             .WithMany(u => u.Following)
@@ -42,65 +56,32 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
             .HasOne(uf => uf.Following)
             .WithMany(u => u.Followers)
             .HasForeignKey(uf => uf.FollowingId);
+    }
 
-
+    private void ConfigureEntities(ModelBuilder builder)
+    {
         builder.Entity<WebSite>(entity =>
         {
             entity.Property(e => e.Id).HasColumnName("Id");
-
-            entity.Property(e => e.Description)
-                .IsRequired()
-                .HasMaxLength(250);
-
-            entity.Property(e => e.Name)
-                .IsRequired()
-                .HasMaxLength(50);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(250);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
             entity.HasIndex(e => e.Name).IsUnique();
-
-            entity.Property(e => e.Title)
-                .IsRequired()
-                .HasMaxLength(250);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(250);
             entity.HasIndex(e => e.Title).IsUnique();
-
-            entity.Property(e => e.DomainUrl)
-                .IsRequired()
-                .HasMaxLength(250);
+            entity.Property(e => e.DomainUrl).IsRequired().HasMaxLength(250);
             entity.HasIndex(e => e.DomainUrl).IsUnique();
-
-            entity.Property(e => e.GalleryFolder)
-                .IsRequired()
-                .HasMaxLength(250);
-
-            entity.Property(e => e.Style)
-                .IsRequired()
-                .HasMaxLength(100);
-
+            entity.Property(e => e.GalleryFolder).IsRequired().HasMaxLength(250);
+            entity.Property(e => e.Style).IsRequired().HasMaxLength(100);
         });
 
         builder.Entity<Menu>(entity =>
         {
-            entity.Property(e => e.Action)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            entity.Property(e => e.Controller)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            entity.Property(e => e.Description)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            entity.Property(e => e.KeyWords)
-                .IsRequired()
-                .HasMaxLength(100);
-
+            entity.Property(e => e.Action).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Controller).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.KeyWords).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Icon).HasMaxLength(50);
-
-            entity.Property(e => e.Title)
-                .IsRequired()
-                .HasMaxLength(50);
-
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(50);
             entity.Property(e => e.Url).HasMaxLength(100);
 
             entity.HasOne(d => d.Domain)
@@ -112,9 +93,53 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
                 .WithMany(p => p.InverseParent)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Menu_ParentMenu_ParentId");
-
         });
-        // Many-to-many relationship between Menu and Keyword
+
+        builder.Entity<Post>()
+            .HasKey(p => p.Id);
+
+        builder.Entity<Post>()
+            .HasMany(p => p.Comments)
+            .WithOne(c => c.Post)
+            .HasForeignKey(c => c.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Post>()
+            .HasMany(p => p.Likes)
+            .WithOne(l => l.Post)
+            .HasForeignKey(l => l.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PostComment>()
+            .HasKey(c => c.Id);
+
+        builder.Entity<PostComment>()
+            .Property(c => c.Content)
+            .IsRequired()
+            .HasMaxLength(1000);
+
+        builder.Entity<PostComment>()
+            .HasOne(c => c.ParentPost)
+            .WithMany()
+            .HasForeignKey(c => c.ParentPostId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<PostLike>()
+            .HasKey(l => new { l.PostId, l.UserId });
+
+        builder.Entity<PostLike>()
+            .HasOne(l => l.Post)
+            .WithMany(p => p.Likes)
+            .HasForeignKey(l => l.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PostLike>()
+            .Property(l => l.UserId)
+            .IsRequired();
+    }
+
+    private void ConfigureManyToMany(ModelBuilder builder)
+    {
         builder.Entity<Menu>()
             .HasMany(m => m.Keywords)
             .WithMany(k => k.Menus)
@@ -123,50 +148,21 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
                 j => j.HasOne<Keyword>().WithMany().HasForeignKey("KeywordId"),
                 j => j.HasOne<Menu>().WithMany().HasForeignKey("MenuId"));
 
-
-        // Many-to-many relationship between ContentPart and Keyword
         builder.Entity<ContentPart>()
-                .HasMany(cp => cp.Keywords)
-                .WithMany(k => k.ContentParts)
-                .UsingEntity<Dictionary<string, object>>(
-                    "ContentPartKeyword",
-                    j => j.HasOne<Keyword>().WithMany().HasForeignKey("KeywordId"),
-                    j => j.HasOne<ContentPart>().WithMany().HasForeignKey("ContentPartId"));
-
-
-        string sql = "getdate()";
-        if (_options.Extensions != null)
-        {
-            foreach (var ext in _options.Extensions)
-            {
-                if (ext.GetType().ToString().StartsWith("Microsoft.EntityFrameworkCore.Sqlite"))
-                {
-                    sql = "DATE('now')";
-                    break;
-                }
-            }
-        }
-
-        OnModelCreatingPartial(builder);
-
+            .HasMany(cp => cp.Keywords)
+            .WithMany(k => k.ContentParts)
+            .UsingEntity<Dictionary<string, object>>(
+                "ContentPartKeyword",
+                j => j.HasOne<Keyword>().WithMany().HasForeignKey("KeywordId"),
+                j => j.HasOne<ContentPart>().WithMany().HasForeignKey("ContentPartId"));
     }
-
-
-
-
-
-
-
-
-
 
     private void UpdateDateTrackingFields()
     {
         var entries = ChangeTracker
             .Entries()
-            .Where(e => e.Entity is BaseEntity && (
-                    e.State == EntityState.Added
-                    || e.State == EntityState.Modified));
+            .Where(e => e.Entity is BaseEntity &&
+                        (e.State == EntityState.Added || e.State == EntityState.Modified));
 
         foreach (var entityEntry in entries)
         {
@@ -194,12 +190,6 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         UpdateDateTrackingFields();
-        return await base.SaveChangesAsync();
+        return await base.SaveChangesAsync(cancellationToken);
     }
-
-
-
-
-
-
 }

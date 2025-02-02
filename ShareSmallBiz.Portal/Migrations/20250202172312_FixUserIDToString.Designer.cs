@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShareSmallBiz.Portal.Data;
 
@@ -10,9 +11,11 @@ using ShareSmallBiz.Portal.Data;
 namespace ShareSmallBiz.Portal.Migrations
 {
     [DbContext(typeof(ShareSmallBizUserContext))]
-    partial class ShareSmallBizUserContextModelSnapshot : ModelSnapshot
+    [Migration("20250202172312_FixUserIDToString")]
+    partial class FixUserIDToString
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
@@ -30,21 +33,6 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.HasIndex("KeywordId");
 
                     b.ToTable("ContentPartKeyword");
-                });
-
-            modelBuilder.Entity("KeywordPost", b =>
-                {
-                    b.Property<int>("PostCategoriesId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("PostsId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("PostCategoriesId", "PostsId");
-
-                    b.HasIndex("PostsId");
-
-                    b.ToTable("KeywordPost");
                 });
 
             modelBuilder.Entity("MenuKeyword", b =>
@@ -251,7 +239,12 @@ namespace ShareSmallBiz.Portal.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PostId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PostId");
 
                     b.ToTable("Keywords");
                 });
@@ -407,108 +400,34 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.ToTable("Posts");
                 });
 
-            modelBuilder.Entity("ShareSmallBiz.Portal.Data.PostComment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("AuthorId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedID")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("ModifiedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ModifiedID")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("ParentPostId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("PostId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("PostId1")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthorId");
-
-                    b.HasIndex("ParentPostId");
-
-                    b.HasIndex("PostId");
-
-                    b.HasIndex("PostId1");
-
-                    b.ToTable("PostComments");
-                });
-
-            modelBuilder.Entity("ShareSmallBiz.Portal.Data.PostCommentLike", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedID")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("ModifiedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ModifiedID")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("PostCommentId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedID");
-
-                    b.HasIndex("PostCommentId");
-
-                    b.ToTable("PostCommentLikes");
-                });
-
             modelBuilder.Entity("ShareSmallBiz.Portal.Data.PostLike", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedID")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ModifiedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ModifiedID")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("PostId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("TEXT");
+                    b.HasKey("Id");
 
-                    b.Property<string>("CreatedID")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Id")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("ModifiedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ModifiedID")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("PostId", "UserId");
+                    b.HasIndex("PostId");
 
                     b.HasIndex("UserId");
 
@@ -726,21 +645,6 @@ namespace ShareSmallBiz.Portal.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("KeywordPost", b =>
-                {
-                    b.HasOne("ShareSmallBiz.Portal.Data.Keyword", null)
-                        .WithMany()
-                        .HasForeignKey("PostCategoriesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ShareSmallBiz.Portal.Data.Post", null)
-                        .WithMany()
-                        .HasForeignKey("PostsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("MenuKeyword", b =>
                 {
                     b.HasOne("ShareSmallBiz.Portal.Data.Keyword", null)
@@ -807,6 +711,13 @@ namespace ShareSmallBiz.Portal.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ShareSmallBiz.Portal.Data.Keyword", b =>
+                {
+                    b.HasOne("ShareSmallBiz.Portal.Data.Post", null)
+                        .WithMany("PostCategories")
+                        .HasForeignKey("PostId");
+                });
+
             modelBuilder.Entity("ShareSmallBiz.Portal.Data.Menu", b =>
                 {
                     b.HasOne("ShareSmallBiz.Portal.Data.WebSite", "Domain")
@@ -829,57 +740,12 @@ namespace ShareSmallBiz.Portal.Migrations
             modelBuilder.Entity("ShareSmallBiz.Portal.Data.Post", b =>
                 {
                     b.HasOne("ShareSmallBiz.Portal.Data.ShareSmallBizUser", "Author")
-                        .WithMany("Posts")
+                        .WithMany()
                         .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Author");
-                });
-
-            modelBuilder.Entity("ShareSmallBiz.Portal.Data.PostComment", b =>
-                {
-                    b.HasOne("ShareSmallBiz.Portal.Data.ShareSmallBizUser", "Author")
-                        .WithMany()
-                        .HasForeignKey("AuthorId");
-
-                    b.HasOne("ShareSmallBiz.Portal.Data.Post", "ParentPost")
-                        .WithMany()
-                        .HasForeignKey("ParentPostId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("ShareSmallBiz.Portal.Data.Post", "Post")
-                        .WithMany("Comments")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ShareSmallBiz.Portal.Data.Post", null)
-                        .WithMany("PostComments")
-                        .HasForeignKey("PostId1");
-
-                    b.Navigation("Author");
-
-                    b.Navigation("ParentPost");
-
-                    b.Navigation("Post");
-                });
-
-            modelBuilder.Entity("ShareSmallBiz.Portal.Data.PostCommentLike", b =>
-                {
-                    b.HasOne("ShareSmallBiz.Portal.Data.ShareSmallBizUser", "User")
-                        .WithMany("LikedPostComments")
-                        .HasForeignKey("CreatedID");
-
-                    b.HasOne("ShareSmallBiz.Portal.Data.PostComment", "PostComment")
-                        .WithMany("Likes")
-                        .HasForeignKey("PostCommentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PostComment");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ShareSmallBiz.Portal.Data.PostLike", b =>
@@ -927,16 +793,9 @@ namespace ShareSmallBiz.Portal.Migrations
 
             modelBuilder.Entity("ShareSmallBiz.Portal.Data.Post", b =>
                 {
-                    b.Navigation("Comments");
-
                     b.Navigation("Likes");
 
-                    b.Navigation("PostComments");
-                });
-
-            modelBuilder.Entity("ShareSmallBiz.Portal.Data.PostComment", b =>
-                {
-                    b.Navigation("Likes");
+                    b.Navigation("PostCategories");
                 });
 
             modelBuilder.Entity("ShareSmallBiz.Portal.Data.ShareSmallBizUser", b =>
@@ -945,11 +804,7 @@ namespace ShareSmallBiz.Portal.Migrations
 
                     b.Navigation("Following");
 
-                    b.Navigation("LikedPostComments");
-
                     b.Navigation("LikedPosts");
-
-                    b.Navigation("Posts");
                 });
 
             modelBuilder.Entity("ShareSmallBiz.Portal.Data.WebSite", b =>

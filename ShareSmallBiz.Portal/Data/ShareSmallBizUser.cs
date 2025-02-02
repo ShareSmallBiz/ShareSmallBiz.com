@@ -20,13 +20,10 @@ public class ShareSmallBizUser : IdentityUser
     /// Last Name of User
     /// </summary>
     public string? LastName { get; set; }
-
-    // Liked Posts
-    public ICollection<PostLike> LikedPosts { get; set; } = [];
-    /// <summary>
-    /// Profile Picture of User
-    /// </summary>
     public byte[]? ProfilePicture { get; set; }
     public string ProfilePictureUrl { get; set; } = string.Empty;
+    public ICollection<PostLike> LikedPosts { get; set; } = [];
+    public virtual ICollection<PostCommentLike> LikedPostComments { get; set; } = [];
+    public virtual ICollection<Post> Posts { get; set; } = [];
 }
 
