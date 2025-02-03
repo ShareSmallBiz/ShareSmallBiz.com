@@ -77,6 +77,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSingleton<IStorageProvider, StorageProvider>();
 builder.Services.AddScoped<IMenuProvider, MenuProvider>();
 builder.Services.AddScoped<IPostProvider, PostProvider>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 
 // ========================
