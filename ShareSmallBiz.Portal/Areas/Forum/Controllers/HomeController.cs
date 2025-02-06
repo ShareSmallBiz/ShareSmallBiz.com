@@ -5,7 +5,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers;
 
 [Area("Forum")]
 [Route("Forum/[controller]")]
-public class HomeController(IPostProvider postProvider) : ForumBaseController
+public class HomeController(PostProvider postProvider) : ForumBaseController
 {
     [HttpGet("")]
     public async Task<IActionResult> Index()

@@ -1,0 +1,9 @@
+﻿@ShareSmallBiz.Portal_HostAddress = https://localhost:55863
+
+GET {{ShareSmallBiz.Portal_HostAddress}}/Forum/home/AllPost
+
+###
+
+GET {{ShareSmallBiz.Portal_HostAddress}}/Forum/home/AllPost
+
+###

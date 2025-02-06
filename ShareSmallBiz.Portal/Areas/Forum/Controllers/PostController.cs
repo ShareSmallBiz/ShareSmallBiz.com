@@ -12,7 +12,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers;
 [Authorize]
 [Area("Forum")]
 public class PostController(
-    IPostProvider postService,
+    PostProvider postService,
     UserManager<ShareSmallBizUser> userManager,
     ILogger<PostController> logger) : ForumBaseController
 {
@@ -32,6 +32,8 @@ public class PostController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(PostModel postModel)
     {
+        ClaimsPrincipal currentUser = this.User;
+
         if (!ModelState.IsValid)
         {
             return View("Edit", postModel);
@@ -45,7 +47,7 @@ public class PostController(
                 return Unauthorized();
             }
             postModel.CreatedID = user.Id;
-            await postService.CreatePostAsync(postModel);
+            await postService.CreatePostAsync(postModel,currentUser);
             return RedirectToAction("Index");
         }
         catch (Exception ex)
@@ -70,6 +72,7 @@ public class PostController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(PostModel postModel)
     {
+        ClaimsPrincipal currentUser = this.User;
         if (!ModelState.IsValid)
         {
             return View(postModel);
@@ -85,7 +88,7 @@ public class PostController(
             }
 
             postModel.ModifiedID = user.Id;
-            var success = await postService.UpdatePostAsync(postModel);
+            var success = await postService.UpdatePostAsync(postModel, currentUser);
             if (!success)
             {
                 return NotFound();

@@ -7,7 +7,6 @@ public class UserService(
     UserManager<ShareSmallBizUser> userManager,
     ILogger<UserService> logger
     )
-: IUserService
 {
 
     // Create a new user
