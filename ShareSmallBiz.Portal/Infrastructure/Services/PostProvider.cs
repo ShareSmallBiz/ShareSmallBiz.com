@@ -3,7 +3,6 @@ using System.Security.Claims;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
-
 public class PostProvider(
     ShareSmallBizUserContext context,
     ILogger<PostProvider> logger,
@@ -178,7 +177,9 @@ public class PostProvider(
         var post = await context.Posts
             .Include(p => p.Author)
             .Include(p => p.PostCategories)
-            .Include(p => p.Comments)
+            .Include(p => p.Likes).ThenInclude(l => l.User)
+            .Include(p => p.Comments).ThenInclude(c => c.Author)
+            .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == postId);
 
         return post == null ? null : new PostModel(post);
@@ -194,9 +195,10 @@ public class PostProvider(
             .OrderByDescending(p => p.Published)
             .Skip((pageNumber - 1) * perPage)
             .Take(perPage)
+            .AsNoTracking()
             .ToListAsync();
 
-        return posts.Select(p => new PostModel(p)).ToList();
+        return [.. posts.Select(p => new PostModel(p))];
     }
 
     /// <summary>

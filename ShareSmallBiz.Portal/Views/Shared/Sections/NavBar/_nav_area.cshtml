@@ -2,13 +2,13 @@
 @using System.Text.Json
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Environment
 @{
-    var areaName1 = ViewContext.RouteData.Values["area"]?.ToString();
+    var areaName1 = ViewContext.RouteData.Values["area"]?.ToString()?.ToLower();
     var currentPath = $"/{ViewContext.RouteData.Values["area"]}/{ViewContext.RouteData.Values["controller"]}/{ViewContext.RouteData.Values["action"]}";
     var currentArea = $"/{ViewContext.RouteData.Values["area"]}";
     var jsonFile = areaName1 != null
         ? System.IO.Path.Combine(Environment.ContentRootPath, "Areas", areaName1, "Views", "Shared", "navigation.json")
         : System.IO.Path.Combine(Environment.ContentRootPath, "Views", "Shared", "navigation.json");
-
+    string areaHome = $"/{areaName1}/home";
     JsonDocument menuItems = null;
     if (File.Exists(jsonFile))
     {
@@ -23,7 +23,7 @@
         <!-- Navbar with Secondary Background and Pills -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-secondary mb-4">
             <div class="container-fluid">
-                <a class="navbar-brand" href="@currentArea">@areaName1</a>
+                <a class="navbar-brand" href="/">ShareSmallBiz</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav5" aria-controls="navbarNav5" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>

@@ -1,6 +1,10 @@
 {
   "menuItems": [
     {
+      "text": "Forum",
+      "url": "/Forum/Home"
+    },
+    {
       "text": "Posts",
       "url": "/Forum/Post/"
     }

@@ -1,39 +1,80 @@
 ﻿@model List<PostModel>
 
 <section class="container my-5">
-    <h2 class="text-center mb-4"><i class="bi bi-chat-dots-fill"></i> Recent Discussions</h2>
-
-    @if (Model != null && Model.Any())
-    {
-        <div class="list-group">
-            @foreach (var post in Model)
-            {
-                <a href="/Forum/Home/@post.Id/@post.Slug" class="list-group-item list-group-item-action">
-                    <h5 class="mb-1">@post.Title</h5>
-                    <p class="mb-1 text-muted">
-                        Started by <strong>@(post?.Author?.UserName ?? "Unknown")</strong>
-                        • @(post.PostViews) views
-                    </p>
-                    <small class="text-muted">
-                        <i class="bi bi-clock"></i> @post.Published.ToString("MMM d, yyyy")
-                    </small>
-                </a>
-            }
-        </div>
-
-        <div class="text-center mt-3">
-            <a href="/Forum" class="btn btn-primary">
-                <i class="bi bi-arrow-right-circle-fill"></i> View All Discussions
+    <h2 class="text-center mb-4">
+        <i class="bi bi-chat-dots-fill"></i> Recent Discussions
+    </h2>
+    <div id="postList" class="list-group">
+        @foreach (var post in Model)
+        {
+            <a href="/Forum/Home/@post.Id/@post.Slug" class="list-group-item list-group-item-action">
+                <h5 class="mb-1">@post.Title</h5>
+                <p class="mb-1 text-muted">
+                    Started by <strong>@(post?.Author?.UserName ?? "Unknown")</strong>
+                    • @(post.PostViews) views
+                </p>
+                <small class="text-muted">
+                    <i class="bi bi-clock"></i> @post.Published.ToString("MMM d, yyyy")
+                </small>
             </a>
+        }
+    </div>
+    <div class="text-center mt-3">
+        <button id="loadMoreBtn" class="btn btn-primary">
+            <i class="bi bi-arrow-down-circle"></i> Load More
+        </button>
+        <div id="loadingIndicator" class="mt-2 d-none">
+            <i class="bi bi-arrow-repeat spin-icon"></i> Loading...
         </div>
-    }
-    else
-    {
-        <p class="text-center text-muted">No posts available. Be the first to start a discussion!</p>
-        <div class="text-center mt-3">
-            <a href="/Forum/Create" class="btn btn-success">
-                <i class="bi bi-pencil-square"></i> Start a New Discussion
-            </a>
-        </div>
-    }
+    </div>
 </section>
+
+@section Scripts {
+    <script>
+        let pageNumber = 1;
+        const pageSize = 10;
+        const sortType = 0; // Adjust sortType as needed
+
+        document.getElementById("loadMoreBtn").addEventListener("click", function () {
+            let btn = this;
+            let loadingIndicator = document.getElementById("loadingIndicator");
+
+            btn.disabled = true;
+            loadingIndicator.classList.remove("d-none");
+
+            fetch(`/Forum/Home/paged?pageNumber=${pageNumber + 1}&pageSize=${pageSize}&sortType=${sortType}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        let postList = document.getElementById("postList");
+                        data.forEach(post => {
+                            let postElement = document.createElement("a");
+                            postElement.href = `/Forum/Home/${post.id}/${post.slug}`;
+                            postElement.className = "list-group-item list-group-item-action";
+                            postElement.innerHTML = `
+                                <h5 class="mb-1">${post.title}</h5>
+                                <p class="mb-1 text-muted">
+                                    Started by <strong>${post.author?.userName || "Unknown"}</strong>
+                                    • ${post.postViews} views
+                                </p>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> ${new Date(post.published).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </small>
+                            `;
+                            postList.appendChild(postElement);
+                        });
+
+                        pageNumber++; // Increase page count for next fetch
+                    } else {
+                        btn.style.display = "none"; // Hide button if no more posts
+                    }
+                })
+                .catch(error => console.error("Error loading posts:", error))
+                .finally(() => {
+                    btn.disabled = false;
+                    loadingIndicator.classList.add("d-none");
+                });
+        });
+    </script>
+
+}

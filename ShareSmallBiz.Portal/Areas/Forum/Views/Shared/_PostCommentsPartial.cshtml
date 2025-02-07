@@ -1,0 +1,21 @@
+﻿@model List<PostCommentModel>
+
+@if (Model != null && Model.Any())
+{
+    <ul class="list-group">
+        @foreach (var comment in Model)
+        {
+            <li class="list-group-item">
+                <div class="d-flex justify-content-between">
+                    <strong><i class="bi bi-person-circle"></i> @(comment.CreatedUser?.UserName ?? "Anonymous")</strong>
+                    <small class="text-muted"><i class="bi bi-clock"></i> @comment.CreatedDate.ToString("MMM d, yyyy")</small>
+                </div>
+                <p class="mb-2">@comment.Content</p>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p class="text-muted">No comments yet. Be the first to share your thoughts!</p>
+}

@@ -209,7 +209,18 @@ app.UseCors("AllowAllOrigins"); // Apply CORS policy for SignalR
 // ========================
 // Endpoint Configuration
 // ========================
-//app.UseStatusCodePagesWithReExecute("/Error/{0}");
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.Equals("/forum", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Redirect("/forum/home/", true);
+        return;
+    }
+    await next();
+});
+
+
+
 app.MapRazorPages();
 app.MapControllerRoute(
     name: "areaRoute",
