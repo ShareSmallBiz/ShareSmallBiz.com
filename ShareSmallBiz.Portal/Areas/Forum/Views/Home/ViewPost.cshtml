@@ -1,125 +1,141 @@
 ﻿@model PostModel
 @using Microsoft.AspNetCore.Identity
-
 @inject SignInManager<ShareSmallBizUser> SignInManager
 
 @{
     ViewData["Title"] = Model.Title;
 }
 
-<!-- Post Header -->
-<div class="card shadow-lg">
-    <div class="card-body">
+<!-- Main Container -->
+<div class="container-fluid px-3 px-md-5 my-3">
 
-        <!-- Cover Image -->
-        @if (!string.IsNullOrEmpty(Model.Cover))
-        {
-            <div class="text-center mb-4">
-                <div class="cover-container">
-                    <img src="@Model.Cover" class="lazyload cover-image rounded shadow"
-                         alt="Cover Image" loading="lazy">
-                </div>
-            </div>
-        }
+    <!-- Post Content -->
+    <div class="card shadow-lg border-0">
+        <div class="card-body">
 
-        <!-- Post Title -->
-        <h1 class="card-title text-center">@Model.Title</h1>
-
-        <!-- Author & Metadata -->
-        <p class="text-muted text-center">
-            @if (Model?.Author?.ProfilePicture != null)
+            <!-- Cover Image -->
+            @if (!string.IsNullOrEmpty(Model.Cover))
             {
-                <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
-                     src="data:image/*;base64,@(Convert.ToBase64String(Model.Author.ProfilePicture))" alt="User Profile">
-            }
-            else
-            {
-                <i class="bi bi-person-circle"></i>
-            }
-            <strong>@(Model?.Author?.UserName ?? "Unknown Author")</strong>
-            | <i class="bi bi-eye"></i> @Model.PostViews views
-            | <i class="bi bi-calendar"></i> @Model.Published.ToString("MMM d, yyyy")
-        </p>
-        <hr />
-
-        <!-- Post Content -->
-        <div class="mb-3">
-            @Html.Raw(Model.Content)
-        </div>
-
-        <!-- Like & Comment Buttons (Only for Logged-in Users) -->
-        @if (SignInManager.IsSignedIn(User))
-        {
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <button id="likeButton" data-post-id="@Model.Id" class="btn btn-outline-primary">
-                        <i class="bi bi-hand-thumbs-up"></i> Like
-                    </button>
-                    <span id="likeStatus"></span>
+                <div class="cover-container mb-3">
+                    <img src="@Model.Cover" class="img-fluid cover-image rounded shadow-sm lazyload" alt="Cover Image" loading="lazy">
                 </div>
-                <span class="badge bg-info text-dark">@Model.PostType</span>
-            </div>
-        }
+            }
 
-        <!-- Comments Section -->
-        <section class="mt-5" id="comments">
-            <h3><i class="bi bi-chat-dots"></i> Comments</h3>
+            <!-- Post Title -->
+            <h1 class="card-title text-center">@Model.Title</h1>
+
+            <!-- Author & Metadata -->
+            <p class="text-muted text-center">
+                @if (Model?.Author?.ProfilePicture != null)
+                {
+                    <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
+                         src="data:image/*;base64,@(Convert.ToBase64String(Model.Author.ProfilePicture))" alt="User Profile">
+                }
+                else
+                {
+                    <i class="bi bi-person-circle"></i>
+                }
+                <strong>@(Model?.Author?.UserName ?? "Unknown Author")</strong>
+                | <i class="bi bi-eye"></i> @Model.PostViews views
+                | <i class="bi bi-calendar"></i> @Model.Published.ToString("MMM d, yyyy")
+            </p>
+
             <hr />
 
+            <!-- Post Content -->
+            <div class="post-content">
+                @Html.Raw(Model.Content)
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Section (Moved Above Post) -->
+    <section class="card shadow-sm border-0 p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="mb-0"><i class="bi bi-chat-dots"></i> Comments</h3>
+
+            <!-- Like Button (Next to Comments Header) -->
             @if (SignInManager.IsSignedIn(User))
             {
-                <!-- Comment Form for Logged-in Users -->
-                <div class="mb-4">
-                    <h5>Leave a Comment</h5>
-                    <textarea id="commentText" class="form-control" rows="3" placeholder="Write a comment..." required></textarea>
-                    <button id="submitComment" class="btn btn-primary mt-2" data-post-id="@Model.Id">
-                        <i class="bi bi-send"></i> Post Comment
-                    </button>
-                    <span id="commentStatus" class="text-danger"></span>
-                </div>
+                <button id="likeButton" data-post-id="@Model.Id" class="btn btn-outline-primary">
+                    <i class="bi bi-hand-thumbs-up"></i> Like
+                </button>
             }
+        </div>
+        <hr />
 
-            <!-- Comments List -->
-            <div id="commentsSection">
-                @await Html.PartialAsync("_PostCommentsPartial", Model.Comments)
+        <!-- Comments List -->
+        <div id="commentsSection">
+            @await Html.PartialAsync("_PostCommentsPartial", Model.Comments)
+        </div>
+
+        @if (!SignInManager.IsSignedIn(User))
+        {
+            <!-- Call to Action for Guests -->
+            <div class="alert alert-info text-center mt-3">
+                <p><strong>Want to join the conversation?</strong></p>
+                <p>
+                    <a href="/Identity/Account/Login" class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
+                    or <a href="/Identity/Account/Register" class="btn btn-success"><i class="bi bi-person-plus-fill"></i> Sign Up</a> to like and comment.
+                </p>
             </div>
-
-            @if (!SignInManager.IsSignedIn(User))
-            {
-                <!-- Call to Action for Guests -->
-                <div class="alert alert-info text-center mt-4">
-                    <p><strong>Want to join the conversation?</strong></p>
-                    <p>
-                        <a href="/Identity/Account/Login" class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
-                        or <a href="/Identity/Account/Register" class="btn btn-success"><i class="bi bi-person-plus-fill"></i> Sign Up</a> to like and comment.
-                    </p>
-                </div>
-            }
+        }
+    </section>
+    <!-- Leave a Comment Section (Separate Card) -->
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <section class="card shadow-sm border-0 p-3 mt-4">
+            <h5><i class="bi bi-pencil-square"></i> Leave a Comment</h5>
+            <textarea id="commentText" class="form-control" rows="3" placeholder="Write a comment..." required></textarea>
+            <button id="submitComment" class="btn btn-primary mt-2" data-post-id="@Model.Id">
+                <i class="bi bi-send"></i> Post Comment
+            </button>
+            <span id="commentStatus" class="text-danger"></span>
         </section>
-    </div>
+    }
+
 </div>
 
+<!-- Styles -->
 @section Styles {
     <style>
-        /* Responsive cover image container */
+        /* Responsive cover image */
         .cover-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
             width: 100%;
-            max-height: 400px;
         }
 
         .cover-image {
             width: 100%;
             height: auto;
-            max-height: 400px;
+            max-height: 350px;
             object-fit: cover;
+            aspect-ratio: 16/9;
+        }
+
+        /* Ensure Footer Doesn't Overlap Content */
+        body {
+            padding-bottom: 100px;
+        }
+
+        /* Mobile Optimized Comment Section */
+        #commentsSection {
+            max-height: none;
+            overflow-y: auto;
+        }
+
+        /* Like Button Adjustment */
+        #likeButton {
+            width: auto;
+            font-size: 0.9rem;
+            padding: 6px 12px;
         }
     </style>
 }
 
+<!-- Scripts -->
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js" async></script>
 
@@ -134,14 +150,8 @@
                     type: "POST",
                     success: function (response) {
                         if (response.success) {
-                            $("#likeStatus").text("Liked!");
-                            $("#likeButton").prop("disabled", true);
-                        } else {
-                            $("#likeStatus").text(response.message || "Unable to like post.");
+                            $("#likeButton").addClass("btn-success").removeClass("btn-outline-primary").prop("disabled", true);
                         }
-                    },
-                    error: function () {
-                        $("#likeStatus").text("Error processing request.");
                     }
                 });
             });

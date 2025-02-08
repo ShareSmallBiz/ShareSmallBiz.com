@@ -10,6 +10,11 @@
 		<AssemblyVersion>9.$([System.DateTime]::UtcNow.ToString(yyMM)).$([System.DateTime]::UtcNow.ToString(ddHH)).$([System.DateTime]::UtcNow.ToString(mmss))</AssemblyVersion>
 		<UserSecretsId>fb7677ee-eb88-4c1d-9234-70bcfcfbba67</UserSecretsId>
 	</PropertyGroup>
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>1591</NoWarn>
+		<!-- Suppress warnings for missing XML comments -->
+	</PropertyGroup>
 	<Target Name="EnsureNodeModules" BeforeTargets="BeforeBuild">
 		<Message Importance="high" Text="Update npm packages..." />
 		<Exec Command="ncu -u" />
@@ -37,7 +42,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.SemanticKernel" Version="1.35.0" />
+		<PackageReference Include="Microsoft.SemanticKernel" Version="1.36.1" />
 		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
 		<PackageReference Include="ScottPlot" Version="5.0.54" />
 		<PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
@@ -51,7 +56,7 @@
 		<ProjectReference Include="..\HttpClientUtility\HttpClientUtility.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-	  <Folder Include="Areas\Forum\Data\" />
-	  <Folder Include="Areas\Forum\Models\" />
+		<Folder Include="Areas\Forum\Data\" />
+		<Folder Include="Areas\Forum\Models\" />
 	</ItemGroup>
 </Project>

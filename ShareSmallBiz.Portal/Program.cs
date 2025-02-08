@@ -13,6 +13,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Westwind.AspNetCore.Markdown;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -95,6 +96,7 @@ builder.Services.AddMarkdown();
 // ========================
 // MVC and Razor Pages
 // ========================
+builder.Services.AddControllers(); // Add this if missing
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
@@ -140,6 +142,35 @@ builder.Services.AddSingleton(new JsonSerializerOptions
 });
 
 
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "ShareSmallBiz API",
+        Description = "API documentation for ShareSmallBiz Portal",
+        Contact = new OpenApiContact
+        {
+            Name = "Support",
+            Email = "support@sharesmallbiz.com",
+            Url = new Uri("https://sharesmallbiz.com/contact")
+        }
+    });
+
+    // Enable XML Comments if needed (for better documentation)
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath);
+    }
+});
+
+
+
+
+
 var app = builder.Build();
 
 // ========================
@@ -165,14 +196,19 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "ShareSmallBiz API v1");
+    options.RoutePrefix = "swagger"; // Change if needed
+});
+
 
 
 // ========================
 // Middleware Configuration
 // ========================
 app.UseMiddleware<NotFoundMiddleware>();
-
-
 
 if (app.Environment.IsDevelopment())
 {

@@ -4,25 +4,29 @@
     <div class="accordion" id="postAccordion">
         @foreach (var post in Model)
         {
+            var postId = $"collapse{post.Id}"; // Ensure unique ID
+
             <div class="accordion-item">
                 <h2 class="accordion-header" id="heading@post.Id">
                     <button class="accordion-button @(!Model.FirstOrDefault()?.Id.Equals(post.Id) ?? true ? "collapsed" : "")"
                             type="button"
                             data-bs-toggle="collapse"
-                            data-bs-target="#collapse@post.Id"
-                            aria-expanded="true"
-                            aria-controls="collapse@post.Id">
+                            data-bs-target="#@postId"
+                            aria-expanded="false"
+                            aria-controls="@postId">
                         <i class="bi bi-file-earmark-post me-2"></i>@post.Title
                     </button>
                 </h2>
-                <div id="collapse@post.Id" class="accordion-collapse collapse show" aria-labelledby="heading@post.Id" data-bs-parent="#postAccordion">
+                <div id="@postId" class="accordion-collapse collapse @(Model.FirstOrDefault()?.Id == post.Id ? "show" : "")"
+                     aria-labelledby="heading@post.Id">
                     <div class="accordion-body">
-                        <div class="d-flex mb-3">
+                        <div class="d-flex flex-column align-items-center text-center mb-3">
                             @if (!string.IsNullOrEmpty(post.Cover))
                             {
-                                <img src="@post.Cover" alt="@post.Title" class="img-fluid rounded-start" style="max-width: 150px; max-height: 150px; object-fit: cover;">
+                                <img src="@post.Cover" alt="@post.Title" class="img-fluid rounded" style="width: 100%; max-height: 250px; object-fit: cover;">
                             }
-                            <div class="ms-3">
+
+                            <div class="mt-3 w-100">
                                 <p class="mb-1 text-muted">
                                     @if (post?.Author?.ProfilePicture != null)
                                     {
@@ -34,8 +38,8 @@
                                         <i class="bi bi-person-circle"></i>
                                     }
                                     <strong>@(post?.Author?.UserName ?? "Unknown")</strong>
-                                    • @(post.PostViews) views
-                                    • @(post.Comments.Count) comments
+                                    • <i class="bi bi-eye"></i> @(post.PostViews) views
+                                    • <i class="bi bi-chat"></i> @(post.Comments.Count) comments
                                 </p>
                                 <p>@post.Description</p>
                                 <a href="/Forum/Home/@post.Id/@post.Slug" class="btn btn-outline-primary">
@@ -52,9 +56,18 @@
 
 @section Scripts {
     <script>
-        // Bootstrap 5 Accordion Initialization - All Items Expanded Initially
-        var myAccordion = new bootstrap.Accordion(document.getElementById('postAccordion'), {
-            toggle: false // Disable auto-collapse when one item is expanded
+        document.addEventListener("DOMContentLoaded", function () {
+            var accordions = document.querySelectorAll('.accordion-button');
+            accordions.forEach(button => {
+                button.addEventListener('click', function () {
+                    var target = document.querySelector(this.getAttribute('data-bs-target'));
+                    if (target.classList.contains('show')) {
+                        target.classList.remove('show');
+                    } else {
+                        target.classList.add('show');
+                    }
+                });
+            });
         });
     </script>
 }

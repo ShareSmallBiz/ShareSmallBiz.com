@@ -24,34 +24,9 @@ public class NotFoundMiddleware(RequestDelegate next, ILogger<NotFoundMiddleware
             {
                 return; // Stop if redirect loop detected
             }
-            if (requestPath.StartsWith("/jshow"))
-            {
-                var newPath = requestPath.Replace("/jshow", "/TriviaSpark/JShow");
-                RedirectWithProtection(context, newPath);
-                return;
-            }
-
-            if (requestPath.StartsWith("/openai/"))
-            {
-                var newPath = requestPath.Replace("/openai/", "/PromptSpark/");
-                RedirectWithProtection(context, newPath);
-                return;
-            }
-            if (requestPath.StartsWith("/async/"))
-            {
-                var newPath = requestPath.Replace("/async/", "/AsyncSpark/");
-                RedirectWithProtection(context, newPath);
-                return;
-            }
 
             var redirects = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                { "github", "/AsyncSpark/github" },
-                { "PromptSpark", "/PromptSpark" },
-                { "AsyncSpark", "/AsyncSpark" },
-                { "DataSpark", "/DataSpark" },
-                { "prompt", "/PromptSpark" },
-                { "async", "/AsyncSpark" },
             };
 
             foreach (var redirect in redirects)
@@ -65,9 +40,6 @@ public class NotFoundMiddleware(RequestDelegate next, ILogger<NotFoundMiddleware
             _logger.LogWarning("No redirect found for {RequestPath}", requestPath);
 
             RedirectWithProtection(context, "/Error/404");
-
-
-
         }
     }
 
@@ -95,7 +67,6 @@ public class NotFoundMiddleware(RequestDelegate next, ILogger<NotFoundMiddleware
         {
             return true; // Redirect loop detected
         }
-
         return false;
     }
 }

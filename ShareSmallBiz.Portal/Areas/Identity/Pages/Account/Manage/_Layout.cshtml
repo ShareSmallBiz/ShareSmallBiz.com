@@ -9,20 +9,30 @@
     }
 }
 
-<h1>Manage your account</h1>
+<div class="container my-4">
+    <h1 class="text-center mb-3">Manage Your Account</h1>
 
-<div>
-    <h2>Change your account settings</h2>
-    <hr />
-    <div class="row">
-        <div class="col-md-3">
+    <div class="d-flex flex-column flex-md-row">
+        <!-- Navigation (On Top for Mobile, Side for Desktop) -->
+        <div class="w-100 w-md-25 mb-3 mb-md-0">
             <partial name="_ManageNav" />
         </div>
-        <div class="col-md-9">
+
+        <!-- Content Area -->
+        <div class="flex-grow-1">
+            <h2 class="mb-3">Change Your Account Settings</h2>
+            <hr />
             @RenderBody()
         </div>
     </div>
 </div>
+
+<!-- Fixed Footer Handling -->
+<style>
+    body {
+        padding-bottom: 80px; /* Ensures content doesn’t get hidden behind the footer */
+    }
+</style>
 
 @section Scripts {
     @RenderSection("Scripts", required: false)
