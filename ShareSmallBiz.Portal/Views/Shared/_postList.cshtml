@@ -1,0 +1,60 @@
+﻿@model List<PostModel>
+
+<section class="container my-5">
+    <div class="accordion" id="postAccordion">
+        @foreach (var post in Model)
+        {
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading@post.Id">
+                    <button class="accordion-button @(!Model.FirstOrDefault()?.Id.Equals(post.Id) ?? true ? "collapsed" : "")"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapse@post.Id"
+                            aria-expanded="true"
+                            aria-controls="collapse@post.Id">
+                        <i class="bi bi-file-earmark-post me-2"></i>@post.Title
+                    </button>
+                </h2>
+                <div id="collapse@post.Id" class="accordion-collapse collapse show" aria-labelledby="heading@post.Id" data-bs-parent="#postAccordion">
+                    <div class="accordion-body">
+                        <div class="d-flex mb-3">
+                            @if (!string.IsNullOrEmpty(post.Cover))
+                            {
+                                <img src="@post.Cover" alt="@post.Title" class="img-fluid rounded-start" style="max-width: 150px; max-height: 150px; object-fit: cover;">
+                            }
+                            <div class="ms-3">
+                                <p class="mb-1 text-muted">
+                                    @if (post?.Author?.ProfilePicture != null)
+                                    {
+                                        <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
+                                             src="data:image/*;base64,@(Convert.ToBase64String(post.Author.ProfilePicture))" alt="User Profile">
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-person-circle"></i>
+                                    }
+                                    <strong>@(post?.Author?.UserName ?? "Unknown")</strong>
+                                    • @(post.PostViews) views
+                                    • @(post.Comments.Count) comments
+                                </p>
+                                <p>@post.Description</p>
+                                <a href="/Forum/Home/@post.Id/@post.Slug" class="btn btn-outline-primary">
+                                    <i class="bi bi-arrow-right-circle"></i> Read Full Post
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Bootstrap 5 Accordion Initialization - All Items Expanded Initially
+        var myAccordion = new bootstrap.Accordion(document.getElementById('postAccordion'), {
+            toggle: false // Disable auto-collapse when one item is expanded
+        });
+    </script>
+}

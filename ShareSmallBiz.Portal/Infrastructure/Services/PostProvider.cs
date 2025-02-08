@@ -1,5 +1,6 @@
 ﻿using ShareSmallBiz.Portal.Data;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
@@ -9,6 +10,58 @@ public class PostProvider(
     UserManager<ShareSmallBizUser> userManager,
      IHttpContextAccessor httpContextAccessor) 
 {
+    public static string GenerateSlug(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return "UNKNOWN";
+        }
+
+        // Normalize the string
+        string normalized = title.Normalize(NormalizationForm.FormD);
+
+        // Remove diacritic marks (accents)
+        var sb = new StringBuilder();
+        foreach (var c in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            {
+                sb.Append(c);
+            }
+        }
+        string cleaned = sb.ToString().Normalize(NormalizationForm.FormC);
+
+        // Convert to lowercase
+        cleaned = cleaned.ToLowerInvariant();
+
+        // Replace spaces with dashes
+        cleaned = Regex.Replace(cleaned, @"\s+", "-");
+
+        // Remove invalid URL characters
+        cleaned = Regex.Replace(cleaned, @"[^a-z0-9\-]", "");
+
+        // Trim dashes from start and end
+        cleaned = cleaned.Trim('-');
+
+        if (string.IsNullOrEmpty(cleaned))
+        {
+            cleaned = "unknown";
+        }
+
+        return cleaned;
+    }
+
+    public static string StringToHtml(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return string.Empty;
+        }
+
+        return input.Replace("\r\n", "<br/>").Replace("\n", "<br/>");
+    }
+
+
     /// <summary>
     /// Allows a logged-in user to add a new comment to a post specified by ID.
     /// </summary>
@@ -131,7 +184,7 @@ public class PostProvider(
             Published = postModel.Published,
             Rating = postModel.Rating,
             Selected = postModel.Selected,
-            Slug = postModel.Slug,
+            Slug = GenerateSlug(postModel.Title),
             CreatedDate = DateTime.UtcNow,
             ModifiedDate = DateTime.UtcNow,
             CreatedID = user.Id,
@@ -170,20 +223,45 @@ public class PostProvider(
         return posts.Select(p => new PostModel(p)).ToList();
     }
 
-    /// <inheritdoc/>
     public async Task<PostModel?> GetPostByIdAsync(int postId)
     {
         logger.LogInformation("Retrieving post with ID: {PostId}", postId);
+
+        // Fetch the post with all related data
         var post = await context.Posts
             .Include(p => p.Author)
             .Include(p => p.PostCategories)
             .Include(p => p.Likes).ThenInclude(l => l.User)
             .Include(p => p.Comments).ThenInclude(c => c.Author)
-            .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == postId);
 
-        return post == null ? null : new PostModel(post);
+        if (post == null)
+        {
+            return null;
+        }
+
+        // Increment the view count (even if it fails due to concurrency conflict)
+        post.PostViews++;
+
+        // Try saving the changes
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            // Log the error but don't throw or interrupt the flow
+            logger.LogWarning("Concurrency conflict occurred while updating post view count for PostId: {PostId}. Error: {Message}", postId, ex.Message);
+            // Optionally, you can log more details about the exception if needed
+        }
+
+        // Map to PostModel for return
+        PostModel returnPost = new(post);
+        returnPost.Content = StringToHtml(returnPost.Content);
+
+        return returnPost;
     }
+
 
     /// <inheritdoc/>
     public async Task<List<PostModel>> GetPostsAsync(int perPage, int pageNumber)
@@ -212,7 +290,7 @@ public class PostProvider(
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
 
-        IQueryable<Post> query = context.Posts.Where(p => p.IsPublic);
+        IQueryable<Post> query = context.Posts.Include(i=>i.Author).Where(p => p.IsPublic);
 
         switch (sortType)
         {
@@ -232,6 +310,7 @@ public class PostProvider(
         var posts = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
+            .AsNoTracking()
             .ToListAsync();
 
         return new PaginatedPostResult
@@ -352,6 +431,38 @@ public class PostProvider(
         await context.SaveChangesAsync();
         return true;
     }
+    /// <inheritdoc/>
+    public async Task<List<PostModel>> FeaturedPostsAsync(int count)
+    {
+        logger.LogInformation("Retrieving {Count} featured posts", count);
+        var posts = await context.Posts
+            .Include(p => p.Author)
+            .Include(p => p.Comments).ThenInclude(c => c.Author)
+            .Where(p => p.IsPublic)
+            .Where(p => p.IsFeatured)
+            .OrderByDescending(p => p.Comments.Count)
+            .Take(count)
+            .AsNoTracking()
+            .ToListAsync();
+
+        return posts.Select(p => new PostModel(p)).ToList();
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<PostModel>> MostCommentedPostsAsync(int count)
+    {
+        logger.LogInformation("Retrieving {Count} most commented posts", count);
+        var posts = await context.Posts
+            .Include(p => p.Author)
+            .Include(p => p.Comments).ThenInclude(c => c.Author)
+            .Where(p => p.IsPublic)
+            .OrderByDescending(p => p.Comments.Count)
+            .Take(count)
+            .AsNoTracking()
+            .ToListAsync();
+
+        return posts.Select(p => new PostModel(p)).ToList();
+    }
 
     /// <inheritdoc/>
     public async Task<List<PostModel>> MostPopularPostsAsync(int count)
@@ -359,9 +470,11 @@ public class PostProvider(
         logger.LogInformation("Retrieving {Count} most popular posts", count);
         var posts = await context.Posts
             .Include(p => p.Author)
+            .Include(p => p.Comments).ThenInclude(c => c.Author)
             .Where(p => p.IsPublic)
             .OrderByDescending(p => p.PostViews)
             .Take(count)
+            .AsNoTracking()
             .ToListAsync();
 
         return posts.Select(p => new PostModel(p)).ToList();
@@ -372,9 +485,12 @@ public class PostProvider(
     {
         logger.LogInformation("Retrieving {Count} most recent posts", count);
         var posts = await context.Posts
+            .Include(p => p.Author)
+            .Include(p => p.Comments).ThenInclude(c => c.Author)
             .Where(p => p.IsPublic)
             .OrderByDescending(p => p.Published)
             .Take(count)
+            .AsNoTracking()
             .ToListAsync();
 
         return posts.Select(p => new PostModel(p)).ToList();
@@ -406,7 +522,7 @@ public class PostProvider(
         existingPost.Published = postModel.Published;
         existingPost.Rating = postModel.Rating;
         existingPost.Selected = postModel.Selected;
-        existingPost.Slug = postModel.Slug;
+        existingPost.Slug = GenerateSlug(postModel.Title);
         existingPost.ModifiedDate = DateTime.UtcNow;
         existingPost.ModifiedID = user.Id;
 

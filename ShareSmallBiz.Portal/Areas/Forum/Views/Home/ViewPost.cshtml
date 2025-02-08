@@ -10,17 +10,43 @@
 <!-- Post Header -->
 <div class="card shadow-lg">
     <div class="card-body">
-        <h1 class="card-title">@Model.Title</h1>
-        <p class="text-muted">
-            <i class="bi bi-person-circle"></i> <strong>@(Model?.Author?.UserName ?? "Unknown Author")</strong>
+
+        <!-- Cover Image -->
+        @if (!string.IsNullOrEmpty(Model.Cover))
+        {
+            <div class="text-center mb-4">
+                <div class="cover-container">
+                    <img src="@Model.Cover" class="lazyload cover-image rounded shadow"
+                         alt="Cover Image" loading="lazy">
+                </div>
+            </div>
+        }
+
+        <!-- Post Title -->
+        <h1 class="card-title text-center">@Model.Title</h1>
+
+        <!-- Author & Metadata -->
+        <p class="text-muted text-center">
+            @if (Model?.Author?.ProfilePicture != null)
+            {
+                <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
+                     src="data:image/*;base64,@(Convert.ToBase64String(Model.Author.ProfilePicture))" alt="User Profile">
+            }
+            else
+            {
+                <i class="bi bi-person-circle"></i>
+            }
+            <strong>@(Model?.Author?.UserName ?? "Unknown Author")</strong>
             | <i class="bi bi-eye"></i> @Model.PostViews views
             | <i class="bi bi-calendar"></i> @Model.Published.ToString("MMM d, yyyy")
         </p>
         <hr />
+
         <!-- Post Content -->
         <div class="mb-3">
             @Html.Raw(Model.Content)
         </div>
+
         <!-- Like & Comment Buttons (Only for Logged-in Users) -->
         @if (SignInManager.IsSignedIn(User))
         {
@@ -34,17 +60,7 @@
                 <span class="badge bg-info text-dark">@Model.PostType</span>
             </div>
         }
-        else
-        {
-            <!-- Call to Action for Guests -->
-            <div class="alert alert-info text-center mt-4">
-                <p><strong>Want to join the conversation?</strong></p>
-                <p>
-                    <a href="/Account/Login" class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
-                    or <a href="/Account/Register" class="btn btn-success"><i class="bi bi-person-plus-fill"></i> Sign Up</a> to like and comment.
-                </p>
-            </div>
-        }
+
         <!-- Comments Section -->
         <section class="mt-5" id="comments">
             <h3><i class="bi bi-chat-dots"></i> Comments</h3>
@@ -62,29 +78,54 @@
                     <span id="commentStatus" class="text-danger"></span>
                 </div>
             }
-            else
-            {
-                <!-- Call to Action for Guests -->
-                <div class="alert alert-warning text-center">
-                    <p><strong>Want to leave a comment?</strong></p>
-                    <p>
-                        <a href="/Account/Login" class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
-                        or <a href="/Account/Register" class="btn btn-success"><i class="bi bi-person-plus-fill"></i> Sign Up</a> to participate.
-                    </p>
-                </div>
-            }
+
             <!-- Comments List -->
             <div id="commentsSection">
                 @await Html.PartialAsync("_PostCommentsPartial", Model.Comments)
             </div>
+
+            @if (!SignInManager.IsSignedIn(User))
+            {
+                <!-- Call to Action for Guests -->
+                <div class="alert alert-info text-center mt-4">
+                    <p><strong>Want to join the conversation?</strong></p>
+                    <p>
+                        <a href="/Identity/Account/Login" class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
+                        or <a href="/Identity/Account/Register" class="btn btn-success"><i class="bi bi-person-plus-fill"></i> Sign Up</a> to like and comment.
+                    </p>
+                </div>
+            }
         </section>
     </div>
 </div>
 
+@section Styles {
+    <style>
+        /* Responsive cover image container */
+        .cover-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            width: 100%;
+            max-height: 400px;
+        }
+
+        .cover-image {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: cover;
+        }
+    </style>
+}
+
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js" async></script>
 
     <script>
         $(document).ready(function () {
+            // Handle Likes
             $("#likeButton").click(function () {
                 var postId = $(this).data("post-id");
 
@@ -105,31 +146,31 @@
                 });
             });
 
+            // Handle Comments
             $("#submitComment").click(function () {
-              var postId = $(this).data("post-id");
-              var comment = $("#commentText").val().trim();
+                var postId = $(this).data("post-id");
+                var comment = $("#commentText").val().trim();
 
-              if (comment === "") {
-                  $("#commentStatus").text("Comment cannot be empty.");
-                  return;
-              }
+                if (comment === "") {
+                    $("#commentStatus").text("Comment cannot be empty.");
+                    return;
+                }
 
-              $.ajax({
-                  url: "/Forum/Home/comment/" + postId,
-                  type: "POST",
-                  contentType: "application/json",
-                  data: JSON.stringify(comment),
-                  success: function (response) {
-                      $("#commentsSection").html(response);
-                      $("#commentText").val("");
-                      $("#commentStatus").text("");
-                  },
-                  error: function () {
-                      $("#commentStatus").text("Failed to add comment.");
-                  }
-              });
+                $.ajax({
+                    url: "/Forum/Home/comment/" + postId,
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(comment),
+                    success: function (response) {
+                        $("#commentsSection").html(response);
+                        $("#commentText").val("");
+                        $("#commentStatus").text("");
+                    },
+                    error: function () {
+                        $("#commentStatus").text("Failed to add comment.");
+                    }
+                });
             });
         });
     </script>
-
 }

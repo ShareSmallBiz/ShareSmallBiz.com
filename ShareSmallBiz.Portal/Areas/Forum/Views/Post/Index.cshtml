@@ -22,25 +22,29 @@
             <thead>
                 <tr>
                     <th>Title</th>
-                    <th>Description</th>
+                    <th>Author</th>
                     <th>Published</th>
-                    <th>Actions</th>
+                    <th>Public</th>
+                    <th>Featured</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var post in Model)
                 {
                     <tr>
-                        <td>@post.Title</td>
-                        <td>@post.Description</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@post.Id" class="" title="@post.Description" alt="@post.Description">
+                                <i class="bi bi-pencil-square"></i> @post.Title
+                            </a>
+
+                        </td>
+                        <td>@post?.Author?.DisplayName</td>
                         <td>@post.Published.ToShortDateString()</td>
                         <td>
-                            <a asp-action="Edit" asp-route-id="@post.Id" class="btn btn-warning btn-sm">
-                                <i class="bi bi-pencil-square"></i> Edit
-                            </a>
-                            <a asp-action="Delete" asp-route-id="@post.Id" class="btn btn-danger btn-sm">
-                                <i class="bi bi-trash"></i> Delete
-                            </a>
+                            @post.IsPublic
+                        </td>
+                        <td>
+                            @post.IsFeatured
                         </td>
                     </tr>
                 }

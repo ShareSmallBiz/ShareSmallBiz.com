@@ -1,0 +1,144 @@
+﻿@model PostModel
+@using Microsoft.AspNetCore.Identity
+
+@inject SignInManager<ShareSmallBizUser> SignInManager
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<!-- Post Header -->
+<div class="card shadow-lg">
+    <div class="card-body">
+        <h1 class="card-title">@Model.Title</h1>
+        <p class="text-muted">
+            @if (Model?.Author?.ProfilePicture != null)
+            {
+                <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
+                     src="data:image/*;base64,@(Convert.ToBase64String(Model.Author.ProfilePicture))" alt="User Profile">
+            }
+            else
+            {
+                <i class="bi bi-person-circle"></i>
+            }
+             <strong>@(Model?.Author?.UserName ?? "Unknown Author")</strong>
+            | <i class="bi bi-eye"></i> @Model.PostViews Views
+            | <i class="bi bi-calendar"></i> @Model.Published.ToString("MMM d, yyyy")
+        </p>
+        <hr />
+        <!-- Post Content -->
+        <div class="mb-3">
+            @Html.Raw(Model.Content)
+        </div>
+        <!-- Like & Comment Buttons (Only for Logged-in Users) -->
+        @if (SignInManager.IsSignedIn(User))
+        {
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <button id="likeButton" data-post-id="@Model.Id" class="btn btn-outline-primary">
+                        <i class="bi bi-hand-thumbs-up"></i> Like
+                    </button>
+                    <span id="likeStatus"></span>
+                </div>
+                <span class="badge bg-info text-dark">@Model.PostType</span>
+            </div>
+        }
+        else
+        {
+            <!-- Call to Action for Guests -->
+            <div class="alert alert-info text-center mt-4">
+                <p><strong>Want to join the conversation?</strong></p>
+                <p>
+                    <a href="/Account/Login" class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
+                    or <a href="/Account/Register" class="btn btn-success"><i class="bi bi-person-plus-fill"></i> Sign Up</a> to like and comment.
+                </p>
+            </div>
+        }
+        <!-- Comments Section -->
+        <section class="mt-5" id="comments">
+            <h3><i class="bi bi-chat-dots"></i> Comments</h3>
+            <hr />
+
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <!-- Comment Form for Logged-in Users -->
+                <div class="mb-4">
+                    <h5>Leave a Comment</h5>
+                    <textarea id="commentText" class="form-control" rows="3" placeholder="Write a comment..." required></textarea>
+                    <button id="submitComment" class="btn btn-primary mt-2" data-post-id="@Model.Id">
+                        <i class="bi bi-send"></i> Post Comment
+                    </button>
+                    <span id="commentStatus" class="text-danger"></span>
+                </div>
+            }
+            else
+            {
+                <!-- Call to Action for Guests -->
+                <div class="alert alert-warning text-center">
+                    <p><strong>Want to leave a comment?</strong></p>
+                    <p>
+                        <a href="/Account/Login" class="btn btn-primary"><i class="bi bi-box-arrow-in-right"></i> Log In</a>
+                        or <a href="/Account/Register" class="btn btn-success"><i class="bi bi-person-plus-fill"></i> Sign Up</a> to participate.
+                    </p>
+                </div>
+            }
+            <!-- Comments List -->
+            <div id="commentsSection">
+                @await Html.PartialAsync("_PostCommentsPartial", Model.Comments)
+            </div>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script>
+        $(document).ready(function () {
+            $("#likeButton").click(function () {
+                var postId = $(this).data("post-id");
+
+                $.ajax({
+                    url: "/Forum/Home/like/" + postId,
+                    type: "POST",
+                    success: function (response) {
+                        if (response.success) {
+                            $("#likeStatus").text("Liked!");
+                            $("#likeButton").prop("disabled", true);
+                        } else {
+                            $("#likeStatus").text(response.message || "Unable to like post.");
+                        }
+                    },
+                    error: function () {
+                        $("#likeStatus").text("Error processing request.");
+                    }
+                });
+            });
+
+            $("#submitComment").click(function () {
+              var postId = $(this).data("post-id");
+              var comment = $("#commentText").val().trim();
+
+              if (comment === "") {
+                  $("#commentStatus").text("Comment cannot be empty.");
+                  return;
+              }
+
+              $.ajax({
+                  url: "/Forum/Home/comment/" + postId,
+                  type: "POST",
+                  contentType: "application/json",
+                  data: JSON.stringify(comment),
+                  success: function (response) {
+                      $("#commentsSection").html(response);
+                      $("#commentText").val("");
+                      $("#commentStatus").text("");
+                  },
+                  error: function () {
+                      $("#commentStatus").text("Failed to add comment.");
+                  }
+              });
+            });
+        });
+    </script>
+
+}

@@ -12,8 +12,7 @@ public class HomeController(PostProvider postProvider) : ForumBaseController
     [HttpGet("")]
     public async Task<IActionResult> Index()
     {
-        var posts = await postProvider.MostPopularPostsAsync(3);
-        return View(posts);
+        return View();
     }
 
     [HttpGet("{id}/{slug}")]
@@ -91,24 +90,33 @@ public class HomeController(PostProvider postProvider) : ForumBaseController
         return Ok(posts);
     }
 
-    [HttpGet("recent/{count}")]
-    public async Task<IActionResult> MostRecentPosts(int count)
+    [HttpGet("commented/{count}")]
+    public async Task<IActionResult> MostCommentedPosts(int count)
     {
-        var posts = await postProvider.MostRecentPostsAsync(count);
-        return Ok(posts);
+        var posts = await postProvider.MostCommentedPostsAsync(count);
+        return PartialView("_postList", posts);
     }
 
     [HttpGet("popular/{count}")]
     public async Task<IActionResult> MostPopularPosts(int count)
     {
         var posts = await postProvider.MostPopularPostsAsync(count);
-        return Ok(posts);
+        return PartialView("_postList", posts);
+    }
+
+    [HttpGet("recent/{count}")]
+    public async Task<IActionResult> MostRecentPosts(int count)
+    {
+        var posts = await postProvider.MostRecentPostsAsync(count);
+        return PartialView("_postList", posts);
     }
 
     [HttpGet("paged")]
-    public async Task<IActionResult> GetPosts([FromQuery] int pageNumber, [FromQuery] int pageSize, [FromQuery] SortType sortType)
+    public async Task<IActionResult> GetPosts([FromQuery] int pageNumber, [FromQuery] int pageSize)
     {
-        var result = await postProvider.GetPostsAsync(pageNumber, pageSize, sortType);
-        return Ok(result);
+        var result = await postProvider.GetPostsAsync(pageNumber, pageSize, SortType.Recent);
+        return PartialView("_postList", result.Posts);
     }
+
+
 }

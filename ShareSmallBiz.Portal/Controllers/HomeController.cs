@@ -1,20 +1,14 @@
+using ShareSmallBiz.Portal.Infrastructure.Services;
 using ShareSmallBiz.Portal.Models.ViewModels;
 using System.Diagnostics;
 
 namespace ShareSmallBiz.Portal.Controllers;
 
-public class HomeController : Controller
+public class HomeController(PostProvider postProvider, ILogger<HomeController> logger) : Controller
 {
-    private readonly ILogger<HomeController> _logger;
-
-    public HomeController(ILogger<HomeController> logger)
+    public async Task<IActionResult> Index()
     {
-        _logger = logger;
-    }
-
-    public IActionResult Index()
-    {
-        return View();
+        return View(await postProvider.FeaturedPostsAsync(3));
     }
 
     public IActionResult Privacy()

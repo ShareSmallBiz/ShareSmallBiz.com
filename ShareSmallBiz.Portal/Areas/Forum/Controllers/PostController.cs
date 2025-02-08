@@ -33,6 +33,7 @@ public class PostController(
     public async Task<IActionResult> Create(PostModel postModel)
     {
         ClaimsPrincipal currentUser = this.User;
+        
 
         if (!ModelState.IsValid)
         {

@@ -56,7 +56,8 @@
         "jszip": "^3.10.1",
         "pdfmake": "^0.2.18",
         "prismjs": "^1.29.0",
-        "terser": "^5.38.1"
+        "terser": "^5.38.1",
+        "trumbowyg": "^2.30.0"
     },
     "devDependencies": {
         "@fullhuman/postcss-purgecss": "^7.0.2",
