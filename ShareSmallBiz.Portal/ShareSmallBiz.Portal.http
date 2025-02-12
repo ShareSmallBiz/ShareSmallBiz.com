@@ -7,3 +7,17 @@ GET {{ShareSmallBiz.Portal_HostAddress}}/Forum/home/AllPost
 GET {{ShareSmallBiz.Portal_HostAddress}}/Forum/home/AllPost
 
 ###
+
+@id=0
+POST {{ShareSmallBiz.Portal_HostAddress}}/api/post/{{id}}/comment
+Content-Type: application/json
+
+"string"
+
+###
+
+@postId=0
+POST {{ShareSmallBiz.Portal_HostAddress}}/api/post/{{id}}/comment
+"string"
+
+###

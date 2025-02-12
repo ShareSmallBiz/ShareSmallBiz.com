@@ -21,6 +21,8 @@
 
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                 <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index"><i class="bi bi-person-circle"></i> Profile</a></li>
+                <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/ChangePassword"><i class="bi bi-key"></i> Change Password</a></li>
+                <li><a class="dropdown-item" asp-area="Forum" asp-controller="Post" asp-action="MyPosts"><i class="bi bi-chat-dots-fill"></i> My Discussions</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
                     <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })">

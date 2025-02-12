@@ -1,4 +1,4 @@
-using HttpClientUtility.MemoryCache;
+﻿using HttpClientUtility.MemoryCache;
 using HttpClientUtility.RequestResult;
 using HttpClientUtility.StringConverter;
 using Microsoft.Extensions.Caching.Memory;
@@ -14,6 +14,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Westwind.AspNetCore.Markdown;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,7 +55,6 @@ builder.Services.AddSession(options =>
 // ========================
 // Database Contexts
 // ========================
-// Admin User Context
 var adminConnectionString = builder.Configuration.GetValue("ShareSmallBizUserContext", "Data Source=c:\\websites\\ShareSmallBiz\\ShareSmallBizUser.db");
 builder.Services.AddDbContext<ShareSmallBizUserContext>(options =>
     options.UseSqlite(adminConnectionString));
@@ -58,91 +62,70 @@ builder.Services.AddDbContext<ShareSmallBizUserContext>(options =>
 // ========================
 // Identity Configuration
 // ========================
-builder.Services.AddIdentity<ShareSmallBizUser, IdentityRole>()
+builder.Services.AddIdentity<ShareSmallBizUser, IdentityRole>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+})
     .AddEntityFrameworkStores<ShareSmallBizUserContext>()
-    .AddDefaultUI()
     .AddDefaultTokenProviders()
-    .AddUserManager<ApplicationUserManager>();
+    .AddSignInManager<SignInManager<ShareSmallBizUser>>()
+    .AddDefaultUI();
+
+// ✅ Data Protection (Ensures authentication works across restarts)
+builder.Services.AddDataProtection()
+    .SetApplicationName("ShareSmallBiz")
+    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\websites\ShareSmallBiz\keys"));
+
+// ========================
+// Authentication & Cookie Settings
+// ========================
+// ✅ Removed duplicate `AddAuthentication()` call
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.IsEssential = true;
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.SlidingExpiration = true;
+
+    options.LoginPath = "/Identity/Account/Login";
+    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+    options.Cookie.Name = ".AspNetCore.Identity.Application";
+
+    options.Events = new CookieAuthenticationEvents
+    {
+        OnValidatePrincipal = async context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            var userPrincipal = context.Principal;
+
+            if (userPrincipal.Identity.IsAuthenticated)
+            {
+                logger.LogInformation("🔹 Authentication cookie validated successfully for {UserName}", userPrincipal.Identity.Name);
+            }
+            else
+            {
+                logger.LogWarning("⚠️ Authentication cookie validation failed! User is NOT authenticated.");
+            }
+        }
+    };
+});
+
+// ========================
+// Authorization Configuration
+// ========================
+builder.Services.AddAuthorization();
 
 // ========================
 // HTTP Clients
 // ========================
-// Base HTTP Client
 RegisterHttpClientUtilities(builder);
 
 // ========================
-// Add OpenAPI/Swagger generation
-//  ========================
+// OpenAPI/Swagger
+// ========================
 builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddSingleton<IStorageProvider, StorageProvider>();
-builder.Services.AddScoped<PostProvider, PostProvider>();
-builder.Services.AddScoped<UserService, UserService>();
-
-
-// ========================
-// Application Services
-// ========================
-builder.Services.AddSingleton<IStringConverter, NewtonsoftJsonStringConverter>();
-builder.Services.AddSingleton(new ApplicationStatus(Assembly.GetExecutingAssembly()));
-builder.Services.AddSingleton<ChatHistoryStore>();
-builder.Services.AddSingleton<IScopeInformation, ScopeInformation>();
-
-// ========================
-// Markdown Support
-// ========================
-builder.Services.AddMarkdown();
-
-// ========================
-// MVC and Razor Pages
-// ========================
-builder.Services.AddControllers(); // Add this if missing
-builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages();
-
-// Add MVC for specific areas
-builder.Services.AddMvc()
-    .AddApplicationPart(typeof(MarkdownPageProcessorMiddleware).Assembly);
-
-// ========================
-// SignalR Configuration
-// ========================
-// Add CORS configuration if needed for SignalR
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAllOrigins", builder =>
-    {
-        builder.AllowAnyHeader()
-               .AllowAnyMethod()
-               .SetIsOriginAllowed(_ => true)  // Allows all origins
-               .AllowCredentials();            // Necessary for SignalR
-    });
-});
-
-// SignalR Configuration
-builder.Services.AddSignalR().AddJsonProtocol(options =>
-{
-    // Configuring JSON serializer options if needed
-    options.PayloadSerializerOptions.PropertyNamingPolicy = null;
-});
-
-// ========================
-// OpenAI Chat Completion Service
-// ========================
-string apikey = builder.Configuration.GetValue<string>("OPENAI_API_KEY") ?? "not found";
-string modelId = builder.Configuration.GetValue<string>("MODEL_ID") ?? "gpt-4o";
-builder.Services.AddOpenAIChatCompletion(modelId, apikey);
-
-
-// Configure JsonSerializerOptions
-builder.Services.AddSingleton(new JsonSerializerOptions
-{
-    PropertyNameCaseInsensitive = true,
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-});
-
-
-
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -158,7 +141,6 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
-    // Enable XML Comments if needed (for better documentation)
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
@@ -167,96 +149,114 @@ builder.Services.AddSwaggerGen(options =>
     }
 });
 
+// ========================
+// Application Services
+// ========================
+builder.Services.AddSingleton<IStorageProvider, StorageProvider>();
+builder.Services.AddScoped<PostProvider, PostProvider>();
+builder.Services.AddScoped<UserService, UserService>();
+builder.Services.AddScoped<CommentProvider, CommentProvider>();
+builder.Services.AddSingleton<IStringConverter, NewtonsoftJsonStringConverter>();
+builder.Services.AddSingleton(new ApplicationStatus(Assembly.GetExecutingAssembly()));
+builder.Services.AddSingleton<ChatHistoryStore>();
+builder.Services.AddSingleton<IScopeInformation, ScopeInformation>();
 
+// ========================
+// Markdown Support
+// ========================
+builder.Services.AddMarkdown();
 
+// ========================
+// MVC, Razor Pages, SignalR
+// ========================
+builder.Services.AddControllers();
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
+builder.Services.AddMvc().AddApplicationPart(typeof(MarkdownPageProcessorMiddleware).Assembly);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins", builder =>
+    {
+        builder.AllowAnyHeader()
+               .AllowAnyMethod()
+               .SetIsOriginAllowed(_ => true)
+               .AllowCredentials();
+    });
+});
+
+builder.Services.AddSignalR().AddJsonProtocol(options =>
+{
+    options.PayloadSerializerOptions.PropertyNamingPolicy = null;
+});
+
+// ========================
+// OpenAI Chat Completion Service
+// ========================
+string apikey = builder.Configuration.GetValue<string>("OPENAI_API_KEY") ?? "not found";
+string modelId = builder.Configuration.GetValue<string>("MODEL_ID") ?? "gpt-4o";
+builder.Services.AddOpenAIChatCompletion(modelId, apikey);
+
+// ========================
+// Json Serializer Configuration
+// ========================
+builder.Services.AddSingleton(new JsonSerializerOptions
+{
+    PropertyNameCaseInsensitive = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+});
 
 var app = builder.Build();
 
 // ========================
-// Database Initialization
+// Middleware Configuration
 // ========================
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var dbContext = services.GetRequiredService<ShareSmallBizUserContext>();
-
-        // Ensure database is created
-        if (dbContext.Database.GetPendingMigrations().Any())
-        {
-            dbContext.Database.Migrate(); // Apply migrations automatically
-        }
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while applying database migrations.");
-    }
-}
-
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "ShareSmallBiz API v1");
-    options.RoutePrefix = "swagger"; // Change if needed
+    options.RoutePrefix = "swagger";
 });
-
-
-
-// ========================
-// Middleware Configuration
-// ========================
-app.UseMiddleware<NotFoundMiddleware>();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-
-}
-else
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-}
-
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
-app.Use(async (context, next) =>
-{
-    context.Response.Headers.Append("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
-    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
-    context.Response.Headers.Append("X-Frame-Options", "DENY");
-    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
-    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
-    context.Response.Headers.Append("Permissions-Policy", "geolocation=(), camera=(), microphone=()");
-    await next();
-});
-
 app.UseRouting();
-app.UseAuthentication();
+app.UseAuthentication(); // ✅ Ensure authentication middleware is before authorization
 app.UseAuthorization();
-app.UseSession(); // Session middleware
-app.UseCors("AllowAllOrigins"); // Apply CORS policy for SignalR
+app.UseSession(); // ✅ Ensure session middleware runs AFTER authentication
+app.UseCors("AllowAllOrigins");
 
-
-// ========================
-// Endpoint Configuration
-// ========================
+// ✅ Debug Middleware to Check Authentication Status
 app.Use(async (context, next) =>
 {
-    if (context.Request.Path.Equals("/forum", StringComparison.OrdinalIgnoreCase))
+    var user = context.User;
+    var isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+    var userName = user.Identity?.Name ?? "Unknown";
+
+    if (isAuthenticated)
     {
-        context.Response.Redirect("/forum/home/", true);
-        return;
+        app.Logger.LogInformation("🔹 Middleware: User is authenticated as {UserName}", userName);
     }
+    else
+    {
+        app.Logger.LogWarning("⚠️ Middleware: User is NOT authenticated.");
+    }
+
+    var authCookie = context.Request.Cookies[".AspNetCore.Identity.Application"];
+    if (authCookie != null)
+    {
+        app.Logger.LogInformation("🔹 Auth Cookie Found in Request");
+    }
+    else
+    {
+        app.Logger.LogWarning("⚠️ No Authentication Cookie Found in Request!");
+    }
+
     await next();
 });
 
-
-
+// ========================
+// Route Configuration
+// ========================
 app.MapRazorPages();
 app.MapControllerRoute(
     name: "areaRoute",
@@ -266,7 +266,12 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}"
 );
+
 app.Run();
+
+
+
+
 
 static void RegisterHttpClientUtilities(WebApplicationBuilder builder)
 {

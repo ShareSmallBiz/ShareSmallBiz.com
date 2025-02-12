@@ -1,8 +1,9 @@
 ﻿{
   "menuItems": [
     {
-      "text": "Forum",
-      "url": "/Forum/Home/"
+      "text": "Discussions",
+      "url": "/Forum/Home/",
+      "icon": "bi bi-chat-dots-fill"
     }
   ]
 }

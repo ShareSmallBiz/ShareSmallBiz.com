@@ -4,6 +4,29 @@
 /// </summary>
 public class ShareSmallBizUser : IdentityUser
 {
+    public ShareSmallBizUser()
+    {
+            
+    }
+    public ShareSmallBizUser(ShareSmallBizUser user)
+    {
+        Id = user.Id;
+        UserName = user.UserName;
+        NormalizedUserName = user.NormalizedUserName;
+        Email = user.Email;
+        NormalizedEmail = user.NormalizedEmail;
+        EmailConfirmed = user.EmailConfirmed;
+        PasswordHash = user.PasswordHash;
+        SecurityStamp = user.SecurityStamp;
+        ConcurrencyStamp = user.ConcurrencyStamp;
+        PhoneNumber = user.PhoneNumber;
+        PhoneNumberConfirmed = user.PhoneNumberConfirmed;
+        TwoFactorEnabled = user.TwoFactorEnabled;
+        LockoutEnd = user.LockoutEnd;
+        LockoutEnabled = user.LockoutEnabled;
+        AccessFailedCount = user.AccessFailedCount;
+    }
+
     public string Bio { get; set; } = string.Empty;
 
     public string DisplayName { get; set; } = string.Empty;

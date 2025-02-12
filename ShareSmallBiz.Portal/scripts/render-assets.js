@@ -23,12 +23,15 @@ module.exports = function renderAssets() {
     const featherIconsSvgPath = upath.resolve(upath.dirname(__filename), '../node_modules/feather-icons/dist/icons'); // Path to Feather SVGs
     const fontAwesomeFontPath = upath.resolve(upath.dirname(__filename), '../node_modules/fontawesome-free/webfonts'); // Path to Font Awesome fonts
     const trumbowygPath = upath.resolve(upath.dirname(__filename), '../node_modules/trumbowyg/dist'); // Path to Trumbowyg assets
+    const jqueryValidationPath = upath.resolve(upath.dirname(__filename), '../node_modules/jquery-validation/dist');
+    const jqueryUnobtrusivePath = upath.resolve(upath.dirname(__filename), '../node_modules/jquery-validation-unobtrusive/dist');
 
     // Updated destination paths
     const fontsDestPath = upath.resolve(destPath, 'dist/css/fonts');
     const featherIconsDestPath = upath.resolve(destPath, 'dist/css/icons/feather-icons');
     const fontAwesomeDestPath = upath.resolve(destPath, 'dist/webfonts');
     const trumbowygDestPath = upath.resolve(destPath, 'dist/trumbowyg'); // Destination for Trumbowyg assets
+    const jqueryDestPath = upath.resolve(destPath, 'dist/jquery');
 
     // Copy Bootstrap Icons fonts
     if (fs.existsSync(bootstrapIconsFontPath)) {
@@ -84,6 +87,34 @@ module.exports = function renderAssets() {
         });
     } else {
         console.error(`Trumbowyg assets path not found: ${trumbowygPath}`);
+    }
+
+
+    // Copy jQuery validation files
+    if (fs.existsSync(jqueryValidationPath)) {
+        const validationFiles = glob.sync('jquery.validate.min.js', { cwd: jqueryValidationPath, nodir: true });
+        validationFiles.forEach((file) => {
+            const sourceFile = path.join(jqueryValidationPath, file);
+            const destFile = path.join(jqueryDestPath, file);
+            sh.mkdir('-p', path.dirname(destFile));
+            sh.cp(sourceFile, destFile);
+            console.log(`Copied: ${sourceFile} to ${destFile}`);
+        });
+    } else {
+        console.error(`jQuery Validation path not found: ${jqueryValidationPath}`);
+    }
+
+    if (fs.existsSync(jqueryUnobtrusivePath)) {
+        const unobtrusiveFiles = glob.sync('jquery.validate.unobtrusive.min.js', { cwd: jqueryUnobtrusivePath, nodir: true });
+        unobtrusiveFiles.forEach((file) => {
+            const sourceFile = path.join(jqueryUnobtrusivePath, file);
+            const destFile = path.join(jqueryDestPath, file);
+            sh.mkdir('-p', path.dirname(destFile));
+            sh.cp(sourceFile, destFile);
+            console.log(`Copied: ${sourceFile} to ${destFile}`);
+        });
+    } else {
+        console.error(`jQuery Unobtrusive Validation path not found: ${jqueryUnobtrusivePath}`);
     }
 
     console.log('Assets and fonts (including Trumbowyg, SVGs, and Font Awesome) copying completed!');

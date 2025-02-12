@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using ShareSmallBiz.Portal.Infrastructure.Services;
-using System.Security.Claims;
+﻿using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Areas.Forum.Controllers;
 
@@ -89,6 +86,14 @@ public class HomeController(PostProvider postProvider) : ForumBaseController
         var posts = await postProvider.GetAllPostsAsync();
         return Ok(posts);
     }
+
+    [HttpGet("my/{count}")]
+    public async Task<IActionResult> MyPosts(int count = 100)
+    {
+        var posts = await postProvider.GetAllUserPostsAsync();
+        return PartialView("_postList", posts);
+    }
+
 
     [HttpGet("commented/{count}")]
     public async Task<IActionResult> MostCommentedPosts(int count)

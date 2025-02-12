@@ -30,11 +30,7 @@ public class PostCommentModel : BaseModel
         LikeCount = comment.Likes?.Count ?? 0;
 
         // Map User
-        Author = new UserModel
-        {
-            Id = comment.Author?.Id,
-            UserName = comment.Author?.UserName ?? "Anonymous"
-        };
+        Author = new(comment.Author);
 
         // Map Likes
         Likes = comment.Likes != null ?

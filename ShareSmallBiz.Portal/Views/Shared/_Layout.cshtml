@@ -19,7 +19,6 @@
             <!-- Sidebar -->
             <div class="col-md-3 col-lg-2 d-none d-md-block bg-light sidebar">
                 <div class="list-group">
-                    <a href="#" class="list-group-item list-group-item-action">New Member Introductions</a>
                 </div>
                 <hr/>
                 <div class="container text-center">
@@ -82,7 +81,15 @@
     @await Html.PartialAsync("Sections/Footer/_footer")
     @await Html.PartialAsync("Sections/Footer/_footer_scripts")
 
+    /*
+    * This is a placeholder for any additional scripts that may be needed.
+    * You can add your custom scripts here or in the respective sections.
+    */
     @await RenderSectionAsync("Scripts", required: false)
+    /*
+    * This is a placeholder for any additional scripts that may be needed.
+    * You can add your custom scripts here or in the respective sections.
+    */
     @await RenderSectionAsync("PageScripts", required: false)
 </body>
 </html>

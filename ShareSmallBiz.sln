@@ -14,16 +14,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShareSmallBiz.Portal", "ShareSmallBiz.Portal\ShareSmallBiz.Portal.csproj", "{640A88B2-B017-C7F4-09E1-96C08D067EF5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShareSmallBiz.Aspire.AppHost", "ShareSmallBiz.Aspire\ShareSmallBiz.Aspire.AppHost\ShareSmallBiz.Aspire.AppHost.csproj", "{D94631FF-BA80-478B-B385-7BE34014AE70}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShareSmallBiz.Aspire.ServiceDefaults", "ShareSmallBiz.Aspire\ShareSmallBiz.Aspire.ServiceDefaults\ShareSmallBiz.Aspire.ServiceDefaults.csproj", "{F2D3647B-10F6-47FD-875E-E606C48768F7}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShareSmallBiz.Aspire.ApiService", "ShareSmallBiz.Aspire\ShareSmallBiz.Aspire.ApiService\ShareSmallBiz.Aspire.ApiService.csproj", "{14FB3E07-4163-4A2D-A308-C5CF40BF0681}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShareSmallBiz.Aspire.Web", "ShareSmallBiz.Aspire\ShareSmallBiz.Aspire.Web\ShareSmallBiz.Aspire.Web.csproj", "{BA6F2FDD-FC87-4CA3-B387-7505D9756D2B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShareSmallBiz.Aspire.Tests", "ShareSmallBiz.Aspire\ShareSmallBiz.Aspire.Tests\ShareSmallBiz.Aspire.Tests.csproj", "{59A25C24-7281-413F-A64A-A11A6C8B8812}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,26 +28,6 @@ Global
 		{640A88B2-B017-C7F4-09E1-96C08D067EF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{640A88B2-B017-C7F4-09E1-96C08D067EF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{640A88B2-B017-C7F4-09E1-96C08D067EF5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D94631FF-BA80-478B-B385-7BE34014AE70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D94631FF-BA80-478B-B385-7BE34014AE70}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D94631FF-BA80-478B-B385-7BE34014AE70}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D94631FF-BA80-478B-B385-7BE34014AE70}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F2D3647B-10F6-47FD-875E-E606C48768F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F2D3647B-10F6-47FD-875E-E606C48768F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F2D3647B-10F6-47FD-875E-E606C48768F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F2D3647B-10F6-47FD-875E-E606C48768F7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{14FB3E07-4163-4A2D-A308-C5CF40BF0681}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{14FB3E07-4163-4A2D-A308-C5CF40BF0681}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{14FB3E07-4163-4A2D-A308-C5CF40BF0681}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{14FB3E07-4163-4A2D-A308-C5CF40BF0681}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BA6F2FDD-FC87-4CA3-B387-7505D9756D2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BA6F2FDD-FC87-4CA3-B387-7505D9756D2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BA6F2FDD-FC87-4CA3-B387-7505D9756D2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BA6F2FDD-FC87-4CA3-B387-7505D9756D2B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{59A25C24-7281-413F-A64A-A11A6C8B8812}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{59A25C24-7281-413F-A64A-A11A6C8B8812}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{59A25C24-7281-413F-A64A-A11A6C8B8812}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{59A25C24-7281-413F-A64A-A11A6C8B8812}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

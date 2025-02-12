@@ -26,3 +26,21 @@ public record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+public static class WeatherForecastExtensions
+{
+    public static void RegisterWeatherServices(this IServiceCollection services)
+    {
+        // Register the WeatherForecastService
+        services.AddSingleton<IWeatherForecastService, WeatherForecastService>();
+    }
+
+    public static void MapWeatherEndpoints(this IEndpointRouteBuilder app)
+    {
+        // Register the /weatherforecast endpoint
+        app.MapGet("/weatherforecast", (IWeatherForecastService weatherService) =>
+        {
+            return weatherService.GetForecast();
+        })
+        .WithName("GetWeatherForecast");
+    }
+}

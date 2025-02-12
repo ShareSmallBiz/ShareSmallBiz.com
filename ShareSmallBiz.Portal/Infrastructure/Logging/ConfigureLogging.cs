@@ -26,17 +26,24 @@ public static class LoggingUtility
         // Configure Serilog
         Log.Logger = new LoggerConfiguration()
             .Enrich.FromLogContext()
-            .MinimumLevel.Information() // Set minimum level to Information
-            .WriteTo.File(logPath, rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: LogEventLevel.Information)
+            .MinimumLevel.Debug() // ✅ Enable Debug-Level Logging
+            .WriteTo.File(logPath, rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: LogEventLevel.Error)
             .CreateLogger();
 
         // Add Serilog to the logging providers
         builder.Logging.AddProvider(new SerilogLoggerProvider(Log.Logger));
 
+        // ✅ Enable Debug-Level Logging for Authentication and Identity
+        builder.Logging.AddFilter("Microsoft.AspNetCore.Authentication", LogLevel.Error);
+        builder.Logging.AddFilter("Microsoft.AspNetCore.Identity", LogLevel.Error);
+        builder.Logging.AddFilter("Microsoft.AspNetCore.Session", LogLevel.Error);
+        builder.Logging.AddFilter("Microsoft.AspNetCore.Http", LogLevel.Error);
+
         // Add filtering for EF Core logging
-        builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
+        builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Error);
 
         // Log a test entry to confirm setup
         Log.Information("Logger setup complete. This is a test log entry.");
     }
+
 }

@@ -9,7 +9,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\ShareSmallBiz.Portal\ShareSmallBiz.Portal.csproj" />
-    <ProjectReference Include="..\ShareSmallBiz.Aspire.ServiceDefaults\ShareSmallBiz.Aspire.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>

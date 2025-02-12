@@ -1,6 +1,11 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using ShareSmallBiz.Aspire.ApiService.PostService;
 using ShareSmallBiz.Aspire.ApiService.WeatherService;
+using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Logging;
+using ShareSmallBiz.Portal.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +23,23 @@ builder.Configuration
 // ========================
 LoggingUtility.ConfigureLogging(builder, "ShareSmallBiz.Aspire.ApiService");
 
+// ========================
+// Database Contexts
+// ========================
+// Admin User Context
+var adminConnectionString = builder.Configuration.GetValue("ShareSmallBizUserContext", "Data Source=c:\\websites\\ShareSmallBiz\\ShareSmallBizUser.db");
+builder.Services.AddDbContext<ShareSmallBizUserContext>(options =>
+    options.UseSqlite(adminConnectionString));
+
+// ========================
+// Identity Configuration
+// ========================
+builder.Services.AddIdentity<ShareSmallBizUser, IdentityRole>()
+    .AddEntityFrameworkStores<ShareSmallBizUserContext>()
+    .AddDefaultUI()
+    .AddDefaultTokenProviders()
+    .AddUserManager<ApplicationUserManager>();
+
 
 
 
@@ -30,9 +52,8 @@ builder.Services.AddProblemDetails();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-
-// Register the WeatherForecastService
-builder.Services.AddSingleton<IWeatherForecastService, WeatherForecastService>();
+builder.Services.RegisterPostProviderServices();
+builder.Services.RegisterWeatherServices();
 
 var app = builder.Build();
 
@@ -47,11 +68,8 @@ app.MapScalarApiReference(options =>
     options.WithSidebar(false);
 });
 
-app.MapGet("/weatherforecast", (IWeatherForecastService weatherService) =>
-{
-    return weatherService.GetForecast();
-})
-.WithName("GetWeatherForecast");
+app.MapPostProviderEndpoints();
+app.MapWeatherEndpoints();
 
 app.MapDefaultEndpoints();
 

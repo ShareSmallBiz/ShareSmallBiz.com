@@ -18,8 +18,21 @@ public class PostController(
 {
     public async Task<IActionResult> Index()
     {
-        var posts = await postService.GetAllPostsAsync();
-        return View(posts);
+        if (User.IsInRole("Admin"))
+        {
+            return View(await postService.GetAllPostsAsync());
+        }
+        return View(await postService.GetAllUserPostsAsync());
+    }
+    [HttpGet, ActionName("MyPosts")]
+    public async Task<IActionResult> MyPosts()
+    {
+        var post = await postService.GetAllUserPostsAsync();
+        if (post == null)
+        {
+            return NotFound();
+        }
+        return View("index",post);
     }
 
     public IActionResult Create()
@@ -65,6 +78,11 @@ public class PostController(
         if (post == null)
         {
             return NotFound();
+        }
+        var user = await userManager.GetUserAsync(User);
+        if (post.Author.Id != user.Id)
+        {
+            return RedirectToAction("Index");
         }
         return View(post);
     }

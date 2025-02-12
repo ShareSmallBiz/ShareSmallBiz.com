@@ -439,9 +439,6 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.Property<int>("PostId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("PostId1")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorId");
@@ -449,8 +446,6 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.HasIndex("ParentPostId");
 
                     b.HasIndex("PostId");
-
-                    b.HasIndex("PostId1");
 
                     b.ToTable("PostComments");
                 });
@@ -854,10 +849,6 @@ namespace ShareSmallBiz.Portal.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ShareSmallBiz.Portal.Data.Post", null)
-                        .WithMany("PostComments")
-                        .HasForeignKey("PostId1");
-
                     b.Navigation("Author");
 
                     b.Navigation("ParentPost");
@@ -930,8 +921,6 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Likes");
-
-                    b.Navigation("PostComments");
                 });
 
             modelBuilder.Entity("ShareSmallBiz.Portal.Data.PostComment", b =>

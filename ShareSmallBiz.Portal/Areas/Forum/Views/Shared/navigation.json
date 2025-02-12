@@ -1,12 +1,15 @@
 {
   "menuItems": [
     {
-      "text": "Forum",
-      "url": "/Forum/Home"
+      "text": "Discussions",
+      "url": "/Forum/Home",
+      "icon": "bi bi-chat-dots-fill"
     },
     {
-      "text": "Posts",
-      "url": "/Forum/Post/"
+      "text": "Post Admin",
+      "url": "/Forum/Post/",
+      "icon": "bi bi-chat-left-text-fill",
+      "role": "Admin"
     }
   ]
 }

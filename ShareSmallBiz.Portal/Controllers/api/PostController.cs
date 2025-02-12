@@ -1,19 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ShareSmallBiz.Portal.Infrastructure.Services;
-using ShareSmallBiz.Portal.Data;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace ShareSmallBiz.Portal.Controllers.api;
+
 
 [ApiController]
 [Route("api/[controller]")]
 public class PostController(PostProvider postProvider) : ControllerBase
 {
 
-    // GET: api/Post
     [HttpGet]
     public async Task<ActionResult<IEnumerable<PostModel>>> GetAllPosts(bool onlyPublic = true)
     {
@@ -21,7 +16,6 @@ public class PostController(PostProvider postProvider) : ControllerBase
         return Ok(posts);
     }
 
-    // GET: api/Post/5
     [HttpGet("{id}")]
     public async Task<ActionResult<PostModel>> GetPostById(int id)
     {
@@ -33,7 +27,41 @@ public class PostController(PostProvider postProvider) : ControllerBase
         return Ok(post);
     }
 
-    // POST: api/Post
+    [HttpGet("paged")]
+    public async Task<ActionResult<PaginatedPostResult>> GetPosts(int pageNumber, int pageSize, SortType sortType)
+    {
+        var result = await postProvider.GetPostsAsync(pageNumber, pageSize, sortType);
+        return Ok(result);
+    }
+
+    [HttpGet("featured/{count}")]
+    public async Task<ActionResult<List<PostModel>>> GetFeaturedPosts(int count)
+    {
+        var posts = await postProvider.FeaturedPostsAsync(count);
+        return Ok(posts);
+    }
+
+    [HttpGet("most-commented/{count}")]
+    public async Task<ActionResult<List<PostModel>>> GetMostCommentedPosts(int count)
+    {
+        var posts = await postProvider.MostCommentedPostsAsync(count);
+        return Ok(posts);
+    }
+
+    [HttpGet("most-popular/{count}")]
+    public async Task<ActionResult<List<PostModel>>> GetMostPopularPosts(int count)
+    {
+        var posts = await postProvider.MostPopularPostsAsync(count);
+        return Ok(posts);
+    }
+
+    [HttpGet("most-recent/{count}")]
+    public async Task<ActionResult<List<PostModel>>> GetMostRecentPosts(int count)
+    {
+        var posts = await postProvider.MostRecentPostsAsync(count);
+        return Ok(posts);
+    }
+
     [HttpPost]
     [Authorize]
     public async Task<ActionResult<PostModel>> CreatePost(PostModel postModel)
@@ -47,7 +75,6 @@ public class PostController(PostProvider postProvider) : ControllerBase
         return CreatedAtAction(nameof(GetPostById), new { id = post.Id }, post);
     }
 
-    // PUT: api/Post/5
     [HttpPut("{id}")]
     [Authorize]
     public async Task<IActionResult> UpdatePost(int id, PostModel postModel)
@@ -66,7 +93,6 @@ public class PostController(PostProvider postProvider) : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/Post/5
     [HttpDelete("{id}")]
     [Authorize]
     public async Task<IActionResult> DeletePost(int id)
@@ -79,8 +105,7 @@ public class PostController(PostProvider postProvider) : ControllerBase
         return NoContent();
     }
 
-    // POST: api/Post/5/Comment
-    [HttpPost("{id}/Comment")]
+    [HttpPost("{id}/comment")]
     [Authorize]
     public async Task<IActionResult> CommentPost(int id, [FromBody] string comment)
     {
@@ -93,8 +118,7 @@ public class PostController(PostProvider postProvider) : ControllerBase
         return NoContent();
     }
 
-    // POST: api/Post/5/Like
-    [HttpPost("{id}/Like")]
+    [HttpPost("{id}/like")]
     [Authorize]
     public async Task<IActionResult> LikePost(int id)
     {

@@ -1,0 +1,18 @@
+﻿@model int
+
+<div id="commentSection" data-post-id="@Model">
+
+    <h3>Comments for Post</h3>
+    <div id="commentsContainer">
+    </div>
+
+    @if (User?.Identity?.IsAuthenticated == true)
+    {
+        <hr />
+        <div id="addCommentContainer">
+            <textarea id="newCommentContent" rows="3" cols="60" placeholder="Add a comment..."></textarea>
+            <br />
+            <button id="btnAddComment" type="button">Add Comment</button>
+        </div>
+    }
+</div>

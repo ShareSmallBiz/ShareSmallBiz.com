@@ -2,32 +2,33 @@
 
 @if (Model != null && Model.Any())
 {
-    <ul class="list-group">
+    <div class="list-group">
         @foreach (var comment in Model)
         {
-            <li class="list-group-item">
-                <div class="d-flex justify-content-between">
-
+            <div class="list-group-item py-2">
+                <div class="d-flex align-items-start">
                     @if (comment?.Author?.ProfilePicture != null)
                     {
-                        <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
+                        <img class="rounded-circle me-2 flex-shrink-0" style="width: 36px; height: 36px; object-fit: cover;"
                              src="data:image/*;base64,@(Convert.ToBase64String(comment.Author.ProfilePicture))" alt="User Profile">
                     }
                     else
                     {
-                        <i class="bi bi-person-circle"></i>
+                        <i class="bi bi-person-circle fs-3 text-secondary me-2"></i>
                     }
-
-
-                    <strong><i class="bi bi-person-circle"></i> @(comment.CreatedUser?.UserName ?? "Anonymous")</strong>
-                    <small class="text-muted"><i class="bi bi-clock"></i> @comment.CreatedDate.ToString("MMM d, yyyy")</small>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                            <strong class="text-truncate">@(comment.Author?.UserName ?? "Anonymous")</strong>
+                            <small class="text-muted"><i class="bi bi-clock"></i> @comment.CreatedDate.ToString("MMM d, yyyy")</small>
+                        </div>
+                        <p class="small text-muted mb-1">@comment.Content</p>
+                    </div>
                 </div>
-                <p class="mb-2">@comment.Content</p>
-            </li>
+            </div>
         }
-    </ul>
+    </div>
 }
 else
 {
-    <p class="text-muted">No comments yet. Be the first to share your thoughts!</p>
+    <p class="text-muted text-center small py-3"><i class="bi bi-chat-left-text"></i> No comments yet. Be the first to share your thoughts!</p>
 }

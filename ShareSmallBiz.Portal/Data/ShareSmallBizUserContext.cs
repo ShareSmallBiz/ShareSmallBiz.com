@@ -37,6 +37,18 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
             .WithMany(p => p.Likes)
             .HasForeignKey(pl => pl.PostId);
 
+        builder.Entity<PostComment>()
+            .HasOne(pc => pc.Post)
+            .WithMany(p => p.Comments) 
+            .HasForeignKey(pc => pc.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PostComment>()
+            .HasOne(pc => pc.ParentPost)
+            .WithMany()  
+            .HasForeignKey(pc => pc.ParentPostId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.Entity<PostCommentLike>()
             .HasOne(pcl => pcl.User)
             .WithMany(u => u.LikedPostComments)

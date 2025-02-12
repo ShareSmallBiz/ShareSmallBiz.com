@@ -4,12 +4,16 @@
 
 // Bootstrap Color Overrides
 
-$primary: #c3d7da; // Main brand color
-$secondary: #c4d9db; // Supporting color
+$primary: #52b788; // Main brand color
+$secondary: #0096c7; // Supporting color
 $success: #c6dadc; // Success messages, notifications
-$info: #c4d9da; // Informational elements
+$info: #ffc300; // Informational elements
 $warning: #c3d8da; // Warnings
 $danger: #c3d7d9; // Errors, alerts
+
+$neutral: #F8F9FA; // off-white for backgrounds
+$darkneutral: #212529; // charcoal for text
+
 
 // Additional UI Colors
 $light: lighten($primary, 20%);

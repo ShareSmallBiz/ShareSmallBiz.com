@@ -100,34 +100,45 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
 
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
-            if (ModelState.IsValid)
+            _logger.LogInformation("Login attempt for email: {Email}", Input.Email);
+
+            if (!ModelState.IsValid)
             {
-                // This doesn't count login failures towards account lockout
-                // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-                if (result.Succeeded)
-                {
-                    _logger.LogInformation("User logged in.");
-                    return LocalRedirect(returnUrl);
-                }
-                if (result.RequiresTwoFactor)
-                {
-                    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-                }
-                if (result.IsLockedOut)
-                {
-                    _logger.LogWarning("User account locked out.");
-                    return RedirectToPage("./Lockout");
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return Page();
-                }
+                _logger.LogWarning("Login failed: Model state is invalid.");
+                return Page();
             }
 
-            // If we got this far, something failed, redisplay form
-            return Page();
+            var user = await _signInManager.UserManager.FindByEmailAsync(Input.Email);
+            if (user == null)
+            {
+                _logger.LogWarning("Login failed: No user found with email {Email}", Input.Email);
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return Page();
+            }
+
+            _logger.LogInformation("User {UserName} found, attempting password sign-in.", user.UserName);
+
+            var result = await _signInManager.PasswordSignInAsync(user.UserName, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("User {UserName} successfully signed in.", user.UserName);
+
+                // ✅ Explicitly set the authentication scheme
+                var claimsPrincipal = await _signInManager.CreateUserPrincipalAsync(user);
+                await HttpContext.SignInAsync(IdentityConstants.ApplicationScheme, claimsPrincipal);
+
+                _logger.LogInformation("🔹 Forced Sign-In: User.Identity.IsAuthenticated = {IsAuthenticated}", User.Identity?.IsAuthenticated);
+
+                return LocalRedirect(returnUrl);
+            }
+            else
+            {
+                _logger.LogWarning("Login failed: Invalid credentials for user {UserName}.", user.UserName);
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return Page();
+            }
         }
+
     }
 }

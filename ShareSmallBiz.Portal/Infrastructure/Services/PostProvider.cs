@@ -4,6 +4,8 @@ using System.Text.RegularExpressions;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
+
+
 public class PostProvider(
     ShareSmallBizUserContext context,
     ILogger<PostProvider> logger,
@@ -61,62 +63,6 @@ public class PostProvider(
         return input.Replace("\r\n", "<br/>").Replace("\n", "<br/>");
     }
 
-
-    /// <summary>
-    /// Allows a logged-in user to add a new comment to a post specified by ID.
-    /// </summary>
-    /// <param name="postId">ID of the post to comment on.</param>
-    /// <param name="comment">The comment's text.</param>
-    /// <returns>True if the comment was successfully added, otherwise false.</returns>
-    public async Task<bool> CommentPostAsync(int postId, string comment)
-    {
-        try
-        {
-            var userPrincipal = httpContextAccessor.HttpContext?.User;
-            if (userPrincipal is null || !userPrincipal.Identity?.IsAuthenticated == true)
-            {
-                logger.LogWarning("No authenticated user found in HttpContext. Aborting comment operation.");
-                return false;
-            }
-
-            // Get the user from the identity system
-            var user = await userManager.GetUserAsync(userPrincipal);
-            if (user == null)
-            {
-                logger.LogWarning("UserManager could not find a valid user. Aborting comment operation.");
-                return false;
-            }
-
-            logger.LogInformation("User {UserId} attempting to comment on post with ID: {PostId}", user.Id, postId);
-
-            var post = await context.Posts.FindAsync(postId);
-            if (post == null)
-            {
-                logger.LogWarning("Post with ID {PostId} not found.", postId);
-                return false;
-            }
-
-            // Create the new comment
-            var postComment = new PostComment
-            {
-                PostId = postId,
-                Content = comment,
-                CreatedDate = DateTime.UtcNow,
-                Author = user  // or store user.Id if you prefer
-            };
-
-            context.PostComments.Add(postComment);
-            await context.SaveChangesAsync();
-
-            logger.LogInformation("User {UserId} successfully added a comment to post {PostId}.", user.Id, postId);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error occurred while commenting on post {PostId}.", postId);
-            return false;
-        }
-    }
 
     /// <summary>
     /// Allows a logged-in user to comment on a post.
@@ -209,7 +155,21 @@ public class PostProvider(
         await context.SaveChangesAsync();
         return true;
     }
+    public async Task<List<PostModel>> GetAllUserPostsAsync(bool onlyPublic = true)
+    {
+        // Get The Current User Id
+        var userId = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+        logger.LogInformation("Retrieving all posts. Only public: {OnlyPublic}", onlyPublic);
+        var posts = await context.Posts
+            .Where(p => !onlyPublic || p.IsPublic)
+            .Where(p => p.AuthorId == userId)
+            .Include(p => p.Author)
+            .Include(p => p.PostCategories)
+            .ToListAsync();
+
+        return [.. posts.Select(p => new PostModel(p))];
+    }
     /// <inheritdoc/>
     public async Task<List<PostModel>> GetAllPostsAsync(bool onlyPublic = true)
     {
@@ -220,7 +180,7 @@ public class PostProvider(
             .Include(p => p.PostCategories)
             .ToListAsync();
 
-        return posts.Select(p => new PostModel(p)).ToList();
+        return [.. posts.Select(p => new PostModel(p))];
     }
 
     public async Task<PostModel?> GetPostByIdAsync(int postId)
@@ -290,7 +250,7 @@ public class PostProvider(
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
 
-        IQueryable<Post> query = context.Posts.Include(i=>i.Author).Where(p => p.IsPublic);
+        IQueryable<Post> query = context.Posts.Include(i => i.Author).Where(p => p.IsPublic);
 
         switch (sortType)
         {
@@ -315,75 +275,13 @@ public class PostProvider(
 
         return new PaginatedPostResult
         {
-            Posts = posts.Select(p => new PostModel(p)).ToList(),
+            Posts = [.. posts.Select(p => new PostModel(p))],
             CurrentPage = pageNumber,
             PageSize = pageSize,
             TotalCount = totalCount
         };
     }
 
-
-    /// <summary>
-    /// Allows a logged-in user to "like" a post specified by ID.
-    /// </summary>
-    /// <param name="postId">ID of the post to like.</param>
-    /// <returns>True if the post was successfully liked, otherwise false.</returns>
-    public async Task<bool> LikePostAsync(int postId)
-    {
-        try
-        {
-            var userPrincipal = httpContextAccessor.HttpContext?.User;
-            if (userPrincipal is null || !userPrincipal.Identity?.IsAuthenticated == true)
-            {
-                logger.LogWarning("No authenticated user found in HttpContext. Aborting like operation.");
-                return false;
-            }
-
-            // Get the user from the identity system
-            var user = await userManager.GetUserAsync(userPrincipal);
-            if (user == null)
-            {
-                logger.LogWarning("UserManager could not find a valid user. Aborting like operation.");
-                return false;
-            }
-
-            logger.LogInformation("User {UserId} attempting to like post with ID: {PostId}", user.Id, postId);
-
-            var post = await context.Posts.FindAsync(postId);
-            if (post == null)
-            {
-                logger.LogWarning("Post with ID {PostId} not found.", postId);
-                return false;
-            }
-
-            // Check if user already liked the post
-            var existingLike = await context.PostLikes
-                .FirstOrDefaultAsync(pl => pl.PostId == postId && pl.UserId == user.Id);
-
-            if (existingLike != null)
-            {
-                logger.LogInformation("User {UserId} has already liked post {PostId}.", user.Id, postId);
-                return false;
-            }
-
-            var newLike = new PostLike
-            {
-                PostId = postId,
-                UserId = user.Id
-            };
-
-            context.PostLikes.Add(newLike);
-            await context.SaveChangesAsync();
-
-            logger.LogInformation("User {UserId} successfully liked post {PostId}.", user.Id, postId);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error occurred while liking post {PostId}.", postId);
-            return false;
-        }
-    }
 
     /// <summary>
     /// Allows a logged-in user to "like" a post.
@@ -445,7 +343,7 @@ public class PostProvider(
             .AsNoTracking()
             .ToListAsync();
 
-        return posts.Select(p => new PostModel(p)).ToList();
+        return [.. posts.Select(p => new PostModel(p))];
     }
 
     /// <inheritdoc/>
@@ -461,7 +359,7 @@ public class PostProvider(
             .AsNoTracking()
             .ToListAsync();
 
-        return posts.Select(p => new PostModel(p)).ToList();
+        return [.. posts.Select(p => new PostModel(p))];
     }
 
     /// <inheritdoc/>
@@ -477,7 +375,7 @@ public class PostProvider(
             .AsNoTracking()
             .ToListAsync();
 
-        return posts.Select(p => new PostModel(p)).ToList();
+        return [.. posts.Select(p => new PostModel(p))];
     }
 
     /// <inheritdoc/>
@@ -493,7 +391,7 @@ public class PostProvider(
             .AsNoTracking()
             .ToListAsync();
 
-        return posts.Select(p => new PostModel(p)).ToList();
+        return [.. posts.Select(p => new PostModel(p))];
     }
 
     /// <inheritdoc/>
@@ -511,6 +409,13 @@ public class PostProvider(
         if (existingPost == null)
             return false;
 
+
+        if (existingPost.AuthorId != user.Id)
+        {
+            logger.LogWarning("User {UserId} attempted to update a post they do not own.", user.Id);
+            return false;
+        }
+
         existingPost.Title = postModel.Title;
         existingPost.Content = postModel.Content;
         existingPost.Description = postModel.Description;
@@ -527,6 +432,45 @@ public class PostProvider(
         existingPost.ModifiedID = user.Id;
 
         context.Posts.Update(existingPost);
+        await context.SaveChangesAsync();
+        return true;
+    }
+    /// <summary>
+    /// Allows a logged-in user to delete a comment on a post.
+    /// </summary>
+    /// <param name="postId">ID of the post containing the comment.</param>
+    /// <param name="commentId">ID of the comment to delete.</param>
+    /// <param name="userPrincipal">The current user's claims principal.</param>
+    /// <returns>True if the comment was deleted successfully, otherwise false.</returns>
+    public async Task<bool> DeleteCommentAsync(int postId, int commentId, ClaimsPrincipal userPrincipal)
+    {
+        // Validate user
+        var user = await userManager.GetUserAsync(userPrincipal);
+        if (user == null)
+        {
+            logger.LogWarning("No logged-in user found. Aborting comment deletion.");
+            return false;
+        }
+
+        logger.LogInformation("User {UserId} attempting to delete comment with ID: {CommentId} from post with ID: {PostId}", user.Id, commentId, postId);
+
+        var comment = await context.PostComments
+            .Include(c => c.Post)
+            .FirstOrDefaultAsync(c => c.Id == commentId && c.PostId == postId);
+
+        if (comment == null)
+        {
+            logger.LogWarning("Comment with ID {CommentId} not found in post with ID {PostId}.", commentId, postId);
+            return false;
+        }
+
+        if (comment.Author.Id != user.Id)
+        {
+            logger.LogWarning("User {UserId} attempted to delete a comment they do not own.", user.Id);
+            return false;
+        }
+
+        context.PostComments.Remove(comment);
         await context.SaveChangesAsync();
         return true;
     }
