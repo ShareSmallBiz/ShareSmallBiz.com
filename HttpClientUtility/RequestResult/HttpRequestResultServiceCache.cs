@@ -32,7 +32,7 @@ public sealed class HttpRequestResultServiceCache(
                 {
                     if (cachedResult != null)
                     {
-                        if(cachedResult.ResponseResults != null)
+                        if (cachedResult.ResponseResults != null)
                         {
                             return cachedResult;
                         }

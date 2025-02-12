@@ -1,10 +1,13 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-#nullable disable
+﻿#nullable disable
 
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using ShareSmallBiz.Portal.Data;
-using System;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 {
@@ -21,58 +24,91 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
             _signInManager = signInManager;
         }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public string Username { get; set; }
 
         [TempData]
         public string StatusMessage { get; set; }
+
         [TempData]
         public string UserNameChangeLimitMessage { get; set; }
 
         [BindProperty]
         public InputModel Input { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
             [Display(Name = "First Name")]
             public string FirstName { get; set; }
+
             [Display(Name = "Last Name")]
             public string LastName { get; set; }
+
             [Display(Name = "Username")]
             public string Username { get; set; }
+
             [Phone]
             [Display(Name = "Phone number")]
             public string PhoneNumber { get; set; }
+
             [Display(Name = "Profile Picture")]
             public byte[] ProfilePicture { get; set; }
+
+            // SEO Fields
+            [Display(Name = "Profile URL (Slug)")]
+            public string Slug { get; set; }
+
+            [Display(Name = "Meta Description")]
+            public string MetaDescription { get; set; }
+
+            [Display(Name = "SEO Keywords (comma-separated)")]
+            public string Keywords { get; set; }
+
+            // Business Information
+            [Display(Name = "Bio")]
+            public string Bio { get; set; }
+
+            [Display(Name = "Website")]
+            public string WebsiteUrl { get; set; }
+
+            // Social Links
+            [Display(Name = "LinkedIn")]
+            public string LinkedIn { get; set; }
+
+            [Display(Name = "Facebook")]
+            public string Facebook { get; set; }
+
+            [Display(Name = "Instagram")]
+            public string Instagram { get; set; }
         }
 
         private async Task LoadAsync(ShareSmallBizUser user)
         {
             var userName = await _userManager.GetUserNameAsync(user);
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-            var firstName = user.FirstName;
-            var lastName = user.LastName;
-            var profilePicture = user.ProfilePicture;
+
             Username = userName;
+
             Input = new InputModel
             {
                 PhoneNumber = phoneNumber,
                 Username = userName,
-                FirstName = firstName,
-                LastName = lastName,
-                ProfilePicture = profilePicture
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                ProfilePicture = user.ProfilePicture,
+
+                // Load SEO Fields
+                Slug = user.Slug,
+                MetaDescription = user.MetaDescription,
+                Keywords = user.Keywords,
+
+                // Load Business Info
+                Bio = user.Bio,
+                WebsiteUrl = user.WebsiteUrl,
+
+                // Load Social Links
+                LinkedIn = user.SocialLinks.FirstOrDefault(s => s.Platform == "LinkedIn")?.Url,
+                Facebook = user.SocialLinks.FirstOrDefault(s => s.Platform == "Facebook")?.Url,
+                Instagram = user.SocialLinks.FirstOrDefault(s => s.Platform == "Instagram")?.Url
             };
         }
 
@@ -83,6 +119,7 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
             {
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
+
             await LoadAsync(user);
             return Page();
         }
@@ -101,6 +138,7 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
+            // Update phone number
             var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
             if (Input.PhoneNumber != phoneNumber)
             {
@@ -111,19 +149,75 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
                     return RedirectToPage();
                 }
             }
-            var firstName = user.FirstName;
-            var lastName = user.LastName;
-            if (Input.FirstName != firstName)
-            {
 
+            // Update user profile fields
+            bool updated = false;
+
+            if (Input.FirstName != user.FirstName)
+            {
                 user.FirstName = Input.FirstName;
-                await _userManager.UpdateAsync(user);
+                updated = true;
             }
-            if (Input.LastName != lastName)
+            if (Input.LastName != user.LastName)
             {
                 user.LastName = Input.LastName;
+                updated = true;
+            }
+            if (Input.Bio != user.Bio)
+            {
+                user.Bio = Input.Bio;
+                updated = true;
+            }
+            if (Input.WebsiteUrl != user.WebsiteUrl)
+            {
+                user.WebsiteUrl = Input.WebsiteUrl;
+                updated = true;
+            }
+
+            // Update SEO Fields
+            if (Input.Slug != user.Slug)
+            {
+                user.Slug = Input.Slug;
+                updated = true;
+            }
+            if (Input.MetaDescription != user.MetaDescription)
+            {
+                user.MetaDescription = Input.MetaDescription;
+                updated = true;
+            }
+            if (Input.Keywords != user.Keywords)
+            {
+                user.Keywords = Input.Keywords;
+                updated = true;
+            }
+
+            if (string.IsNullOrEmpty(user.UserName))
+            {
+                user.UserName = user.Email;
+                updated = true;
+            }
+            if (string.IsNullOrEmpty(user.DisplayName))
+            {
+                user.DisplayName = Input.Username;
+                updated = true;
+            }
+
+
+            // Update Social Links
+            var socialLinks = user.SocialLinks.ToList();
+
+            UpdateSocialLink(socialLinks, user.Id, "LinkedIn", Input.LinkedIn);
+            UpdateSocialLink(socialLinks, user.Id, "Facebook", Input.Facebook);
+            UpdateSocialLink(socialLinks, user.Id, "Instagram", Input.Instagram);
+
+            user.SocialLinks = socialLinks;
+
+            if (updated)
+            {
                 await _userManager.UpdateAsync(user);
             }
+
+            // Handle profile picture upload
             if (Request.Form.Files.Count > 0)
             {
                 IFormFile file = Request.Form.Files.FirstOrDefault();
@@ -134,9 +228,30 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
                 }
                 await _userManager.UpdateAsync(user);
             }
+
             await _signInManager.RefreshSignInAsync(user);
             StatusMessage = "Your profile has been updated";
             return RedirectToPage();
+        }
+
+        private void UpdateSocialLink(List<SocialLink> socialLinks, string userId, string platform, string newUrl)
+        {
+            var existingLink = socialLinks.FirstOrDefault(s => s.Platform == platform);
+            if (!string.IsNullOrEmpty(newUrl))
+            {
+                if (existingLink == null)
+                {
+                    socialLinks.Add(new SocialLink { UserId = userId, Platform = platform, Url = newUrl });
+                }
+                else if (existingLink.Url != newUrl)
+                {
+                    existingLink.Url = newUrl;
+                }
+            }
+            else if (existingLink != null)
+            {
+                socialLinks.Remove(existingLink);
+            }
         }
     }
 }

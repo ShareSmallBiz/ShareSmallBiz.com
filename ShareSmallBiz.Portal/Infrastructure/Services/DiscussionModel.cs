@@ -2,7 +2,7 @@
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
-public class PostModel : BaseModel, IEquatable<PostModel>
+public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
 {
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -24,9 +24,9 @@ public class PostModel : BaseModel, IEquatable<PostModel>
     public List<PostCommentModel> Comments { get; set; } = [];
     public UserModel Author { get; set; } = new();
 
-    public PostModel() { }
+    public DiscussionModel() { }
 
-    public PostModel(Post post)
+    public DiscussionModel(Post post)
     {
         Id = post.Id;
         Title = post.Title;
@@ -49,7 +49,7 @@ public class PostModel : BaseModel, IEquatable<PostModel>
         Comments = [.. post.Comments.Select(comment => new PostCommentModel(comment))];
         Author = new UserModel(post.Author);
     }
-    public bool Equals(PostModel other)
+    public bool Equals(DiscussionModel other)
     {
         if (Id == other.Id)
             return true;
@@ -63,6 +63,6 @@ public class PostModel : BaseModel, IEquatable<PostModel>
 
     public override bool Equals(object obj)
     {
-        return Equals(obj as PostModel);
+        return Equals(obj as DiscussionModel);
     }
 }

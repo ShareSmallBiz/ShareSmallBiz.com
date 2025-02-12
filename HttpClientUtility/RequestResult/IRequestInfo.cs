@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace HttpClientUtility.RequestResult;
+﻿namespace HttpClientUtility.RequestResult;
 
 public interface IRequestInfo
 {

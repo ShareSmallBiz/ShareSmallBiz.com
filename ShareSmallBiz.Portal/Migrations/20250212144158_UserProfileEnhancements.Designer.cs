@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShareSmallBiz.Portal.Data;
 
@@ -10,9 +11,11 @@ using ShareSmallBiz.Portal.Data;
 namespace ShareSmallBiz.Portal.Migrations
 {
     [DbContext(typeof(ShareSmallBizUserContext))]
-    partial class ShareSmallBizUserContextModelSnapshot : ModelSnapshot
+    [Migration("20250212144158_UserProfileEnhancements")]
+    partial class UserProfileEnhancements
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
@@ -235,6 +238,7 @@ namespace ShareSmallBiz.Portal.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Slug")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("WebsiteUrl")
@@ -577,6 +581,7 @@ namespace ShareSmallBiz.Portal.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Bio")
+                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
@@ -605,6 +610,7 @@ namespace ShareSmallBiz.Portal.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Keywords")
+                        .IsRequired()
                         .HasMaxLength(250)
                         .HasColumnType("TEXT");
 
@@ -618,6 +624,7 @@ namespace ShareSmallBiz.Portal.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("MetaDescription")
+                        .IsRequired()
                         .HasMaxLength(160)
                         .HasColumnType("TEXT");
 
@@ -659,9 +666,6 @@ namespace ShareSmallBiz.Portal.Migrations
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("WebsiteUrl")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

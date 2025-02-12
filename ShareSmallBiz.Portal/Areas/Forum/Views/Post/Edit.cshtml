@@ -1,4 +1,4 @@
-﻿@model PostModel
+﻿@model DiscussionModel
 
 @{
     ViewData["Title"] = Model.Id == 0 ? "Create Post" : "Edit Post";
@@ -9,17 +9,22 @@
     <style>
         /* Ensure enough space at the bottom to avoid hidden fields */
         .form-container {
-            padding-bottom: 100px; /* Adjust as needed */
+            padding-bottom: 200px; /* Adjust as needed */
         }
-
-        /* Image Preview Styling */
         .cover-preview {
-            max-width: 100%;
+            max-width: 200px; /* Reduced size */
             height: auto;
             display: block;
             margin-top: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
+        }
+
+        /* Highlight Lookup Button */
+        #browseImages {
+            font-size: 1.1rem; /* Make it slightly larger */
+            font-weight: bold;
+            padding: 10px 20px;
         }
     </style>
 }
@@ -60,10 +65,8 @@
         <div class="mb-3">
             <label asp-for="Cover" class="form-label">Cover Image</label>
             <div class="input-group">
-                <input asp-for="Cover" id="coverUrl" class="form-control" placeholder="Enter cover image URL" />
+                <input disabled="disabled" asp-for="Cover" id="coverUrl" class="form-control" placeholder="Enter cover image URL" />
                 <button type="button" class="btn btn-outline-secondary" id="browseImages"><i class="bi bi-search"></i> Lookup</button>
-                <input type="file" id="coverUpload" name="coverFile" class="form-control" accept="image/*" hidden>
-                <button type="button" class="btn btn-outline-primary" id="uploadImage"><i class="bi bi-upload"></i> Upload</button>
             </div>
             <img id="coverPreview" class="cover-preview" src="@Model.Cover" alt="Cover Image Preview" style="display: @(string.IsNullOrEmpty(Model.Cover) ? "none" : "block");" />
         </div>

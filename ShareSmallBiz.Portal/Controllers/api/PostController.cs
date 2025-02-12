@@ -6,18 +6,18 @@ namespace ShareSmallBiz.Portal.Controllers.api;
 
 [ApiController]
 [Route("api/[controller]")]
-public class PostController(PostProvider postProvider) : ControllerBase
+public class PostController(DiscussionProvider postProvider) : ControllerBase
 {
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<PostModel>>> GetAllPosts(bool onlyPublic = true)
+    public async Task<ActionResult<IEnumerable<DiscussionModel>>> GetAllPosts(bool onlyPublic = true)
     {
         var posts = await postProvider.GetAllPostsAsync(onlyPublic);
         return Ok(posts);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<PostModel>> GetPostById(int id)
+    public async Task<ActionResult<DiscussionModel>> GetPostById(int id)
     {
         var post = await postProvider.GetPostByIdAsync(id);
         if (post == null)
@@ -35,28 +35,28 @@ public class PostController(PostProvider postProvider) : ControllerBase
     }
 
     [HttpGet("featured/{count}")]
-    public async Task<ActionResult<List<PostModel>>> GetFeaturedPosts(int count)
+    public async Task<ActionResult<List<DiscussionModel>>> GetFeaturedPosts(int count)
     {
         var posts = await postProvider.FeaturedPostsAsync(count);
         return Ok(posts);
     }
 
     [HttpGet("most-commented/{count}")]
-    public async Task<ActionResult<List<PostModel>>> GetMostCommentedPosts(int count)
+    public async Task<ActionResult<List<DiscussionModel>>> GetMostCommentedPosts(int count)
     {
         var posts = await postProvider.MostCommentedPostsAsync(count);
         return Ok(posts);
     }
 
     [HttpGet("most-popular/{count}")]
-    public async Task<ActionResult<List<PostModel>>> GetMostPopularPosts(int count)
+    public async Task<ActionResult<List<DiscussionModel>>> GetMostPopularPosts(int count)
     {
         var posts = await postProvider.MostPopularPostsAsync(count);
         return Ok(posts);
     }
 
     [HttpGet("most-recent/{count}")]
-    public async Task<ActionResult<List<PostModel>>> GetMostRecentPosts(int count)
+    public async Task<ActionResult<List<DiscussionModel>>> GetMostRecentPosts(int count)
     {
         var posts = await postProvider.MostRecentPostsAsync(count);
         return Ok(posts);
@@ -64,10 +64,10 @@ public class PostController(PostProvider postProvider) : ControllerBase
 
     [HttpPost]
     [Authorize]
-    public async Task<ActionResult<PostModel>> CreatePost(PostModel postModel)
+    public async Task<ActionResult<DiscussionModel>> CreatePost(DiscussionModel discussionModel)
     {
         var userPrincipal = HttpContext.User;
-        var post = await postProvider.CreatePostAsync(postModel, userPrincipal);
+        var post = await postProvider.CreatePostAsync(discussionModel, userPrincipal);
         if (post == null)
         {
             return BadRequest("Unable to create post.");
@@ -77,15 +77,15 @@ public class PostController(PostProvider postProvider) : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize]
-    public async Task<IActionResult> UpdatePost(int id, PostModel postModel)
+    public async Task<IActionResult> UpdatePost(int id, DiscussionModel discussionModel)
     {
-        if (id != postModel.Id)
+        if (id != discussionModel.Id)
         {
             return BadRequest();
         }
 
         var userPrincipal = HttpContext.User;
-        var result = await postProvider.UpdatePostAsync(postModel, userPrincipal);
+        var result = await postProvider.UpdatePostAsync(discussionModel, userPrincipal);
         if (!result)
         {
             return NotFound();

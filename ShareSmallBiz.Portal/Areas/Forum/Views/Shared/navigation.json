@@ -2,7 +2,7 @@
   "menuItems": [
     {
       "text": "Discussions",
-      "url": "/Forum/Home",
+      "url": "/Discussions",
       "icon": "bi bi-chat-dots-fill"
     },
     {

@@ -153,8 +153,8 @@ builder.Services.AddSwaggerGen(options =>
 // Application Services
 // ========================
 builder.Services.AddSingleton<IStorageProvider, StorageProvider>();
-builder.Services.AddScoped<PostProvider, PostProvider>();
-builder.Services.AddScoped<UserService, UserService>();
+builder.Services.AddScoped<DiscussionProvider, DiscussionProvider>();
+builder.Services.AddScoped<UserProvider, UserProvider>();
 builder.Services.AddScoped<CommentProvider, CommentProvider>();
 builder.Services.AddSingleton<IStringConverter, NewtonsoftJsonStringConverter>();
 builder.Services.AddSingleton(new ApplicationStatus(Assembly.GetExecutingAssembly()));

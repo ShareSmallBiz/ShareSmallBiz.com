@@ -1,4 +1,4 @@
-﻿@model PostModel
+﻿@model DiscussionModel
 @using Microsoft.AspNetCore.Identity
 @inject SignInManager<ShareSmallBizUser> SignInManager
 @inject UserManager<ShareSmallBizUser> UserManager
@@ -17,12 +17,13 @@
         <div class="card-body">
 
             <!-- Cover Image -->
-            @if (!string.IsNullOrEmpty(Model.Cover))
+            @if (!string.IsNullOrEmpty(Model.Cover) && Model.Cover != "https://sharesmallbiz.com/")
             {
                 <div class="cover-container mb-3 text-center">
                     <img src="@Model.Cover"
                          class="img-fluid cover-image rounded shadow-sm lazyload mx-auto d-block"
-                         alt="Cover Image"
+                         alt="@Model.Title"
+                         title="@Model.Cover"
                          loading="lazy"
                          style="max-height: 50vh; object-fit: cover;">
                 </div>

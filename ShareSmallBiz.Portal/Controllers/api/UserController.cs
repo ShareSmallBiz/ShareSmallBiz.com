@@ -4,7 +4,7 @@ namespace ShareSmallBiz.Portal.Controllers.api;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsersController(UserService userService, ILogger<UsersController> logger) : ControllerBase
+public class UsersController(UserProvider userService, ILogger<UsersController> logger) : ControllerBase
 {
     [HttpPost("create")]
     public async Task<IActionResult> CreateUser([FromBody] UserModel model, [FromQuery] string password)

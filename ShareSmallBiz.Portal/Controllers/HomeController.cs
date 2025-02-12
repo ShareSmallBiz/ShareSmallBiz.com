@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace ShareSmallBiz.Portal.Controllers;
 
-public class HomeController(PostProvider postProvider, ILogger<HomeController> logger) : Controller
+public class HomeController(DiscussionProvider postProvider, ILogger<HomeController> logger) : Controller
 {
     public async Task<IActionResult> Index()
     {

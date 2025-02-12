@@ -41,6 +41,18 @@
                     <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
                 </div>
 
+                <div class="mb-3">
+                    <label asp-for="Input.Bio" class="form-label">Bio</label>
+                    <textarea asp-for="Input.Bio" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Input.Bio" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.WebsiteUrl" class="form-label">Website</label>
+                    <input asp-for="Input.WebsiteUrl" class="form-control" />
+                    <span asp-validation-for="Input.WebsiteUrl" class="text-danger"></span>
+                </div>
+
                 <button id="update-profile-button" type="submit" class="btn btn-primary w-100 mt-2">
                     <i class="bi bi-save"></i> Save
                 </button>
@@ -77,45 +89,57 @@
                 <span asp-validation-for="Input.ProfilePicture" class="text-danger"></span>
             </div>
         </div>
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
-        <br />
+
+        <hr />
+
+        <!-- SEO & Business Information -->
+        <h5>SEO & Business Information</h5>
+
+        <div class="mb-3">
+            <label asp-for="Input.Slug" class="form-label">Profile URL (SEO Slug)</label>
+            <input asp-for="Input.Slug" class="form-control" />
+            <span asp-validation-for="Input.Slug" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.MetaDescription" class="form-label">Meta Description</label>
+            <textarea asp-for="Input.MetaDescription" class="form-control" rows="2"></textarea>
+            <span asp-validation-for="Input.MetaDescription" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.Keywords" class="form-label">SEO Keywords (comma-separated)</label>
+            <input asp-for="Input.Keywords" class="form-control" />
+            <span asp-validation-for="Input.Keywords" class="text-danger"></span>
+        </div>
+
+        <hr />
+
+        <h5>Social Media Links</h5>
+
+        <div class="mb-3">
+            <label asp-for="Input.LinkedIn" class="form-label">LinkedIn</label>
+            <input asp-for="Input.LinkedIn" class="form-control" />
+            <span asp-validation-for="Input.LinkedIn" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.Facebook" class="form-label">Facebook</label>
+            <input asp-for="Input.Facebook" class="form-control" />
+            <span asp-validation-for="Input.Facebook" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.Instagram" class="form-label">Instagram</label>
+            <input asp-for="Input.Instagram" class="form-control" />
+            <span asp-validation-for="Input.Instagram" class="text-danger"></span>
+        </div>
+
+        <button id="update-profile-button" type="submit" class="btn btn-success w-100 mt-3">
+            <i class="bi bi-save"></i> Update Profile
+        </button>
     </form>
-    <hr/>
-    <section>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-        <p></p>
-    </section>
 </div>
-
-
-
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

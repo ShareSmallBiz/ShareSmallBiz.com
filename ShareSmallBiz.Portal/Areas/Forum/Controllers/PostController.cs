@@ -12,7 +12,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers;
 [Authorize]
 [Area("Forum")]
 public class PostController(
-    PostProvider postService,
+    DiscussionProvider postService,
     UserManager<ShareSmallBizUser> userManager,
     ILogger<PostController> logger) : ForumBaseController
 {
@@ -37,20 +37,20 @@ public class PostController(
 
     public IActionResult Create()
     {
-        var postModel = new PostModel();
-        return View("Edit",postModel);
+        var discussionModel = new DiscussionModel();
+        return View("Edit",discussionModel);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(PostModel postModel)
+    public async Task<IActionResult> Create(DiscussionModel discussionModel)
     {
         ClaimsPrincipal currentUser = this.User;
         
 
         if (!ModelState.IsValid)
         {
-            return View("Edit", postModel);
+            return View("Edit", discussionModel);
         }
         try
         {
@@ -60,15 +60,15 @@ public class PostController(
                 logger.LogWarning("User not found when creating post.");
                 return Unauthorized();
             }
-            postModel.CreatedID = user.Id;
-            await postService.CreatePostAsync(postModel,currentUser);
+            discussionModel.CreatedID = user.Id;
+            await postService.CreatePostAsync(discussionModel,currentUser);
             return RedirectToAction("Index");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating post");
             ModelState.AddModelError("", "An error occurred while creating the post.");
-            return View("Edit", postModel);
+            return View("Edit", discussionModel);
         }
     }
 
@@ -89,12 +89,12 @@ public class PostController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(PostModel postModel)
+    public async Task<IActionResult> Edit(DiscussionModel discussionModel)
     {
         ClaimsPrincipal currentUser = this.User;
         if (!ModelState.IsValid)
         {
-            return View(postModel);
+            return View(discussionModel);
         }
 
         try
@@ -106,8 +106,8 @@ public class PostController(
                 return Unauthorized();
             }
 
-            postModel.ModifiedID = user.Id;
-            var success = await postService.UpdatePostAsync(postModel, currentUser);
+            discussionModel.ModifiedID = user.Id;
+            var success = await postService.UpdatePostAsync(discussionModel, currentUser);
             if (!success)
             {
                 return NotFound();
@@ -118,7 +118,7 @@ public class PostController(
         {
             logger.LogError(ex, "Error updating post");
             ModelState.AddModelError("", "An error occurred while updating the post.");
-            return View(postModel);
+            return View(discussionModel);
         }
     }
 

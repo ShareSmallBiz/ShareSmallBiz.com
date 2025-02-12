@@ -2,10 +2,10 @@
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
-public class UserService(
+public class UserProvider(
     ShareSmallBizUserContext context,
     UserManager<ShareSmallBizUser> userManager,
-    ILogger<UserService> logger
+    ILogger<UserProvider> logger
     )
 {
 

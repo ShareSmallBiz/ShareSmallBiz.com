@@ -17,7 +17,7 @@ public enum SortType
 /// </summary>
 public class PaginatedPostResult
 {
-    public List<PostModel> Posts { get; set; } = [];
+    public List<DiscussionModel> Posts { get; set; } = [];
     public int CurrentPage { get; set; }
     public int PageSize { get; set; }
     public int TotalCount { get; set; }

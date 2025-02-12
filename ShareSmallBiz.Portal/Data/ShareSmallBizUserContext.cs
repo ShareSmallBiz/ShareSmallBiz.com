@@ -17,6 +17,14 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
     public virtual DbSet<PostCommentLike> PostCommentLikes { get; set; }
     public virtual DbSet<UserFollow> UserFollows { get; set; }
 
+    // New Models
+    public virtual DbSet<BusinessProfile> BusinessProfiles { get; set; }
+    public virtual DbSet<UserCollaboration> UserCollaborations { get; set; }
+    public virtual DbSet<UserContentContribution> UserContentContributions { get; set; }
+    public virtual DbSet<UserService> UserServices { get; set; }
+    public virtual DbSet<SocialLink> SocialLinks { get; set; }
+    public virtual DbSet<Testimonial> Testimonials { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -25,8 +33,17 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
         ConfigureManyToMany(builder);
     }
 
+
     private void ConfigureRelationships(ModelBuilder builder)
     {
+        // ---- POSTS, COMMENTS, LIKES ----
+        builder.Entity<PostLike>()
+            .HasKey(pl => pl.Id);
+
+        builder.Entity<PostLike>()
+            .Property(pl => pl.Id)
+            .ValueGeneratedOnAdd();  // Ensures auto-increment behavior
+
         builder.Entity<PostLike>()
             .HasOne(pl => pl.User)
             .WithMany(u => u.LikedPosts)
@@ -39,26 +56,16 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
 
         builder.Entity<PostComment>()
             .HasOne(pc => pc.Post)
-            .WithMany(p => p.Comments) 
+            .WithMany(p => p.Comments)
             .HasForeignKey(pc => pc.PostId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.Entity<PostComment>()
-            .HasOne(pc => pc.ParentPost)
-            .WithMany()  
-            .HasForeignKey(pc => pc.ParentPostId)
-            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<PostCommentLike>()
             .HasOne(pcl => pcl.User)
             .WithMany(u => u.LikedPostComments)
             .HasForeignKey(pcl => pcl.CreatedID);
 
-        builder.Entity<PostCommentLike>()
-            .HasOne(pcl => pcl.PostComment)
-            .WithMany(pc => pc.Likes)
-            .HasForeignKey(pcl => pcl.PostCommentId);
-
+        // ---- FOLLOWERS ----
         builder.Entity<UserFollow>()
             .HasOne(uf => uf.Follower)
             .WithMany(u => u.Following)
@@ -68,86 +75,67 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
             .HasOne(uf => uf.Following)
             .WithMany(u => u.Followers)
             .HasForeignKey(uf => uf.FollowingId);
+ 
+        // ---- BUSINESS PROFILE RELATIONSHIPS ----
+
+        // Business Owner (One-to-One)
+        builder.Entity<BusinessProfile>()
+            .HasOne(bp => bp.Owner)
+            .WithOne(u => u.OwnedBusiness)
+            .HasForeignKey<BusinessProfile>(bp => bp.OwnerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Employees (One-to-Many)
+        builder.Entity<BusinessProfile>()
+            .HasMany(bp => bp.Employees)
+            .WithOne(u => u.Business)
+            .HasForeignKey(u => u.BusinessId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ---- USER COLLABORATIONS ----
+        builder.Entity<UserCollaboration>()
+            .HasOne(uc => uc.User1)
+            .WithMany()
+            .HasForeignKey(uc => uc.UserId1);
+
+        builder.Entity<UserCollaboration>()
+            .HasOne(uc => uc.User2)
+            .WithMany()
+            .HasForeignKey(uc => uc.UserId2);
+
+        builder.Entity<UserCollaboration>()
+            .HasOne(uc => uc.Business1)
+            .WithMany()
+            .HasForeignKey(uc => uc.BusinessId1);
+
+        builder.Entity<UserCollaboration>()
+            .HasOne(uc => uc.Business2)
+            .WithMany()
+            .HasForeignKey(uc => uc.BusinessId2);
+
+        // ---- USER CONTENT CONTRIBUTIONS ----
+        builder.Entity<UserContentContribution>()
+            .HasOne(ucc => ucc.User)
+            .WithMany(u => u.ContentContributions)
+            .HasForeignKey(ucc => ucc.UserId);
+
+        builder.Entity<UserContentContribution>()
+            .HasOne(ucc => ucc.Business)
+            .WithMany(bp => bp.ContentContributions)
+            .HasForeignKey(ucc => ucc.BusinessId);
     }
 
+        
     private void ConfigureEntities(ModelBuilder builder)
     {
-        builder.Entity<WebSite>(entity =>
-        {
-            entity.Property(e => e.Id).HasColumnName("Id");
-            entity.Property(e => e.Description).IsRequired().HasMaxLength(250);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
-            entity.HasIndex(e => e.Name).IsUnique();
-            entity.Property(e => e.Title).IsRequired().HasMaxLength(250);
-            entity.HasIndex(e => e.Title).IsUnique();
-            entity.Property(e => e.DomainUrl).IsRequired().HasMaxLength(250);
-            entity.HasIndex(e => e.DomainUrl).IsUnique();
-            entity.Property(e => e.GalleryFolder).IsRequired().HasMaxLength(250);
-            entity.Property(e => e.Style).IsRequired().HasMaxLength(100);
-        });
+        // Ensure uniqueness and optimization for SEO purposes
+        builder.Entity<BusinessProfile>()
+            .HasIndex(bp => bp.Slug)
+            .IsUnique();
 
-        builder.Entity<Menu>(entity =>
-        {
-            entity.Property(e => e.Action).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Controller).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Description).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.KeyWords).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Icon).HasMaxLength(50);
-            entity.Property(e => e.Title).IsRequired().HasMaxLength(50);
-            entity.Property(e => e.Url).HasMaxLength(100);
-
-            entity.HasOne(d => d.Domain)
-                .WithMany(p => p.Menus)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("FK_Menu_Domain");
-
-            entity.HasOne(d => d.Parent)
-                .WithMany(p => p.InverseParent)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Menu_ParentMenu_ParentId");
-        });
-
-        builder.Entity<Post>()
-            .HasKey(p => p.Id);
-
-        builder.Entity<Post>()
-            .HasMany(p => p.Comments)
-            .WithOne(c => c.Post)
-            .HasForeignKey(c => c.PostId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.Entity<Post>()
-            .HasMany(p => p.Likes)
-            .WithOne(l => l.Post)
-            .HasForeignKey(l => l.PostId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.Entity<PostComment>()
-            .HasKey(c => c.Id);
-
-        builder.Entity<PostComment>()
-            .Property(c => c.Content)
-            .IsRequired()
-            .HasMaxLength(1000);
-
-        builder.Entity<PostComment>()
-            .HasOne(c => c.ParentPost)
-            .WithMany()
-            .HasForeignKey(c => c.ParentPostId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        builder.Entity<PostLike>()
-            .HasKey(l => new { l.PostId, l.UserId });
-
-        builder.Entity<PostLike>()
-            .HasOne(l => l.Post)
-            .WithMany(p => p.Likes)
-            .HasForeignKey(l => l.PostId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.Entity<PostLike>()
-            .Property(l => l.UserId)
-            .IsRequired();
+        builder.Entity<ShareSmallBizUser>()
+            .HasIndex(u => u.Slug)
+            .IsUnique();
     }
 
     private void ConfigureManyToMany(ModelBuilder builder)

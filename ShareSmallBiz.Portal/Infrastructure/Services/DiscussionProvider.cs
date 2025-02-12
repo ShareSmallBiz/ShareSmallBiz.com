@@ -6,9 +6,9 @@ namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
 
 
-public class PostProvider(
+public class DiscussionProvider(
     ShareSmallBizUserContext context,
-    ILogger<PostProvider> logger,
+    ILogger<DiscussionProvider> logger,
     UserManager<ShareSmallBizUser> userManager,
      IHttpContextAccessor httpContextAccessor) 
 {
@@ -49,7 +49,6 @@ public class PostProvider(
         {
             cleaned = "unknown";
         }
-
         return cleaned;
     }
 
@@ -59,7 +58,6 @@ public class PostProvider(
         {
             return string.Empty;
         }
-
         return input.Replace("\r\n", "<br/>").Replace("\n", "<br/>");
     }
 
@@ -107,7 +105,7 @@ public class PostProvider(
 
 
     /// <inheritdoc/>
-    public async Task<PostModel?> CreatePostAsync(PostModel postModel, ClaimsPrincipal userPrincipal)
+    public async Task<DiscussionModel?> CreatePostAsync(DiscussionModel discussionModel, ClaimsPrincipal userPrincipal)
     {
         var user = await userManager.GetUserAsync(userPrincipal);
         if (user == null)
@@ -116,21 +114,21 @@ public class PostProvider(
             return null;
         }
 
-        logger.LogInformation("Creating a new post with title: {Title}", postModel.Title);
+        logger.LogInformation("Creating a new post with title: {Title}", discussionModel.Title);
         var post = new Post
         {
-            Title = postModel.Title,
-            Content = postModel.Content,
-            Description = postModel.Description,
-            Cover = postModel.Cover,
-            IsFeatured = postModel.IsFeatured,
-            IsPublic = postModel.IsPublic,
-            PostType = postModel.PostType,
-            PostViews = postModel.PostViews,
-            Published = postModel.Published,
-            Rating = postModel.Rating,
-            Selected = postModel.Selected,
-            Slug = GenerateSlug(postModel.Title),
+            Title = discussionModel.Title,
+            Content = discussionModel.Content,
+            Description = discussionModel.Description,
+            Cover = discussionModel.Cover,
+            IsFeatured = discussionModel.IsFeatured,
+            IsPublic = discussionModel.IsPublic,
+            PostType = discussionModel.PostType,
+            PostViews = discussionModel.PostViews,
+            Published = discussionModel.Published,
+            Rating = discussionModel.Rating,
+            Selected = discussionModel.Selected,
+            Slug = GenerateSlug(discussionModel.Title),
             CreatedDate = DateTime.UtcNow,
             ModifiedDate = DateTime.UtcNow,
             CreatedID = user.Id,
@@ -140,7 +138,7 @@ public class PostProvider(
 
         context.Posts.Add(post);
         await context.SaveChangesAsync();
-        return new PostModel(post);
+        return new DiscussionModel(post);
     }
 
     /// <inheritdoc/>
@@ -155,7 +153,7 @@ public class PostProvider(
         await context.SaveChangesAsync();
         return true;
     }
-    public async Task<List<PostModel>> GetAllUserPostsAsync(bool onlyPublic = true)
+    public async Task<List<DiscussionModel>> GetAllUserPostsAsync(bool onlyPublic = true)
     {
         // Get The Current User Id
         var userId = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -168,10 +166,10 @@ public class PostProvider(
             .Include(p => p.PostCategories)
             .ToListAsync();
 
-        return [.. posts.Select(p => new PostModel(p))];
+        return [.. posts.Select(p => new DiscussionModel(p))];
     }
     /// <inheritdoc/>
-    public async Task<List<PostModel>> GetAllPostsAsync(bool onlyPublic = true)
+    public async Task<List<DiscussionModel>> GetAllPostsAsync(bool onlyPublic = true)
     {
         logger.LogInformation("Retrieving all posts. Only public: {OnlyPublic}", onlyPublic);
         var posts = await context.Posts
@@ -180,10 +178,10 @@ public class PostProvider(
             .Include(p => p.PostCategories)
             .ToListAsync();
 
-        return [.. posts.Select(p => new PostModel(p))];
+        return [.. posts.Select(p => new DiscussionModel(p))];
     }
 
-    public async Task<PostModel?> GetPostByIdAsync(int postId)
+    public async Task<DiscussionModel?> GetPostByIdAsync(int postId)
     {
         logger.LogInformation("Retrieving post with ID: {PostId}", postId);
 
@@ -215,8 +213,8 @@ public class PostProvider(
             // Optionally, you can log more details about the exception if needed
         }
 
-        // Map to PostModel for return
-        PostModel returnPost = new(post);
+        // Map to DiscussionModel for return
+        DiscussionModel returnPost = new(post);
         returnPost.Content = StringToHtml(returnPost.Content);
 
         return returnPost;
@@ -224,7 +222,7 @@ public class PostProvider(
 
 
     /// <inheritdoc/>
-    public async Task<List<PostModel>> GetPostsAsync(int perPage, int pageNumber)
+    public async Task<List<DiscussionModel>> GetPostsAsync(int perPage, int pageNumber)
     {
         logger.LogInformation("Retrieving page {PageNumber} with {PerPage} posts per page", pageNumber, perPage);
 
@@ -236,7 +234,7 @@ public class PostProvider(
             .AsNoTracking()
             .ToListAsync();
 
-        return [.. posts.Select(p => new PostModel(p))];
+        return [.. posts.Select(p => new DiscussionModel(p))];
     }
 
     /// <summary>
@@ -275,7 +273,7 @@ public class PostProvider(
 
         return new PaginatedPostResult
         {
-            Posts = [.. posts.Select(p => new PostModel(p))],
+            Posts = [.. posts.Select(p => new DiscussionModel(p))],
             CurrentPage = pageNumber,
             PageSize = pageSize,
             TotalCount = totalCount
@@ -330,7 +328,7 @@ public class PostProvider(
         return true;
     }
     /// <inheritdoc/>
-    public async Task<List<PostModel>> FeaturedPostsAsync(int count)
+    public async Task<List<DiscussionModel>> FeaturedPostsAsync(int count)
     {
         logger.LogInformation("Retrieving {Count} featured posts", count);
         var posts = await context.Posts
@@ -343,11 +341,11 @@ public class PostProvider(
             .AsNoTracking()
             .ToListAsync();
 
-        return [.. posts.Select(p => new PostModel(p))];
+        return [.. posts.Select(p => new DiscussionModel(p))];
     }
 
     /// <inheritdoc/>
-    public async Task<List<PostModel>> MostCommentedPostsAsync(int count)
+    public async Task<List<DiscussionModel>> MostCommentedPostsAsync(int count)
     {
         logger.LogInformation("Retrieving {Count} most commented posts", count);
         var posts = await context.Posts
@@ -359,11 +357,11 @@ public class PostProvider(
             .AsNoTracking()
             .ToListAsync();
 
-        return [.. posts.Select(p => new PostModel(p))];
+        return [.. posts.Select(p => new DiscussionModel(p))];
     }
 
     /// <inheritdoc/>
-    public async Task<List<PostModel>> MostPopularPostsAsync(int count)
+    public async Task<List<DiscussionModel>> MostPopularPostsAsync(int count)
     {
         logger.LogInformation("Retrieving {Count} most popular posts", count);
         var posts = await context.Posts
@@ -375,11 +373,11 @@ public class PostProvider(
             .AsNoTracking()
             .ToListAsync();
 
-        return [.. posts.Select(p => new PostModel(p))];
+        return [.. posts.Select(p => new DiscussionModel(p))];
     }
 
     /// <inheritdoc/>
-    public async Task<List<PostModel>> MostRecentPostsAsync(int count)
+    public async Task<List<DiscussionModel>> MostRecentPostsAsync(int count)
     {
         logger.LogInformation("Retrieving {Count} most recent posts", count);
         var posts = await context.Posts
@@ -391,11 +389,11 @@ public class PostProvider(
             .AsNoTracking()
             .ToListAsync();
 
-        return [.. posts.Select(p => new PostModel(p))];
+        return [.. posts.Select(p => new DiscussionModel(p))];
     }
 
     /// <inheritdoc/>
-    public async Task<bool> UpdatePostAsync(PostModel postModel, ClaimsPrincipal userPrincipal)
+    public async Task<bool> UpdatePostAsync(DiscussionModel discussionModel, ClaimsPrincipal userPrincipal)
     {
         var user = await userManager.GetUserAsync(userPrincipal);
         if (user == null)
@@ -404,8 +402,8 @@ public class PostProvider(
             return false;
         }
 
-        logger.LogInformation("Updating post with ID: {PostId}", postModel.Id);
-        var existingPost = await context.Posts.FindAsync(postModel.Id);
+        logger.LogInformation("Updating post with ID: {PostId}", discussionModel.Id);
+        var existingPost = await context.Posts.FindAsync(discussionModel.Id);
         if (existingPost == null)
             return false;
 
@@ -416,18 +414,18 @@ public class PostProvider(
             return false;
         }
 
-        existingPost.Title = postModel.Title;
-        existingPost.Content = postModel.Content;
-        existingPost.Description = postModel.Description;
-        existingPost.Cover = postModel.Cover;
-        existingPost.IsFeatured = postModel.IsFeatured;
-        existingPost.IsPublic = postModel.IsPublic;
-        existingPost.PostType = postModel.PostType;
-        existingPost.PostViews = postModel.PostViews;
-        existingPost.Published = postModel.Published;
-        existingPost.Rating = postModel.Rating;
-        existingPost.Selected = postModel.Selected;
-        existingPost.Slug = GenerateSlug(postModel.Title);
+        existingPost.Title = discussionModel.Title;
+        existingPost.Content = discussionModel.Content;
+        existingPost.Description = discussionModel.Description;
+        existingPost.Cover = discussionModel.Cover;
+        existingPost.IsFeatured = discussionModel.IsFeatured;
+        existingPost.IsPublic = discussionModel.IsPublic;
+        existingPost.PostType = discussionModel.PostType;
+        existingPost.PostViews = discussionModel.PostViews;
+        existingPost.Published = discussionModel.Published;
+        existingPost.Rating = discussionModel.Rating;
+        existingPost.Selected = discussionModel.Selected;
+        existingPost.Slug = GenerateSlug(discussionModel.Title);
         existingPost.ModifiedDate = DateTime.UtcNow;
         existingPost.ModifiedID = user.Id;
 

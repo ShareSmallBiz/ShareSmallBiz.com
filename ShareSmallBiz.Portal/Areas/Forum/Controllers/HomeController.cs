@@ -4,7 +4,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers;
 
 [Area("Forum")]
 [Route("Forum/[controller]")]
-public class HomeController(PostProvider postProvider) : ForumBaseController
+public class HomeController(DiscussionProvider postProvider, ILogger<HomeController> logger) : ForumBaseController
 {
     [HttpGet("")]
     public async Task<IActionResult> Index()
@@ -15,40 +15,36 @@ public class HomeController(PostProvider postProvider) : ForumBaseController
     [HttpGet("{id}/{slug}")]
     public async Task<IActionResult> ViewPost(int id, string slug)
     {
+        logger.LogInformation("Call to Forum-Home-ViewPost");
         var post = await postProvider.GetPostByIdAsync(id);
         if (post == null)
         {
             return NotFound();
         }
-
-        if (!string.Equals(post.Slug, slug, StringComparison.OrdinalIgnoreCase))
-        {
-            return RedirectToActionPermanent(nameof(ViewPost), new { id, slug = post.Slug });
-        }
-
-        return View(post);
+        string Url = $"/Discussions/{id}/{post.Slug}";
+        return RedirectPermanent(Url);
     }
 
     [Authorize]
     [HttpPost("create")]
-    public async Task<IActionResult> CreatePost([FromBody] PostModel postModel)
+    public async Task<IActionResult> CreateDiscussion([FromBody] DiscussionModel discussionModel)
     {
         var user = User;
-        var createdPost = await postProvider.CreatePostAsync(postModel, user);
+        var createdPost = await postProvider.CreatePostAsync(discussionModel, user);
         if (createdPost == null)
         {
-            return BadRequest("Post creation failed.");
+            return BadRequest("Discussion creation failed.");
         }
         return Ok(createdPost);
     }
 
     [Authorize]
     [HttpPut("update")]
-    public async Task<IActionResult> UpdatePost([FromBody] PostModel postModel)
+    public async Task<IActionResult> UpdatePost([FromBody] DiscussionModel discussionModel)
     {
         var user = User;
-        var result = await postProvider.UpdatePostAsync(postModel, user);
-        return result ? Ok() : BadRequest("Post update failed.");
+        var result = await postProvider.UpdatePostAsync(discussionModel, user);
+        return result ? Ok() : BadRequest("Discussion update failed.");
     }
 
     [Authorize]
@@ -122,6 +118,9 @@ public class HomeController(PostProvider postProvider) : ForumBaseController
         var result = await postProvider.GetPostsAsync(pageNumber, pageSize, SortType.Recent);
         return PartialView("_postList", result.Posts);
     }
+
+
+
 
 
 }

@@ -1,4 +1,4 @@
-﻿@model List<PostModel>
+﻿@model List<DiscussionModel>
 
 <section class="container my-5">
     <div class="accordion" id="postAccordion">
@@ -21,7 +21,8 @@
                      aria-labelledby="heading@post.Id">
                     <div class="accordion-body">
                         <div class="d-flex flex-column align-items-center text-center mb-3">
-                            @if (!string.IsNullOrEmpty(post.Cover))
+
+                            @if (!string.IsNullOrEmpty(post.Cover) && post.Cover != "https://sharesmallbiz.com/")
                             {
                                 <img src="@post.Cover" alt="@post.Title" class="img-fluid rounded" style="width: 100%; max-height: 250px; object-fit: cover;">
                             }
@@ -42,7 +43,7 @@
                                     • <i class="bi bi-chat"></i> @(post.Comments.Count) comments
                                 </p>
                                 <p>@post.Description</p>
-                                <a href="/Forum/Home/@post.Id/@post.Slug" class="btn btn-outline-primary">
+                                <a href="/Discussions/@post.Id/@post.Slug" class="btn btn-outline-primary">
                                     <i class="bi bi-arrow-right-circle"></i> Read Full Post
                                 </a>
                             </div>
