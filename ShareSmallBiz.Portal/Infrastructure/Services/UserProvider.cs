@@ -51,10 +51,9 @@ public class UserProvider(
         return MapToUserModel(user);
     }
 
-    // Retrieve a user by username
     public async Task<UserModel?> GetUserByUsernameAsync(string username)
     {
-        var user = await context.Users
+        var user = await context.Users.Include(u => u.Posts).Include(u => u.LikedPosts)
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.UserName == username);
 
@@ -66,6 +65,8 @@ public class UserProvider(
 
         return MapToUserModel(user);
     }
+
+
 
     // Retrieve all users
     public async Task<List<UserModel>> GetAllUsersAsync()
@@ -203,6 +204,7 @@ public class UserProvider(
             Bio = user.Bio,
             FirstName = user.FirstName,
             LastName = user.LastName,
+            ProfilePicture = user.ProfilePicture,
             ProfilePictureUrl = user.ProfilePictureUrl,
             PostCount = user.Posts?.Count ?? 0,
             LikeCount = user.LikedPosts?.Count ?? 0

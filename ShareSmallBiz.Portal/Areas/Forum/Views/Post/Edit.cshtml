@@ -11,6 +11,7 @@
         .form-container {
             padding-bottom: 200px; /* Adjust as needed */
         }
+
         .cover-preview {
             max-width: 200px; /* Reduced size */
             height: auto;
@@ -110,12 +111,12 @@
     <div class="row">
         <div class="col-md-12">
             <br />
-            <hr/>
+            <hr />
             <br />
         </div>
     </div>
 </section>
-    
+
 
 
 
@@ -132,15 +133,21 @@
                     ['link'],
                     ['unorderedList', 'orderedList'],
                     ['removeformat'],
-                    ['fullscreen']
+                    ['fullscreen', 'viewHTML']
                 ],
                 autogrow: true,
                 removeformatPasted: true,
-                tagsToRemove: ['script', 'style'],
+                tagsToRemove: ['script', 'style'], // Keep scripts removed
                 semantic: true,
-                allowedTags: ['p', 'br', 'ul', 'ol', 'li', 'a', 'strong', 'em', 'u', 'strike'],
-                allowedAttributes: ['href', 'title', 'target'],
-                disabledTags: ['img'],
+                allowedTags: [
+                    'p', 'br', 'ul', 'ol', 'li', 'a', 'strong', 'em', 'u', 'strike',
+                    'iframe' // Allowing iframe for video embeds
+                ],
+                allowedAttributes: [
+                    'href', 'title', 'target',
+                    'src', 'width', 'height', 'allow', 'frameborder', 'allowfullscreen'
+                ],
+                disabledTags: [] // Ensure iframe is not removed
             });
 
             // Ensure pasted content is sanitized
@@ -153,11 +160,6 @@
 
                     $('#contentEditor').trumbowyg('html', sanitizedContent);
                 }, 10);
-            });
-
-            // Handle Image Upload
-            $('#uploadImage').click(function () {
-                $('#coverUpload').click();
             });
 
             $('#coverUpload').change(function () {

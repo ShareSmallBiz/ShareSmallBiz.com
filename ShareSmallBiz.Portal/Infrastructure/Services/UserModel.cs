@@ -37,7 +37,6 @@ namespace ShareSmallBiz.Portal.Infrastructure.Services
             Bio = author.Bio;
             ProfilePictureUrl = author.ProfilePictureUrl;
             ProfilePicture = author.ProfilePicture;
-
             PostCount = author.Posts?.Count ?? 0;
             LikeCount = author.LikedPosts?.Count ?? 0;
         }
