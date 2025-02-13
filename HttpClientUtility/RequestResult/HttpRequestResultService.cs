@@ -68,7 +68,7 @@ public class HttpRequestResultService(
 
             // Step 4: Send the HTTP request
             _logger.LogInformation("Sending HTTP request to {Url}", request.RequestUri);
-            HttpResponseMessage? response = await _httpClient.SendAsync(request, ct).ConfigureAwait(true);
+            HttpResponseMessage? response = await _httpClient.SendAsync(request, ct).ConfigureAwait(false);
 
             // Step 5: Handle response for redirects
             if (response?.StatusCode == HttpStatusCode.MovedPermanently)
@@ -79,7 +79,7 @@ public class HttpRequestResultService(
             }
 
             // Step 6: Process the response
-            return await ProcessHttpResponseAsync(response, httpSendResults, ct).ConfigureAwait(true);
+            return await ProcessHttpResponseAsync(response, httpSendResults, ct).ConfigureAwait(false);
         }
         catch (ArgumentNullException ex)
         {

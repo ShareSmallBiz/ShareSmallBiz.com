@@ -4,28 +4,30 @@
 {
     <div id="comment-@comment.Id" class="mb-2">
         <div class="list-group-item py-2">
-            <div class="d-flex align-items-start">
-                @if (comment?.Author?.ProfilePicture != null)
-                {
-                    <img class="rounded-circle me-2 flex-shrink-0" style="width: 36px; height: 36px; object-fit: cover;"
-                         src="data:image/*;base64,@(Convert.ToBase64String(comment.Author.ProfilePicture))" alt="User Profile" />
-                }
-                else
-                {
-                    <i class="bi bi-person-circle fs-3 text-secondary me-2"></i>
-                }
-                <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between">
-                        <strong class="text-truncate">@(comment.Author?.UserName ?? "Anonymous")</strong>
-                        <small class="text-muted"><i class="bi bi-clock"></i> @comment.CreatedDate.ToString("MMM d, yyyy")</small>
+            <div class="d-flex align-items-start flex-wrap">
+                <div class="flex-shrink-0">
+                    @if (comment?.Author?.ProfilePicture != null)
+                    {
+                        <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
+                             src="data:image/*;base64,@(Convert.ToBase64String(comment.Author.ProfilePicture))" alt="User Profile" />
+                    }
+                    else
+                    {
+                        <i class="bi bi-person-circle fs-3 text-secondary me-2"></i>
+                    }
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start">
+                        <strong class="text-break">@(comment.Author?.UserName ?? "Anonymous")</strong>
+                        <small class="text-muted mt-1 mt-md-0"><i class="bi bi-clock"></i> @comment.CreatedDate.ToString("MMM d, yyyy")</small>
                     </div>
-                    <p class="small text-muted mb-1">@comment.Content</p>
+                    <p class="small text-muted mb-0 text-break">@comment.Content</p>
                 </div>
             </div>
         </div>
         @if (User.Identity.IsAuthenticated && comment.Author.UserName == User.Identity.Name)
         {
-            <button class="btn btn-outline-danger btn-sm delete-comment" data-comment-id="@comment.Id">
+            <button class="btn btn-outline-danger btn-sm delete-comment mt-1" data-comment-id="@comment.Id">
                 <i class="bi bi-trash"></i>
             </button>
         }

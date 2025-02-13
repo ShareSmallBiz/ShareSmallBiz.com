@@ -65,7 +65,7 @@
         <div class="mb-3">
             <label asp-for="Cover" class="form-label">Cover Image</label>
             <div class="input-group">
-                <input disabled="disabled" asp-for="Cover" id="coverUrl" class="form-control" placeholder="Enter cover image URL" />
+                <input asp-for="Cover" id="coverUrl" class="form-control" placeholder="Enter cover image URL" />
                 <button type="button" class="btn btn-outline-secondary" id="browseImages"><i class="bi bi-search"></i> Lookup</button>
             </div>
             <img id="coverPreview" class="cover-preview" src="@Model.Cover" alt="Cover Image Preview" style="display: @(string.IsNullOrEmpty(Model.Cover) ? "none" : "block");" />

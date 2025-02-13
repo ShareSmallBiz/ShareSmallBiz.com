@@ -387,15 +387,15 @@ public class DiscussionProvider(
             .OrderByDescending(p => p.Published)
             .Take(count)
             .AsNoTracking()
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
         return [.. posts.Select(p => new DiscussionModel(p))];
     }
 
     /// <inheritdoc/>
-    public async Task<bool> UpdatePostAsync(DiscussionModel discussionModel, ClaimsPrincipal userPrincipal)
+    public async Task<bool> UpdatePostAsync(DiscussionModel discussionModel, ClaimsPrincipal userPrincipal,CancellationToken ct = default)
     {
-        var user = await userManager.GetUserAsync(userPrincipal);
+        var user = await userManager.GetUserAsync(userPrincipal).ConfigureAwait(false);
         if (user == null)
         {
             logger.LogWarning("No logged-in user found. Aborting post update.");
@@ -403,7 +403,7 @@ public class DiscussionProvider(
         }
 
         logger.LogInformation("Updating post with ID: {PostId}", discussionModel.Id);
-        var existingPost = await context.Posts.FindAsync(discussionModel.Id);
+        var existingPost = await context.Posts.FindAsync(discussionModel.Id,ct).ConfigureAwait(false);
         if (existingPost == null)
             return false;
 
@@ -421,16 +421,14 @@ public class DiscussionProvider(
         existingPost.IsFeatured = discussionModel.IsFeatured;
         existingPost.IsPublic = discussionModel.IsPublic;
         existingPost.PostType = discussionModel.PostType;
-        existingPost.PostViews = discussionModel.PostViews;
         existingPost.Published = discussionModel.Published;
-        existingPost.Rating = discussionModel.Rating;
         existingPost.Selected = discussionModel.Selected;
         existingPost.Slug = GenerateSlug(discussionModel.Title);
         existingPost.ModifiedDate = DateTime.UtcNow;
         existingPost.ModifiedID = user.Id;
 
         context.Posts.Update(existingPost);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(ct).ConfigureAwait(false);
         return true;
     }
     /// <summary>
@@ -440,10 +438,10 @@ public class DiscussionProvider(
     /// <param name="commentId">ID of the comment to delete.</param>
     /// <param name="userPrincipal">The current user's claims principal.</param>
     /// <returns>True if the comment was deleted successfully, otherwise false.</returns>
-    public async Task<bool> DeleteCommentAsync(int postId, int commentId, ClaimsPrincipal userPrincipal)
+    public async Task<bool> DeleteCommentAsync(int postId, int commentId, ClaimsPrincipal userPrincipal, CancellationToken ct)
     {
         // Validate user
-        var user = await userManager.GetUserAsync(userPrincipal);
+        var user = await userManager.GetUserAsync(userPrincipal).ConfigureAwait(false);
         if (user == null)
         {
             logger.LogWarning("No logged-in user found. Aborting comment deletion.");
@@ -454,7 +452,7 @@ public class DiscussionProvider(
 
         var comment = await context.PostComments
             .Include(c => c.Post)
-            .FirstOrDefaultAsync(c => c.Id == commentId && c.PostId == postId);
+            .FirstOrDefaultAsync(c => c.Id == commentId && c.PostId == postId, ct).ConfigureAwait(false);
 
         if (comment == null)
         {
@@ -462,14 +460,14 @@ public class DiscussionProvider(
             return false;
         }
 
-        if (comment.Author.Id != user.Id)
+        if (string.Compare(comment.Author.Id, user.Id, StringComparison.Ordinal) != 0)
         {
             logger.LogWarning("User {UserId} attempted to delete a comment they do not own.", user.Id);
             return false;
         }
 
         context.PostComments.Remove(comment);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(ct).ConfigureAwait(false);
         return true;
     }
 }

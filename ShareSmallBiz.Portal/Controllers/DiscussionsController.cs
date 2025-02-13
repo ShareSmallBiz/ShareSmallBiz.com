@@ -59,15 +59,15 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
 
     // DELETE: /post/{postId}/comment/{commentId}
     [HttpDelete("{postId}/comment/{commentId}")]
-    public async Task<IActionResult> DeleteComment(int postId, int commentId)
+    public async Task<IActionResult> DeleteComment(int postId, int commentId, CancellationToken ct = default)
     {
-        if (!User.Identity.IsAuthenticated)
+        if (!User?.Identity?.IsAuthenticated ?? true)
         {
             return Unauthorized();
         }
         var userPrincipal = HttpContext.User;
-        await postProvider.DeleteCommentAsync(postId, commentId, userPrincipal);
-        var model = await postProvider.GetPostByIdAsync(postId);
+        await postProvider.DeleteCommentAsync(postId, commentId, userPrincipal, ct).ConfigureAwait(false);
+        var model = await postProvider.GetPostByIdAsync(postId).ConfigureAwait(false);
         return PartialView("_CommentsPartial", model.Comments);
     }
 

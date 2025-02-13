@@ -37,12 +37,14 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 
         public class InputModel
         {
+            [Required]
             [Display(Name = "First Name")]
             public string FirstName { get; set; }
-
+            [Required]
             [Display(Name = "Last Name")]
             public string LastName { get; set; }
 
+            [Required]
             [Display(Name = "Username")]
             public string Username { get; set; }
 
@@ -52,10 +54,6 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 
             [Display(Name = "Profile Picture")]
             public byte[] ProfilePicture { get; set; }
-
-            // SEO Fields
-            [Display(Name = "Profile URL (Slug)")]
-            public string Slug { get; set; }
 
             [Display(Name = "Meta Description")]
             public string MetaDescription { get; set; }
@@ -95,17 +93,10 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 ProfilePicture = user.ProfilePicture,
-
-                // Load SEO Fields
-                Slug = user.Slug,
                 MetaDescription = user.MetaDescription,
                 Keywords = user.Keywords,
-
-                // Load Business Info
                 Bio = user.Bio,
                 WebsiteUrl = user.WebsiteUrl,
-
-                // Load Social Links
                 LinkedIn = user.SocialLinks.FirstOrDefault(s => s.Platform == "LinkedIn")?.Url,
                 Facebook = user.SocialLinks.FirstOrDefault(s => s.Platform == "Facebook")?.Url,
                 Instagram = user.SocialLinks.FirstOrDefault(s => s.Platform == "Instagram")?.Url
@@ -124,9 +115,9 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync(CancellationToken ct = default)
         {
-            var user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.GetUserAsync(User).ConfigureAwait(false);
             if (user == null)
             {
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
@@ -134,7 +125,7 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 
             if (!ModelState.IsValid)
             {
-                await LoadAsync(user);
+                await LoadAsync(user).ConfigureAwait(false);
                 return Page();
             }
 
@@ -175,11 +166,24 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
             }
 
             // Update SEO Fields
-            if (Input.Slug != user.Slug)
+            if (Input.Username != user.UserName)
             {
-                user.Slug = Input.Slug;
+                user.Slug = Input.Username;
+                user.DisplayName = Input.Username;
+                user.UserName = Input.Username;
                 updated = true;
             }
+            if (string.IsNullOrEmpty(user.UserName))
+            {
+                user.UserName = user.Email;
+                updated = true;
+            }
+            if (string.IsNullOrEmpty(user.DisplayName))
+            {
+                user.DisplayName = Input.Username;
+                updated = true;
+            }
+
             if (Input.MetaDescription != user.MetaDescription)
             {
                 user.MetaDescription = Input.MetaDescription;
@@ -191,16 +195,6 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
                 updated = true;
             }
 
-            if (string.IsNullOrEmpty(user.UserName))
-            {
-                user.UserName = user.Email;
-                updated = true;
-            }
-            if (string.IsNullOrEmpty(user.DisplayName))
-            {
-                user.DisplayName = Input.Username;
-                updated = true;
-            }
 
 
             // Update Social Links
@@ -243,7 +237,7 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
                 {
                     socialLinks.Add(new SocialLink { UserId = userId, Platform = platform, Url = newUrl });
                 }
-                else if (existingLink.Url != newUrl)
+                else if (string.Compare(existingLink.Url, newUrl) != 0)
                 {
                     existingLink.Url = newUrl;
                 }
