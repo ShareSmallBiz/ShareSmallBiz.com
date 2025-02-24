@@ -65,6 +65,8 @@ builder.Services.AddDbContext<ShareSmallBizUserContext>(options =>
 builder.Services.AddIdentity<ShareSmallBizUser, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
+    options.User.RequireUniqueEmail = true;
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
 })
     .AddEntityFrameworkStores<ShareSmallBizUserContext>()
     .AddDefaultTokenProviders()
@@ -77,9 +79,52 @@ builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(@"C:\websites\ShareSmallBiz\keys"));
 
 // ========================
+// JWT Authentication Configuration
+// ========================
+// 1. Get your secret from configuration (preferably stored safely)
+var jwtSecret = builder.Configuration["JwtSettings:Secret"];
+var issuer = builder.Configuration["JwtSettings:Issuer"];
+var audience = builder.Configuration["JwtSettings:Audience"];
+var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+// 2. Register authentication and specify Bearer
+builder.Services.AddAuthentication(options =>
+{
+    // By default, do not override existing schemes. We explicitly add the JWT scheme below.
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    // 3. Token validation parameters
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,           // check token expiration
+        ValidateIssuerSigningKey = true,   // verify signature to avoid tampering
+        ValidIssuer = issuer,
+        ValidAudience = audience,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ClockSkew = TimeSpan.Zero          // remove default buffer time
+    };
+
+    // 4. (Optional) Define additional events for customization
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError(context.Exception, "JWT Authentication failed.");
+            return Task.CompletedTask;
+        }
+    };
+});
+
+
+// ========================
 // Authentication & Cookie Settings
 // ========================
-// ✅ Removed duplicate `AddAuthentication()` call
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.HttpOnly = true;

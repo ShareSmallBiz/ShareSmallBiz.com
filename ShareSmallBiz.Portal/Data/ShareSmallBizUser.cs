@@ -93,7 +93,6 @@ public class ShareSmallBizUser : IdentityUser
     // ---- SOCIAL INTERACTIONS ----
     public ICollection<UserFollow> Followers { get; set; }
     public ICollection<UserFollow> Following { get; set; }
-
     public virtual ICollection<PostLike> LikedPosts { get; set; }
     public virtual ICollection<PostCommentLike> LikedPostComments { get; set; }
     public virtual ICollection<Post> Posts { get; set; }
@@ -162,18 +161,13 @@ public class UserService
 {
     [Key]
     public int Id { get; set; }
-
     [Required]
     public string Name { get; set; } = string.Empty;
-
     [MaxLength(500)]
     public string Description { get; set; } = string.Empty;
-
     public bool IsBusinessService { get; set; } = false; // If true, service is for a business
-
     public string? UserId { get; set; }
     public virtual ShareSmallBizUser? User { get; set; } = null!;
-
     public string? BusinessId { get; set; }
     public virtual BusinessProfile? Business { get; set; } = null!;
 }

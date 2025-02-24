@@ -54,29 +54,101 @@ public class AuthController : ControllerBase
         var token = GenerateJwtToken(user);
         return Ok(new { Token = token, UserId = user.Id, DisplayName = user.DisplayName });
     }
+    [HttpGet("test")]
+    public IActionResult TestToken()
+    {
+        try
+        {
+            // 1) Retrieve the Authorization header
+            var authHeader = Request.Headers["Authorization"].FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(authHeader) || !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                return Unauthorized(new { Message = "Missing or invalid Authorization header." });
+            }
+
+            // 2) Extract the token (strip out "Bearer ")
+            var tokenString = authHeader["Bearer ".Length..].Trim();
+
+            // 3) Prepare validation parameters (matching GenerateJwtToken settings)
+            var secret = _configuration["JwtSettings:Secret"];
+            var issuer = _configuration["JwtSettings:Issuer"];
+            var audience = _configuration["JwtSettings:Audience"];
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+            var tokenValidationParams = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = true,
+                ValidIssuer = issuer,
+                ValidateAudience = true,
+                ValidAudience = audience,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            // 4) Validate the token
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var principal = tokenHandler.ValidateToken(tokenString, tokenValidationParams, out SecurityToken validatedToken);
+
+            // 5) If we get here without exception, the token is valid
+            return Ok(new
+            {
+                Message = "Token is valid.",
+                Claims = principal.Claims.Select(c => new { c.Type, c.Value }).ToList()
+            });
+        }
+        catch (SecurityTokenExpiredException)
+        {
+            return Unauthorized(new { Message = "Token has expired." });
+        }
+        catch (SecurityTokenException ex)
+        {
+            return Unauthorized(new { Message = $"Token validation failed: {ex.Message}" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { Message = ex.Message });
+        }
+    }
+
 
     private string GenerateJwtToken(ShareSmallBizUser user)
     {
-        var claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim("displayName", user.DisplayName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+        if (user == null)
+            throw new ArgumentNullException(nameof(user), "User parameter is required.");
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+        // Retrieve secret from configuration
+        var secret = _configuration["JwtSettings:Secret"];
+        if (string.IsNullOrWhiteSpace(secret))
+            throw new InvalidOperationException("JWT secret not configured or is empty. Check your appsettings or user secrets.");
+
+        // Build the claims
+        var claims = new List<Claim>
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, user.Id ?? string.Empty),
+        new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+        new Claim("displayName", user.DisplayName ?? string.Empty),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
+
+        // Generate the signing credentials
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        // Construct the token
         var token = new JwtSecurityToken(
-            _configuration["Jwt:Issuer"],
-            _configuration["Jwt:Audience"],
-            claims,
+            issuer: _configuration["JwtSettings:Issuer"],
+            audience: _configuration["JwtSettings:Audience"],
+            claims: claims,
             expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: creds
         );
 
+        // Return the serialized token
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
 }
 
 public class LoginRequest

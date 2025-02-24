@@ -1,7 +1,9 @@
-﻿using ShareSmallBiz.Portal.Infrastructure.Services;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Controllers.api;
 
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [ApiController]
 [Route("api/[controller]")]
 public class UsersController(UserProvider userService, ILogger<UsersController> logger) : ControllerBase

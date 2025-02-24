@@ -79,10 +79,10 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
             public string Instagram { get; set; }
         }
 
-        private async Task LoadAsync(ShareSmallBizUser user)
+        private async Task LoadAsync(ShareSmallBizUser user, CancellationToken ct = default)
         {
-            var userName = await _userManager.GetUserNameAsync(user);
-            var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
+            var userName = await _userManager.GetUserNameAsync(user).ConfigureAwait(true);
+            var phoneNumber = await _userManager.GetPhoneNumberAsync(user).ConfigureAwait(true);
 
             Username = userName;
 
@@ -103,15 +103,15 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
             };
         }
 
-        public async Task<IActionResult> OnGetAsync()
+        public async Task<IActionResult> OnGetAsync(CancellationToken ct = default)
         {
-            var user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.GetUserAsync(User).ConfigureAwait(false);
             if (user == null)
             {
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
-            await LoadAsync(user);
+            await LoadAsync(user,ct).ConfigureAwait(false);
             return Page();
         }
 
@@ -125,7 +125,7 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 
             if (!ModelState.IsValid)
             {
-                await LoadAsync(user).ConfigureAwait(false);
+                await LoadAsync(user,ct).ConfigureAwait(false);
                 return Page();
             }
 
@@ -168,6 +168,14 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
             // Update SEO Fields
             if (Input.Username != user.UserName)
             {
+                // Check if username is already taken
+                var existingUser = await _userManager.FindByNameAsync(Input.Username);
+                if (existingUser != null && existingUser.Id != user.Id)
+                {
+                    UserNameChangeLimitMessage = "Username is already taken.";
+                    return RedirectToPage();
+                }
+
                 user.Slug = Input.Username;
                 user.DisplayName = Input.Username;
                 user.UserName = Input.Username;
