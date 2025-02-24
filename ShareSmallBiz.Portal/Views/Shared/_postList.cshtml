@@ -6,9 +6,9 @@
         {
             var postId = $"collapse{post.Id}"; // Ensure unique ID
 
-            <div class="accordion-item">
+            <article class="accordion-item">
                 <h2 class="accordion-header" id="heading@post.Id">
-                    <button class="accordion-button "
+                    <button class="accordion-button"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#@postId"
@@ -17,11 +17,10 @@
                         <i class="bi bi-file-earmark-post me-2"></i>@post.Title
                     </button>
                 </h2>
-                <div id="@postId" class="accordion-collapse collapse show "
+                <div id="@postId" class="accordion-collapse collapse show"
                      aria-labelledby="heading@post.Id">
                     <div class="accordion-body">
                         <div class="d-flex flex-column align-items-center text-center mb-3">
-
                             @if (!string.IsNullOrEmpty(post.Cover) && post.Cover != "https://sharesmallbiz.com/")
                             {
                                 <img src="@post.Cover" alt="@post.Title" class="img-fluid rounded" style="width: 100%; max-height: 250px; object-fit: cover;">
@@ -38,7 +37,16 @@
                                     {
                                         <i class="bi bi-person-circle"></i>
                                     }
-                                    <strong>@(post?.Author?.UserName ?? "Unknown")</strong>
+                                    <strong>
+                                        @if (!string.IsNullOrEmpty(post?.Author?.UserName))
+                                        {
+                                            <a href="/profiles/@post.Author.UserName">@post.Author.UserName</a>
+                                        }
+                                        else
+                                        {
+                                            @:Unknown
+                                        }
+                                    </strong>
                                     • <i class="bi bi-eye"></i> @(post.PostViews) views
                                     • <i class="bi bi-chat"></i> @(post.Comments.Count) comments
                                 </p>
@@ -50,7 +58,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </article>
         }
     </div>
 </section>

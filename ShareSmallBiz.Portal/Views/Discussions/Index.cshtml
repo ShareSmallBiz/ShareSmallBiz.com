@@ -17,46 +17,82 @@
         </div>
     }
 
-    <!-- Full-width Navigation Bar -->
-    <div class="d-flex justify-content-center mb-4">
-        <div class="btn-group" role="group">
-            <!-- Most Popular Button -->
-            <button class="btn btn-outline-primary" onclick="loadPosts('/Discussions/popular/10')">
-                <i class="bi bi-trophy-fill me-2"></i> Most Popular
-            </button>
-
-            <!-- Most Comments Button -->
-            <button class="btn btn-outline-warning" onclick="loadPosts('/Discussions/commented/10')">
-                <i class="bi bi-chat-left-dots-fill me-2"></i> Most Comments
-            </button>
-
-            <!-- Recent Posts Button -->
-            <button class="btn btn-outline-success" onclick="loadPosts('/Discussions/recent/10')">
-                <i class="bi bi-clock-fill me-2"></i> Recent 
-            </button>
-        </div>
+    <!-- Navigation Bar with On-Page Links -->
+    <nav class="text-center mb-4">
+        <a href="#mostpopular" class="btn btn-outline-primary me-2" onclick="loadPostsByHash('#mostpopular');">
+            <i class="bi bi-trophy-fill me-2"></i> Most Popular
+        </a>
+        <a href="#mostcomments" class="btn btn-outline-warning me-2" onclick="loadPostsByHash('#mostcomments');">
+            <i class="bi bi-chat-left-dots-fill me-2"></i> Most Comments
+        </a>
+        <a href="#recent" class="btn btn-outline-success me-2" onclick="loadPostsByHash('#recent');">
+            <i class="bi bi-clock-fill me-2"></i> Recent
+        </a>
         @if (user != null && user.IsAuthenticated)
         {
-            <button class="btn btn-outline-info" onclick="loadPosts('/Discussions/my/10')">
+            <a href="#mine" class="btn btn-outline-info" onclick="loadPostsByHash('#mine');">
                 <i class="bi bi-person-lines-fill me-2"></i> Mine
-            </button>
+            </a>
         }
-    </div>
+    </nav>
 
     <!-- Posts Container -->
     <div id="postsContainer" class="list-group"></div>
+
+    <!-- Hidden Static Links for Search Engine Indexing -->
+    <div style="display: none;">
+        <a href="/Discussions/popular/10" id="link-mostpopular">Most Popular Discussions</a>
+        <a href="/Discussions/commented/10" id="link-mostcomments">Most Commented Discussions</a>
+        <a href="/Discussions/recent/10" id="link-recent">Recent Discussions</a>
+        @if (user != null && user.IsAuthenticated)
+        {
+            <a href="/Discussions/my/10" id="link-mine">My Discussions</a>
+        }
+    </div>
 </div>
 
 @section Scripts {
     <script>
-        $(document).ready(function () {
-            loadPosts('/Discussions/recent/10');
-        });
+        function loadPostsByHash(hash) {
+            var endpoint = "";
+            switch(hash) {
+                case "#mostpopular":
+                    endpoint = '/Discussions/popular/10';
+                    break;
+                case "#mostcomments":
+                    endpoint = '/Discussions/commented/10';
+                    break;
+                case "#recent":
+                    endpoint = '/Discussions/recent/10';
+                    break;
+                case "#mine":
+                    endpoint = '/Discussions/my/10';
+                    break;
+                default:
+                    endpoint = '/Discussions/recent/10';
+            }
+            loadPosts(endpoint);
+        }
 
         function loadPosts(endpoint) {
             $.get(endpoint, function (data) {
                 $("#postsContainer").html(data);
             });
         }
+
+        $(document).ready(function () {
+            // On page load, check the hash. Default to #recent if none of the recognized ones exist.
+            var currentHash = window.location.hash;
+            if (currentHash !== "#mostpopular" && currentHash !== "#mostcomments" && currentHash !== "#recent" && currentHash !== "#mine") {
+                currentHash = "#recent";
+                window.location.hash = currentHash;
+            }
+            loadPostsByHash(currentHash);
+
+            // Listen for hash change events to reload the posts accordingly.
+            $(window).on('hashchange', function () {
+                loadPostsByHash(window.location.hash);
+            });
+        });
     </script>
 }

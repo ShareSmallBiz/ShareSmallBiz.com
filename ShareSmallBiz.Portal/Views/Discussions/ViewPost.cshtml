@@ -9,44 +9,60 @@
     var currentUserName = User.Identity.IsAuthenticated ? User.Identity.Name : "";
 }
 
-<!-- Main Container -->
 <div class="container-fluid px-3 px-md-5 my-3">
-
-    <!-- Post Content -->
-    <div class="card shadow-lg border-0">
+    <article class="card shadow-lg border-0" itemscope itemtype="http://schema.org/Article">
+        <meta itemprop="headline" content="@Model.Title" />
+        <meta itemprop="datePublished" content="@Model.Published.ToString("yyyy-MM-dd")" />
         <div class="card-body">
-
             <!-- Cover Image -->
             @if (!string.IsNullOrEmpty(Model.Cover) && Model.Cover != "https://sharesmallbiz.com/")
             {
-                <div class="cover-container mb-3 text-center">
+                <figure class="cover-container mb-3 text-center">
                     <img src="@Model.Cover"
                          class="img-fluid cover-image rounded shadow-sm lazyload mx-auto d-block"
                          alt="@Model.Title"
                          title="@Model.Cover"
                          loading="lazy"
-                         style="max-height: 50vh; object-fit: cover;">
-                </div>
+                         style="max-height: 50vh; object-fit: cover;"
+                         itemprop="image" />
+                </figure>
             }
 
-            <!-- Post Title -->
-            <h1 class="card-title text-center">@Model.Title</h1>
-
-            <!-- Author & Metadata -->
-            <p class="text-muted text-center">
-                @if (Model?.Author?.ProfilePicture != null)
-                {
-                    <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
-                         src="data:image/*;base64,@(Convert.ToBase64String(Model.Author.ProfilePicture))" alt="User Profile">
-                }
-                else
-                {
-                    <i class="bi bi-person-circle"></i>
-                }
-                <strong>@(Model?.Author?.UserName ?? "Unknown Author")</strong>
-                | <i class="bi bi-eye"></i> @Model.PostViews views
-                | <i class="bi bi-calendar"></i> @Model.Published.ToString("MMM d, yyyy")
-            </p>
+            <!-- Post Header -->
+            <header>
+                <h1 class="card-title text-center" itemprop="headline">@Model.Title</h1>
+                <p class="text-muted text-center">
+                    @if (Model?.Author?.ProfilePicture != null)
+                    {
+                        <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
+                             src="data:image/*;base64,@(Convert.ToBase64String(Model.Author.ProfilePicture))" alt="User Profile" />
+                    }
+                    else
+                    {
+                        <i class="bi bi-person-circle"></i>
+                    }
+                    <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+                        <meta itemprop="name" content="@(Model?.Author?.UserName ?? "Unknown Author")" />
+                        <strong>
+                            @if (!string.IsNullOrEmpty(Model?.Author?.UserName))
+                            {
+                                <a href="/profiles/@Model.Author.UserName" itemprop="url">
+                                    @(Model.Author.UserName)
+                                </a>
+                            }
+                            else
+                            {
+                                @:Unknown Author
+                            }
+                        </strong>
+                    </span>
+                    | <i class="bi bi-eye"></i> <span itemprop="interactionCount">@(Model.PostViews) views</span>
+                    | <i class="bi bi-calendar"></i>
+                    <time datetime="@Model.Published.ToString("yyyy-MM-dd")" itemprop="datePublished">
+                        @Model.Published.ToString("MMM d, yyyy")
+                    </time>
+                </p>
+            </header>
 
             <!-- Edit Post Link (Only for Author) -->
             @if (SignInManager.IsSignedIn(User) && Model.Author.Id == currentUserId)
@@ -61,14 +77,14 @@
             <hr />
 
             <!-- Post Content -->
-            <div class="post-content">
+            <div class="post-content" itemprop="articleBody">
                 @Html.Raw(Model.Content)
             </div>
         </div>
-    </div>
+    </article>
 
+    <!-- Comments Section -->
     <section class="card shadow-sm border-0 p-3 mb-4">
-        <!-- Comments Section -->
         <div class="card-header">
             <i class="bi bi-chat-dots"></i> Comments
         </div>
@@ -94,7 +110,6 @@
 
         @if (!SignInManager.IsSignedIn(User))
         {
-            <!-- Call to Action for Guests -->
             <div class="alert alert-info text-center mt-3">
                 <p><strong>Want to join the conversation?</strong></p>
                 <p>
@@ -135,7 +150,6 @@
                     method: 'POST',
                     data: { comment: commentText },
                     success: function (response) {
-                        // Replace the inner HTML of the commentsList div with the rendered partial view HTML
                         $("#commentsList").html(response);
                         $("#newCommentText").val('');
                     },
@@ -153,7 +167,6 @@
                     url: '/post/' + postId + '/comment/' + commentId,
                     method: 'DELETE',
                     success: function (response) {
-                        // Update the comments list with the new rendered HTML
                         $("#commentsList").html(response);
                     },
                     error: function () {

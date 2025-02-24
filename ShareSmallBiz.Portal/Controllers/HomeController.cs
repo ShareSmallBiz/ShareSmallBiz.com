@@ -10,6 +10,10 @@ public class HomeController(DiscussionProvider postProvider, ILogger<HomeControl
     {
         return View(await postProvider.FeaturedPostsAsync(3));
     }
+    public IActionResult ContentModerationPolicy()
+    {
+        return View();
+    }
 
     public IActionResult Privacy()
     {
