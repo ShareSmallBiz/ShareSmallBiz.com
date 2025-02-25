@@ -19,12 +19,10 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
         {
             return NotFound();
         }
-
         if (!string.Equals(post.Slug, slug, StringComparison.OrdinalIgnoreCase))
         {
             return RedirectToActionPermanent(nameof(ViewPost), new { id, slug = post.Slug });
         }
-
         return View(post);
     }
 

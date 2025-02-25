@@ -4,16 +4,6 @@
       "ignored": "true",
       "type": "mssql",
       "connectionId": "ShareSmallBizUserContext"
-    },
-    "mssql2": {
-      "ignored": "true",
-      "type": "mssql",
-      "connectionId": "GPTDbContext"
-    },
-    "mssql3": {
-      "ignored": "true",
-      "type": "mssql",
-      "connectionId": "ShareSmallBizContext"
     }
   }
 }

@@ -1,23 +1,20 @@
 ﻿using HttpClientUtility.MemoryCache;
 using HttpClientUtility.RequestResult;
 using HttpClientUtility.StringConverter;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Microsoft.SemanticKernel;
-using ScottPlot.Statistics;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Logging;
+using ShareSmallBiz.Portal.Infrastructure.Middleware;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 using ShareSmallBiz.Portal.Interfaces;
 using ShareSmallBiz.Portal.Models;
-using System.Reflection;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Westwind.AspNetCore.Markdown;
-using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.DataProtection;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -90,72 +87,33 @@ var key = Encoding.ASCII.GetBytes(jwtSecret);
 // 2. Register authentication and specify Bearer
 builder.Services.AddAuthentication(options =>
 {
-    // By default, do not override existing schemes. We explicitly add the JWT scheme below.
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-.AddJwtBearer(options =>
-{
-    // 3. Token validation parameters
-    options.TokenValidationParameters = new TokenValidationParameters
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,           // check token expiration
-        ValidateIssuerSigningKey = true,   // verify signature to avoid tampering
-        ValidIssuer = issuer,
-        ValidAudience = audience,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ClockSkew = TimeSpan.Zero          // remove default buffer time
-    };
-
-    // 4. (Optional) Define additional events for customization
-    options.Events = new JwtBearerEvents
-    {
-        OnAuthenticationFailed = context =>
+        // 3. Token validation parameters
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogError(context.Exception, "JWT Authentication failed.");
-            return Task.CompletedTask;
-        }
-    };
-});
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,           // check token expiration
+            ValidateIssuerSigningKey = true,   // verify signature to avoid tampering
+            ValidIssuer = issuer,
+            ValidAudience = audience,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ClockSkew = TimeSpan.Zero          // remove default buffer time
+        };
 
-
-// ========================
-// Authentication & Cookie Settings
-// ========================
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.IsEssential = true;
-    options.ExpireTimeSpan = TimeSpan.FromDays(7);
-    options.SlidingExpiration = true;
-
-    options.LoginPath = "/Identity/Account/Login";
-    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
-    options.Cookie.Name = ".AspNetCore.Identity.Application";
-
-    options.Events = new CookieAuthenticationEvents
-    {
-        OnValidatePrincipal = async context =>
+        // 4. (Optional) Define additional events for customization
+        options.Events = new JwtBearerEvents
         {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            var userPrincipal = context.Principal;
-
-            if (userPrincipal.Identity.IsAuthenticated)
+            OnAuthenticationFailed = context =>
             {
-                logger.LogInformation("🔹 Authentication cookie validated successfully for {UserName}", userPrincipal.Identity.Name);
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError(context.Exception, "JWT Authentication failed.");
+                return Task.CompletedTask;
             }
-            else
-            {
-                logger.LogWarning("⚠️ Authentication cookie validation failed! User is NOT authenticated.");
-            }
-        }
-    };
-});
+        };
+    });
 
 // ========================
 // Authorization Configuration
@@ -196,15 +154,20 @@ builder.Services.AddSwaggerGen(options =>
 
 // ========================
 // Application Services
-// ========================
+// ======================
+builder.Services.AddSingleton<ILogger<Program>, Logger<Program>>();
 builder.Services.AddSingleton<IStorageProvider, StorageProvider>();
-builder.Services.AddScoped<DiscussionProvider, DiscussionProvider>();
-builder.Services.AddScoped<UserProvider, UserProvider>();
-builder.Services.AddScoped<CommentProvider, CommentProvider>();
 builder.Services.AddSingleton<IStringConverter, NewtonsoftJsonStringConverter>();
 builder.Services.AddSingleton(new ApplicationStatus(Assembly.GetExecutingAssembly()));
 builder.Services.AddSingleton<ChatHistoryStore>();
 builder.Services.AddSingleton<IScopeInformation, ScopeInformation>();
+
+builder.Services.AddScoped<ShareSmallBizUserManager, ShareSmallBizUserManager>();
+
+builder.Services.AddScoped<DiscussionProvider, DiscussionProvider>();
+builder.Services.AddScoped<UserProvider, UserProvider>();
+builder.Services.AddScoped<CommentProvider, CommentProvider>();
+
 
 // ========================
 // Markdown Support
@@ -252,6 +215,7 @@ builder.Services.AddSingleton(new JsonSerializerOptions
 });
 
 var app = builder.Build();
+app.UseGlobalExceptionHandling();
 
 // ========================
 // Middleware Configuration

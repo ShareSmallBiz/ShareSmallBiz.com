@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Infrastructure.Services;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
@@ -11,19 +12,10 @@ using System.Threading.Tasks;
 
 namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 {
-    public class IndexModel : PageModel
+    public class IndexModel(
+        ShareSmallBizUserManager userManager,
+        SignInManager<ShareSmallBizUser> signInManager) : PageModel
     {
-        private readonly UserManager<ShareSmallBizUser> _userManager;
-        private readonly SignInManager<ShareSmallBizUser> _signInManager;
-
-        public IndexModel(
-            UserManager<ShareSmallBizUser> userManager,
-            SignInManager<ShareSmallBizUser> signInManager)
-        {
-            _userManager = userManager;
-            _signInManager = signInManager;
-        }
-
         public string Username { get; set; }
 
         [TempData]
@@ -81,8 +73,8 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 
         private async Task LoadAsync(ShareSmallBizUser user, CancellationToken ct = default)
         {
-            var userName = await _userManager.GetUserNameAsync(user).ConfigureAwait(true);
-            var phoneNumber = await _userManager.GetPhoneNumberAsync(user).ConfigureAwait(true);
+            var userName = await userManager.GetUserNameAsync(user).ConfigureAwait(true);
+            var phoneNumber = await userManager.GetPhoneNumberAsync(user).ConfigureAwait(true);
 
             Username = userName;
 
@@ -105,35 +97,34 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 
         public async Task<IActionResult> OnGetAsync(CancellationToken ct = default)
         {
-            var user = await _userManager.GetUserAsync(User).ConfigureAwait(false);
+            var user = await userManager.GetFullUserAsync(User).ConfigureAwait(false);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
             }
-
-            await LoadAsync(user,ct).ConfigureAwait(false);
+            await LoadAsync(user, ct).ConfigureAwait(false);
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(CancellationToken ct = default)
         {
-            var user = await _userManager.GetUserAsync(User).ConfigureAwait(false);
+            var user = await userManager.GetFullUserAsync(User).ConfigureAwait(false);
             if (user == null)
             {
-                return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+                return NotFound($"Unable to load user with ID '{userManager.GetUserId(User)}'.");
             }
 
             if (!ModelState.IsValid)
             {
-                await LoadAsync(user,ct).ConfigureAwait(false);
+                await LoadAsync(user, ct).ConfigureAwait(false);
                 return Page();
             }
 
             // Update phone number
-            var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
+            var phoneNumber = await userManager.GetPhoneNumberAsync(user);
             if (Input.PhoneNumber != phoneNumber)
             {
-                var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+                var setPhoneResult = await userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
                 if (!setPhoneResult.Succeeded)
                 {
                     StatusMessage = "Unexpected error when trying to set phone number.";
@@ -169,7 +160,7 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
             if (Input.Username != user.UserName)
             {
                 // Check if username is already taken
-                var existingUser = await _userManager.FindByNameAsync(Input.Username);
+                var existingUser = await userManager.FindByNameAsync(Input.Username);
                 if (existingUser != null && existingUser.Id != user.Id)
                 {
                     UserNameChangeLimitMessage = "Username is already taken.";
@@ -202,21 +193,23 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
                 user.Keywords = Input.Keywords;
                 updated = true;
             }
+            if ((Input.LinkedIn != null && user.SocialLinks.FirstOrDefault(s => s.Platform == "LinkedIn")?.Url != Input.LinkedIn) ||
+                (Input.Facebook != null && user.SocialLinks.FirstOrDefault(s => s.Platform == "Facebook")?.Url != Input.Facebook) ||
+                (Input.Instagram != null && user.SocialLinks.FirstOrDefault(s => s.Platform == "Instagram")?.Url != Input.Instagram))
+            {
+                user.SocialLinks = await userManager.GetUserSocialLinksAsync(user.Id).ConfigureAwait(false);
+                UpdateSocialLink(user.SocialLinks, user.Id, "LinkedIn", Input.LinkedIn);
+                UpdateSocialLink(user.SocialLinks, user.Id, "Facebook", Input.Facebook);
+                UpdateSocialLink(user.SocialLinks, user.Id, "Instagram", Input.Instagram);
+
+                updated = true;
+            }
 
 
-
-            // Update Social Links
-            var socialLinks = user.SocialLinks.ToList();
-
-            UpdateSocialLink(socialLinks, user.Id, "LinkedIn", Input.LinkedIn);
-            UpdateSocialLink(socialLinks, user.Id, "Facebook", Input.Facebook);
-            UpdateSocialLink(socialLinks, user.Id, "Instagram", Input.Instagram);
-
-            user.SocialLinks = socialLinks;
 
             if (updated)
             {
-                await _userManager.UpdateAsync(user);
+                await userManager.UpdateAsync(user);
             }
 
             // Handle profile picture upload
@@ -228,15 +221,15 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
                     await file.CopyToAsync(dataStream);
                     user.ProfilePicture = dataStream.ToArray();
                 }
-                await _userManager.UpdateAsync(user);
+                await userManager.UpdateAsync(user);
             }
 
-            await _signInManager.RefreshSignInAsync(user);
+            await signInManager.RefreshSignInAsync(user);
             StatusMessage = "Your profile has been updated";
             return RedirectToPage();
         }
 
-        private void UpdateSocialLink(List<SocialLink> socialLinks, string userId, string platform, string newUrl)
+        private void UpdateSocialLink(ICollection<SocialLink> socialLinks, string userId, string platform, string newUrl)
         {
             var existingLink = socialLinks.FirstOrDefault(s => s.Platform == platform);
             if (!string.IsNullOrEmpty(newUrl))

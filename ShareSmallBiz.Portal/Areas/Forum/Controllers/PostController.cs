@@ -13,7 +13,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers;
 [Area("Forum")]
 public class PostController(
     DiscussionProvider postService,
-    UserManager<ShareSmallBizUser> userManager,
+    ShareSmallBizUserManager userManager,
     ILogger<PostController> logger) : ForumBaseController
 {
     public async Task<IActionResult> Index()

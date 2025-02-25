@@ -5,7 +5,6 @@
 using Microsoft.AspNetCore.Authentication;
 using ShareSmallBiz.Portal.Data;
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
 namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account

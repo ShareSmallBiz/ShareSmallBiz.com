@@ -1,10 +1,61 @@
-﻿using ShareSmallBiz.Portal.Data;
+﻿using Microsoft.Extensions.Options;
+using ShareSmallBiz.Portal.Data;
+using System.Security.Claims;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
+public class ShareSmallBizUserManager(
+    IUserStore<ShareSmallBizUser> store,
+    IOptions<IdentityOptions> optionsAccessor,
+    IPasswordHasher<ShareSmallBizUser> passwordHasher,
+    IEnumerable<IUserValidator<ShareSmallBizUser>> userValidators,
+    IEnumerable<IPasswordValidator<ShareSmallBizUser>> passwordValidators,
+    ILookupNormalizer keyNormalizer,
+    IdentityErrorDescriber errors,
+    IServiceProvider services,
+    ILogger<ShareSmallBizUserManager> logger,
+    ShareSmallBizUserContext context
+    ) : UserManager<ShareSmallBizUser>(store, optionsAccessor, passwordHasher, userValidators,
+         passwordValidators, keyNormalizer, errors, services, logger)
+{
+
+    /// <summary>
+    /// Retrieves the social links of a user by their ID.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <returns>A list of SocialLink objects.</returns>
+    public async Task<List<SocialLink>> GetUserSocialLinksAsync(string userId, CancellationToken ct = default)
+    {
+        var socialLinks = await context.SocialLinks
+            .Where(sl => sl.UserId == userId)
+            .AsNoTracking().ToListAsync(ct).ConfigureAwait(false);
+
+        logger.LogInformation("Retrieved {Count} social links for user {UserId}.",
+                              socialLinks.Count, userId);
+        return socialLinks ?? [];
+    }
+    public async Task<ShareSmallBizUser?> GetFullUserAsync(ClaimsPrincipal principal)
+    {
+        var id = GetUserId(principal);
+        if (id == null)
+        {
+            return null;
+        }
+        var user = await FindByIdAsync(id).ConfigureAwait(false);
+        if (user == null)
+        {
+            return null;
+        }
+        user.SocialLinks = await GetUserSocialLinksAsync(id).ConfigureAwait(false);
+        return user;
+    }
+
+}
+
+
 public class UserProvider(
     ShareSmallBizUserContext context,
-    UserManager<ShareSmallBizUser> userManager,
+    ShareSmallBizUserManager userManager,
     ILogger<UserProvider> logger
     )
 {
@@ -195,19 +246,6 @@ public class UserProvider(
     // Private method to map from EF entity to UserModel
     private static UserModel MapToUserModel(ShareSmallBizUser user)
     {
-        return new UserModel
-        {
-            Id = user.Id,
-            UserName = user.UserName,
-            Email = user.Email,
-            DisplayName = user.DisplayName,
-            Bio = user.Bio,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            ProfilePicture = user.ProfilePicture,
-            ProfilePictureUrl = user.ProfilePictureUrl,
-            PostCount = user.Posts?.Count ?? 0,
-            LikeCount = user.LikedPosts?.Count ?? 0
-        };
+        return new UserModel(user);
     }
 }

@@ -28,6 +28,12 @@ public class HomeController(DiscussionProvider postProvider, ILogger<HomeControl
         return View();
     }
 
+    [HttpGet("error")]
+    public IActionResult GetError()
+    {
+        throw new Exception("This is a test exception.");
+    }
+    
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

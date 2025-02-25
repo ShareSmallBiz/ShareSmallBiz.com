@@ -30,7 +30,7 @@ public class PostCommentModel : BaseModel
         LikeCount = comment.Likes?.Count ?? 0;
 
         // Map User
-        Author = new(comment.Author);
+        Author = GetAuthor(comment.Author);
 
         // Map Likes
         Likes = comment.Likes != null ?
@@ -41,4 +41,18 @@ public class PostCommentModel : BaseModel
                 CreatedID = like.CreatedID
             })] : [];
     }
+
+    public UserModel GetAuthor(ShareSmallBizUser user)
+    {
+        return new UserModel()
+        {
+            Id = user.Id,
+            UserName = user.UserName ?? string.Empty,
+            DisplayName = user.DisplayName,
+            ProfilePictureUrl = user.ProfilePictureUrl,
+            ProfilePicture = user.ProfilePicture,
+        };
+    }
+
+
 }

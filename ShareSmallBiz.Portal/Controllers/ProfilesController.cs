@@ -17,7 +17,7 @@ public class ProfilesController(
     [HttpGet("{id}")]
     public async Task<IActionResult> ViewProfile(string id)
     {
-        var profile = await userProvider.GetUserByUsernameAsync(id);
+        var profile = await userProvider.GetUserByUsernameAsync(id).ConfigureAwait(false);
         if (profile == null)
         {
             return NotFound();
