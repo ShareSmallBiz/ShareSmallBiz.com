@@ -1,0 +1,30 @@
+﻿@model KeywordModel
+@{
+    Layout = "_Layout";
+}
+
+<h2 class="mb-4">Delete Keyword</h2>
+
+<div class="alert alert-warning" role="alert">
+    Are you sure you want to delete the keyword "<strong>@Model.Name</strong>"?
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">@Model.Name</h5>
+        <p class="card-text">@Model.Description</p>
+    </div>
+</div>
+
+<form asp-action="Delete" method="post" class="mt-4">
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(model => model.Id)
+    <div class="d-flex justify-content-between">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Cancel
+        </a>
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Delete
+        </button>
+    </div>
+</form>

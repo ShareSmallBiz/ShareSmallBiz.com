@@ -11,6 +11,10 @@
     {
       "text": "User-Roles",
       "url": "/admin/UserRoles"
+    },
+    {
+      "text": "Keywords",
+      "url": "/admin/Keyword"
     }
   ]
 }

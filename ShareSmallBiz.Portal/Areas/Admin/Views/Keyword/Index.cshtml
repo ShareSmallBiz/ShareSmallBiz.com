@@ -1,0 +1,61 @@
+﻿@model IEnumerable<KeywordModel>
+@{
+    Layout = "_Layout";
+}
+<h2 class="mb-4">Keywords</h2>
+
+<a asp-action="Create" class="btn btn-success mb-3">
+    <i class="bi bi-plus-circle"></i> Add New Keyword
+</a>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Posts</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td><span title="@item.Description">@item.Name</span></td>
+                        <td>@item.PostCount</td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger">
+                                <i class="bi bi-trash"></i> Delete
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center">No keywords found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div>
+    <!-- Render the CSV upload partial view -->
+    <div class="mb-4">
+        <h3>Upload CSV File</h3>
+        @await Html.PartialAsync("_UploadPartial")
+    </div>
+    <br/>
+    <br />
+    <br />
+    <br />
+    <br />
+    <br />
+</div>

@@ -1,35 +1,49 @@
 ﻿@model IEnumerable<PostCommentModel>
 
-@foreach (var comment in Model)
-{
-    <div id="comment-@comment.Id" class="mb-2">
-        <div class="list-group-item py-2">
-            <div class="d-flex align-items-start flex-wrap">
-                <div class="flex-shrink-0">
+<div class="list-group">
+    @foreach (var comment in Model)
+    {
+        <div id="comment-@comment.Id" class="list-group-item border-0 px-0 pb-3">
+            <div class="d-flex align-items-start">
+                <div class="flex-shrink-0 m-2">
                     @if (comment?.Author?.ProfilePicture != null)
                     {
-                        <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
-                             src="data:image/*;base64,@(Convert.ToBase64String(comment.Author.ProfilePicture))" alt="User Profile" />
+                        <img class="rounded-circle"
+                             style="width: 40px; height: 40px; object-fit: cover;"
+                             src="data:image/*;base64,@(Convert.ToBase64String(comment.Author.ProfilePicture))"
+                             alt="User Profile" />
                     }
                     else
                     {
-                        <i class="bi bi-person-circle fs-3 text-secondary me-2"></i>
+                        <i class="bi bi-person-circle fs-3 text-secondary"></i>
                     }
                 </div>
-                <div class="flex-grow-1 overflow-hidden">
+                <div class="flex-grow-1 m-2  " >
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start">
-                        <strong class="text-break">@(comment.Author?.UserName ?? "Anonymous")</strong>
-                        <small class="text-muted mt-1 mt-md-0"><i class="bi bi-clock"></i> @comment.CreatedDate.ToString("MMM d, yyyy")</small>
+                        <h6 class="mb-1 text-break">
+                            @(comment.Author?.UserName ?? "Anonymous")
+                        </h6>
+                        <small class="text-muted d-block d-md-inline">
+                            <i class="bi bi-clock me-1"></i>@comment.CreatedDate.ToString("MMM d, yyyy")
+                        </small>
                     </div>
-                    <p class="small text-muted mb-0 text-break">@comment.Content</p>
+                </div>
+            </div>
+            <div class="m-2">
+                <div>
+                    <p class="mb-1 text-muted text-break">
+                        @comment.Content
+                    </p>
+                    @if (User.Identity.IsAuthenticated && comment.Author?.UserName == User.Identity.Name)
+                    {
+                        <div class="mt-2">
+                            <button class="btn btn-outline-danger btn-sm delete-comment" data-comment-id="@comment.Id">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
-        @if (User.Identity.IsAuthenticated && comment.Author.UserName == User.Identity.Name)
-        {
-            <button class="btn btn-outline-danger btn-sm delete-comment mt-1" data-comment-id="@comment.Id">
-                <i class="bi bi-trash"></i>
-            </button>
-        }
-    </div>
-}
+    }
+</div>

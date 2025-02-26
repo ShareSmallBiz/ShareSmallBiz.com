@@ -1,0 +1,29 @@
+﻿@model List<DiscussionModel>
+@{
+    ViewData["Title"] = "Discussions";
+    var user = User.Identity;
+}
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">
+        <i class="bi bi-chat-dots-fill"></i> Discussions
+    </h2>
+
+    @if (user != null && user.IsAuthenticated)
+    {
+        <div class="text-center mb-4">
+            <a href="/Forum/Post/create" class="btn btn-primary btn-lg">
+                <i class="bi bi-chat-dots me-2"></i> Create Discussion
+            </a>
+        </div>
+    }
+
+    <!-- Posts Container -->
+    <section>
+        @Html.Partial("_PostListCards", Model)
+    </section>
+
+@section Scripts {
+    <script>
+    </script>
+}

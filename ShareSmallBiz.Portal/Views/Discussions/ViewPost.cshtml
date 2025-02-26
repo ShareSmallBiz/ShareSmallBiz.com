@@ -62,6 +62,14 @@
                         @Model.Published.ToString("MMM d, yyyy")
                     </time>
                 </p>
+                <center>
+                    @foreach (var tag in Model.Tags)
+                    {
+                        <a class="btn btn-info" href="/discussions/tag/@tag">#@tag</a>
+                    }
+                </center>
+
+
             </header>
 
             <!-- Edit Post Link (Only for Author) -->
@@ -146,7 +154,7 @@
                 var postId = $(this).data("post-id");
                 var commentText = $("#newCommentText").val();
                 $.ajax({
-                    url: '/post/' + postId + '/comment',
+                    url: '/discussions/' + postId + '/comment',
                     method: 'POST',
                     data: { comment: commentText },
                     success: function (response) {
@@ -160,11 +168,11 @@
             });
 
             // Delegate click event for deleting a comment
-            $("#commentsContainer").on("click", ".delete-comment", function () {
+            $("#commentsList").on("click", ".delete-comment", function () {
                 var commentId = $(this).data("comment-id");
                 var postId = @Model.Id;
                 $.ajax({
-                    url: '/post/' + postId + '/comment/' + commentId,
+                    url: '/discussions/' + postId + '/comment/' + commentId,
                     method: 'DELETE',
                     success: function (response) {
                         $("#commentsList").html(response);

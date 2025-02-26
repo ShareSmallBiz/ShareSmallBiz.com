@@ -1,0 +1,31 @@
+﻿@model KeywordModel
+@{
+    Layout = "_Layout";
+    var isEdit = Model.Id > 0;
+    var title = isEdit ? "Edit Keyword" : "Create Keyword";
+}
+
+<h2 class="mb-4">@title</h2>
+<form asp-action="Save" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    @if (isEdit)
+    {
+        @Html.HiddenFor(m => m.Id)
+    }
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label">Name</label>
+        <input asp-for="Name" class="form-control" placeholder="Enter keyword name" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label">Description</label>
+        <textarea asp-for="Description" class="form-control" placeholder="Enter keyword description"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">
+        <i class="bi bi-save"></i> Save
+    </button>
+    <a asp-action="Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Cancel
+    </a>
+</form>

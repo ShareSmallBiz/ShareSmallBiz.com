@@ -23,6 +23,8 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
     public DateTime ModifiedDate { get; set; } = DateTime.UtcNow;
     public List<PostCommentModel> Comments { get; set; } = [];
     public UserModel Author { get; set; } = new();
+    public List<string> Tags { get; set; } = [];
+    public List<string> Keywords { get; set; } = [];
 
     public DiscussionModel() { }
 
@@ -48,6 +50,7 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
         CreatedID = post.AuthorId;
         Comments = [.. post.Comments.Select(comment => new PostCommentModel(comment))];
         Author = new UserModel(post.Author);
+        Tags = [.. post.PostCategories.Select(x => x.Name)];
     }
     public bool Equals(DiscussionModel other)
     {

@@ -10,7 +10,7 @@ public class DiscussionProvider(
     ShareSmallBizUserContext context,
     ILogger<DiscussionProvider> logger,
     UserManager<ShareSmallBizUser> userManager,
-     IHttpContextAccessor httpContextAccessor) 
+     IHttpContextAccessor httpContextAccessor)
 {
     public static string GenerateSlug(string title)
     {
@@ -393,7 +393,7 @@ public class DiscussionProvider(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> UpdatePostAsync(DiscussionModel discussionModel, ClaimsPrincipal userPrincipal,CancellationToken ct = default)
+    public async Task<bool> UpdatePostAsync(DiscussionModel discussionModel, ClaimsPrincipal userPrincipal, CancellationToken ct = default)
     {
         var user = await userManager.GetUserAsync(userPrincipal).ConfigureAwait(false);
         if (user == null)
@@ -401,18 +401,15 @@ public class DiscussionProvider(
             logger.LogWarning("No logged-in user found. Aborting post update.");
             return false;
         }
-
         logger.LogInformation("Updating post with ID: {PostId}", discussionModel.Id);
-        var existingPost = await context.Posts.FindAsync(discussionModel.Id,ct).ConfigureAwait(false);
+
+        var existingPost = await context.Posts.
+            Where(p => p.Id == discussionModel.Id)
+            .Include(discussionModel => discussionModel.PostCategories)
+            .FirstOrDefaultAsync(ct).ConfigureAwait(false);
+
         if (existingPost == null)
             return false;
-
-
-        if (existingPost.AuthorId != user.Id)
-        {
-            logger.LogWarning("User {UserId} attempted to update a post they do not own.", user.Id);
-            return false;
-        }
 
         existingPost.Title = discussionModel.Title;
         existingPost.Content = discussionModel.Content;
@@ -427,6 +424,17 @@ public class DiscussionProvider(
         existingPost.ModifiedDate = DateTime.UtcNow;
         existingPost.ModifiedID = user.Id;
 
+        // Update post categories
+        existingPost.PostCategories.Clear();
+        foreach (var categoryName in discussionModel.Tags)
+        {
+            var category = await context.Keywords
+                .FirstOrDefaultAsync(k => k.Name == categoryName, ct).ConfigureAwait(false);
+            if (category != null)
+            {
+                existingPost.PostCategories.Add(category);
+            }
+        }
         context.Posts.Update(existingPost);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         return true;
@@ -469,5 +477,20 @@ public class DiscussionProvider(
         context.PostComments.Remove(comment);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         return true;
+    }
+
+    public async Task<List<DiscussionModel>> GetPostsByTagAsync(string id)
+    {
+        logger.LogInformation("Retrieving posts by tag: {Tag}", id);
+        var posts = await context.Posts
+            .Include(p => p.Author)
+            .Include(p => p.PostCategories)
+            .Where(p => p.IsPublic)
+            .Where(p => p.PostCategories.Any(c => c.Name == id))
+            .AsNoTracking()
+            .Select(p => new DiscussionModel(p))
+            .ToListAsync().ConfigureAwait(true);
+
+        return posts ?? new List<DiscussionModel>();
     }
 }

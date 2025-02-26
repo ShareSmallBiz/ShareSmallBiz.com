@@ -25,6 +25,13 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
         }
         return View(post);
     }
+    // GET: /post
+    [HttpGet("tag/{id}")]
+    public async Task<IActionResult> tag(string id)
+    {
+        var posts = await postProvider.GetPostsByTagAsync(id).ConfigureAwait(true);
+        return View(posts);
+    }
 
     // GET: /post
     [HttpGet("")]

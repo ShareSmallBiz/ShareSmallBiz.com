@@ -1,7 +1,4 @@
-﻿using ShareSmallBiz.Portal.Models.ViewModels;
-using System.ComponentModel.DataAnnotations;
-
-namespace ShareSmallBiz.Portal.Data;
+﻿namespace ShareSmallBiz.Portal.Data;
 
 public class Post : BaseEntity
 {

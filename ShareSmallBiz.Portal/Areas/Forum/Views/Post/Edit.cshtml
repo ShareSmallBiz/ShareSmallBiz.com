@@ -20,7 +20,6 @@
             border: 1px solid #ddd;
             border-radius: 5px;
         }
-
         /* Highlight Lookup Button */
         #browseImages {
             font-size: 1.1rem; /* Make it slightly larger */
@@ -33,12 +32,16 @@
 <div class="container mt-4 form-container">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2><i class="bi bi-pencil-square"></i> @ViewData["Title"]</h2>
-        <a asp-area="Forum" asp-controller="Home" asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Posts</a>
+        <a asp-area="Forum" asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Posts
+        </a>
     </div>
 
     <!-- Save Button at the Top -->
     <div class="text-end mb-3">
-        <button type="submit" form="postForm" class="btn btn-success"><i class="bi bi-save"></i> Save Post</button>
+        <button type="submit" form="postForm" class="btn btn-success">
+            <i class="bi bi-save"></i> Save Post
+        </button>
     </div>
 
     <form id="postForm" asp-action="@(Model.Id == 0 ? "Create" : "Edit")" method="post" enctype="multipart/form-data">
@@ -67,7 +70,9 @@
             <label asp-for="Cover" class="form-label">Cover Image</label>
             <div class="input-group">
                 <input asp-for="Cover" id="coverUrl" class="form-control" placeholder="Enter cover image URL" />
-                <button type="button" class="btn btn-outline-secondary" id="browseImages"><i class="bi bi-search"></i> Lookup</button>
+                <button type="button" class="btn btn-outline-secondary" id="browseImages">
+                    <i class="bi bi-search"></i> Lookup
+                </button>
             </div>
             <img id="coverPreview" class="cover-preview" src="@Model.Cover" alt="Cover Image Preview" style="display: @(string.IsNullOrEmpty(Model.Cover) ? "none" : "block");" />
         </div>
@@ -86,12 +91,37 @@
             <input asp-for="Published" type="date" class="form-control" required />
         </div>
 
+        <!-- Tag Selection Section -->
+        <div class="mb-3">
+            <label asp-for="Tags" class="form-label">Tags</label>
+            <select asp-for="Tags" class="form-control" multiple size="5">
+                @foreach (var keyword in Model.Keywords)
+                {
+                    if (Model.Tags.Contains(keyword))
+                    {
+                        <option value="@keyword" selected>@keyword</option>
+                    }
+                    else
+                    {
+                        <option value="@keyword" >@keyword</option>
+                    }
+                }
+            </select>
+            <small class="form-text text-muted">
+                Hold down the Ctrl (Windows) or Command (Mac) key to select multiple tags.
+            </small>
+            <span asp-validation-for="Tags" class="text-danger"></span>
+        </div>
+
         <!-- Save Button at the Bottom -->
         <div class="text-end">
-            <button type="submit" class="btn btn-success"><i class="bi bi-save"></i> Save Post</button>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-save"></i> Save Post
+            </button>
         </div>
     </form>
 </div>
+
 <!-- Unsplash Image Picker Modal -->
 <div class="modal fade" id="unsplashModal" tabindex="-1" aria-labelledby="unsplashModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -116,9 +146,6 @@
         </div>
     </div>
 </section>
-
-
-
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -146,8 +173,7 @@
                 allowedAttributes: [
                     'href', 'title', 'target',
                     'src', 'width', 'height', 'allow', 'frameborder', 'allowfullscreen'
-                ],
-                disabledTags: [] // Ensure iframe is not removed
+                ]
             });
 
             // Ensure pasted content is sanitized
@@ -157,7 +183,6 @@
                         .replace(/<script[^>]*>.*?<\/script>/gi, '')
                         .replace(/<style[^>]*>.*?<\/style>/gi, '')
                         .replace(/<img[^>]*>/gi, '');
-
                     $('#contentEditor').trumbowyg('html', sanitizedContent);
                 }, 10);
             });
@@ -178,11 +203,9 @@
             $('#browseImages').click(function () {
                 let query = prompt("Enter a search term for an image (e.g., nature, city):");
                 if (!query) return;
-
                 $.getJSON(`/api/unsplash/search?query=${query}`, function (data) {
                     let imagesContainer = $('#unsplashImages');
                     imagesContainer.empty();
-
                     if (data.results && data.results.length > 0) {
                         data.results.forEach(image => {
                             let imageCard = `
@@ -196,7 +219,6 @@
                                 </div>`;
                             imagesContainer.append(imageCard);
                         });
-
                         $('#unsplashModal').modal('show');
                     } else {
                         alert("No images found.");
@@ -211,16 +233,13 @@
                 let imageUrl = $(this).data('url');
                 let photographer = $(this).data('attribution');
                 let profileLink = $(this).data('profile');
-
                 $('#coverUrl').val(imageUrl);
                 $('#coverPreview').attr('src', imageUrl).show();
                 $('#unsplashModal').modal('hide');
-
                 // Append attribution to content
                 let attributionText = `<p style="font-size: 12px; text-align: right;">
                     <em>Photo by <a href="${profileLink}" target="_blank">${photographer}</a> on <a href="https://unsplash.com" target="_blank">Unsplash</a></em>
                 </p>`;
-
                 let currentContent = $('#contentEditor').trumbowyg('html');
                 $('#contentEditor').trumbowyg('html', currentContent + attributionText);
             });

@@ -167,7 +167,7 @@ builder.Services.AddScoped<ShareSmallBizUserManager, ShareSmallBizUserManager>()
 builder.Services.AddScoped<DiscussionProvider, DiscussionProvider>();
 builder.Services.AddScoped<UserProvider, UserProvider>();
 builder.Services.AddScoped<CommentProvider, CommentProvider>();
-
+builder.Services.AddScoped<KeywordProvider, KeywordProvider>();
 
 // ========================
 // Markdown Support
