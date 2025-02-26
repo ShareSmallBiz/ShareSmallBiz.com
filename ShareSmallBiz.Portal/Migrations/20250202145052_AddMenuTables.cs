@@ -1,5 +1,5 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+using System;
 
 #nullable disable
 
@@ -47,7 +47,7 @@ namespace ShareSmallBiz.Portal.Migrations
                 table: "Posts",
                 type: "TEXT",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "CreatedDate",
@@ -68,7 +68,7 @@ namespace ShareSmallBiz.Portal.Migrations
                 type: "TEXT",
                 maxLength: 450,
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
             migrationBuilder.AddColumn<bool>(
                 name: "IsFeatured",
@@ -124,7 +124,7 @@ namespace ShareSmallBiz.Portal.Migrations
                 type: "TEXT",
                 maxLength: 160,
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
             migrationBuilder.AddColumn<DateTime>(
                 name: "CreatedDate",

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace ShareSmallBiz.Portal.Data;
@@ -7,18 +6,12 @@ namespace ShareSmallBiz.Portal.Data;
 public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUserContext> options)
     : IdentityDbContext<ShareSmallBizUser>(options)
 {
-    public virtual DbSet<WebSite> WebSites { get; set; }
-    public virtual DbSet<ContentPart> ContentParts { get; set; }
     public virtual DbSet<Keyword> Keywords { get; set; }
-    public virtual DbSet<Menu> Menus { get; set; }
     public virtual DbSet<Post> Posts { get; set; }
     public virtual DbSet<PostLike> PostLikes { get; set; }
     public virtual DbSet<PostComment> PostComments { get; set; }
     public virtual DbSet<PostCommentLike> PostCommentLikes { get; set; }
     public virtual DbSet<UserFollow> UserFollows { get; set; }
-
-    // New Models
-    public virtual DbSet<BusinessProfile> BusinessProfiles { get; set; }
     public virtual DbSet<UserCollaboration> UserCollaborations { get; set; }
     public virtual DbSet<UserContentContribution> UserContentContributions { get; set; }
     public virtual DbSet<UserService> UserServices { get; set; }
@@ -75,22 +68,6 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
             .HasOne(uf => uf.Following)
             .WithMany(u => u.Followers)
             .HasForeignKey(uf => uf.FollowingId);
- 
-        // ---- BUSINESS PROFILE RELATIONSHIPS ----
-
-        // Business Owner (One-to-One)
-        builder.Entity<BusinessProfile>()
-            .HasOne(bp => bp.Owner)
-            .WithOne(u => u.OwnedBusiness)
-            .HasForeignKey<BusinessProfile>(bp => bp.OwnerId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        // Employees (One-to-Many)
-        builder.Entity<BusinessProfile>()
-            .HasMany(bp => bp.Employees)
-            .WithOne(u => u.Business)
-            .HasForeignKey(u => u.BusinessId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         // ---- USER COLLABORATIONS ----
         builder.Entity<UserCollaboration>()
@@ -103,36 +80,16 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
             .WithMany()
             .HasForeignKey(uc => uc.UserId2);
 
-        builder.Entity<UserCollaboration>()
-            .HasOne(uc => uc.Business1)
-            .WithMany()
-            .HasForeignKey(uc => uc.BusinessId1);
-
-        builder.Entity<UserCollaboration>()
-            .HasOne(uc => uc.Business2)
-            .WithMany()
-            .HasForeignKey(uc => uc.BusinessId2);
-
         // ---- USER CONTENT CONTRIBUTIONS ----
         builder.Entity<UserContentContribution>()
             .HasOne(ucc => ucc.User)
             .WithMany(u => u.ContentContributions)
             .HasForeignKey(ucc => ucc.UserId);
-
-        builder.Entity<UserContentContribution>()
-            .HasOne(ucc => ucc.Business)
-            .WithMany(bp => bp.ContentContributions)
-            .HasForeignKey(ucc => ucc.BusinessId);
     }
 
-        
+
     private void ConfigureEntities(ModelBuilder builder)
     {
-        // Ensure uniqueness and optimization for SEO purposes
-        builder.Entity<BusinessProfile>()
-            .HasIndex(bp => bp.Slug)
-            .IsUnique();
-
         builder.Entity<ShareSmallBizUser>()
             .HasIndex(u => u.Slug)
             .IsUnique();
@@ -140,21 +97,6 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
 
     private void ConfigureManyToMany(ModelBuilder builder)
     {
-        builder.Entity<Menu>()
-            .HasMany(m => m.Keywords)
-            .WithMany(k => k.Menus)
-            .UsingEntity<Dictionary<string, object>>(
-                "MenuKeyword",
-                j => j.HasOne<Keyword>().WithMany().HasForeignKey("KeywordId"),
-                j => j.HasOne<Menu>().WithMany().HasForeignKey("MenuId"));
-
-        builder.Entity<ContentPart>()
-            .HasMany(cp => cp.Keywords)
-            .WithMany(k => k.ContentParts)
-            .UsingEntity<Dictionary<string, object>>(
-                "ContentPartKeyword",
-                j => j.HasOne<Keyword>().WithMany().HasForeignKey("KeywordId"),
-                j => j.HasOne<ContentPart>().WithMany().HasForeignKey("ContentPartId"));
     }
 
     private void UpdateDateTrackingFields()

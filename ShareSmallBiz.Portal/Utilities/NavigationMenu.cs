@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-namespace ShareSmallBiz.Portal.Utilities;
+﻿namespace ShareSmallBiz.Portal.Utilities;
 
 
 public class MenuItem

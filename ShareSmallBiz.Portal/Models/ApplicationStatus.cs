@@ -1,7 +1,4 @@
-﻿using System.Reflection;
-using System.Text.Json.Serialization;
-
-namespace ShareSmallBiz.Portal.Models;
+﻿namespace ShareSmallBiz.Portal.Models;
 
 public class ApplicationStatus
 {

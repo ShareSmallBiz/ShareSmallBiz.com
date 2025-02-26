@@ -1,6 +1,4 @@
 using ShareSmallBiz.Portal.Infrastructure.Services;
-using ShareSmallBiz.Portal.Models.ViewModels;
-using System.Diagnostics;
 
 namespace ShareSmallBiz.Portal.Controllers;
 
@@ -33,7 +31,7 @@ public class HomeController(DiscussionProvider postProvider, ILogger<HomeControl
     {
         throw new Exception("This is a test exception.");
     }
-    
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {

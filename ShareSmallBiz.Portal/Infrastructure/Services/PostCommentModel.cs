@@ -7,15 +7,10 @@ public class PostCommentModel : BaseModel
     public int PostId { get; set; } // Tied to the original post
     public string Content { get; set; } = string.Empty;
     public int? ParentPostId { get; set; } // Optional parent post
-
     public int LikeCount { get; set; } = 0; // Count of likes on the comment
-
     public UserModel? Author { get; set; } // The author of the comment
-
     public List<PostCommentLikeModel> Likes { get; set; } = [];
-
     public PostCommentModel() { }
-
     public PostCommentModel(PostComment comment)
     {
         if (comment == null)

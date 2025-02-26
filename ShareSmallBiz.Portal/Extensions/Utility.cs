@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualBasic;
 using Microsoft.VisualBasic.CompilerServices;
 using System.Drawing;
-using System.Net;
 using System.Text.RegularExpressions;
 
 namespace ShareSmallBiz.Portal.Extensions;

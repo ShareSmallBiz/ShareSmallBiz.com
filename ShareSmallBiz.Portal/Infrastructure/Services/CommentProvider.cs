@@ -8,8 +8,6 @@ public class KeywordModel
     public int Id { get; set; }
     public string Name { get; set; } = null!;
     public string Description { get; set; } = null!;
-    public int MenuCount { get; set; }
-    public int ContentPartCount { get; set; }
     public int PostCount { get; set; }
 }
 
@@ -21,7 +19,7 @@ public class KeywordProvider(ShareSmallBizUserContext context)
     public async Task<IEnumerable<KeywordModel>> GetAllKeywordsAsync()
     {
         return await context.Keywords
-            .Include(i=>i.Posts)
+            .Include(i => i.Posts)
             .OrderBy(o => o.Name)
             .Select(k => GetKeywordModel(k))
             .ToListAsync().ConfigureAwait(false) ?? [];
@@ -32,8 +30,6 @@ public class KeywordProvider(ShareSmallBizUserContext context)
     public async Task<KeywordModel?> GetKeywordByIdAsync(int id)
     {
         var keyword = await context.Keywords
-            .Include(k => k.Menus)
-            .Include(k => k.ContentParts)
             .Include(k => k.Posts)
             .FirstOrDefaultAsync(k => k.Id == id);
 
@@ -77,8 +73,6 @@ public class KeywordProvider(ShareSmallBizUserContext context)
             Id = keyword.Id,
             Name = keyword.Name,
             Description = keyword.Description,
-            MenuCount = keyword.Menus.Count,
-            ContentPartCount = keyword.ContentParts.Count,
             PostCount = keyword.Posts.Count
         };
     }
@@ -103,8 +97,6 @@ public class KeywordProvider(ShareSmallBizUserContext context)
 
         // Reload the keyword including navigation properties to get updated counts
         var updatedKeyword = await context.Keywords
-            .Include(k => k.Menus)
-            .Include(k => k.ContentParts)
             .Include(k => k.Posts)
             .FirstOrDefaultAsync(k => k.Id == id);
 
@@ -116,8 +108,6 @@ public class KeywordProvider(ShareSmallBizUserContext context)
             Id = updatedKeyword.Id,
             Name = updatedKeyword.Name,
             Description = updatedKeyword.Description,
-            MenuCount = updatedKeyword.Menus.Count,
-            ContentPartCount = updatedKeyword.ContentParts.Count,
             PostCount = updatedKeyword.Posts.Count
         };
     }
@@ -134,9 +124,6 @@ public class KeywordProvider(ShareSmallBizUserContext context)
         return true;
     }
 }
-
-
-
 
 public class CommentProvider(
     ShareSmallBizUserContext context,

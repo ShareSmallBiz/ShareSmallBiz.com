@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-using ShareSmallBiz.Portal.Infrastructure.Services;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ShareSmallBiz.Portal.Data;
 
@@ -70,19 +67,6 @@ public class ShareSmallBizUser : IdentityUser
     [MaxLength(250)]
     public string? Keywords { get; set; } = string.Empty;
 
-    // ---- BUSINESS RELATIONSHIPS ----
-    public bool IsSoleProprietor { get; set; } = false;
-
-    // Business Ownership (One-to-One)
-    public string? OwnedBusinessId { get; set; }
-    [ForeignKey("OwnedBusinessId")]
-    public virtual BusinessProfile? OwnedBusiness { get; set; }
-
-    // Employment in a Business (One-to-Many)
-    public string? BusinessId { get; set; }
-    [ForeignKey("BusinessId")]
-    public virtual BusinessProfile? Business { get; set; }
-
     // ---- SOCIAL & SERVICES ----
     public virtual ICollection<UserService> Services { get; set; }
     public virtual ICollection<SocialLink> SocialLinks { get; set; }
@@ -99,64 +83,6 @@ public class ShareSmallBizUser : IdentityUser
     public string? WebsiteUrl { get; set; }
 }
 
-public class BusinessProfile
-{
-    public BusinessProfile()
-    {
-        Employees = [];
-        Services = [];
-        Testimonials = [];
-        SocialLinks = [];
-        Collaborations = [];
-        ContentContributions = [];
-    }
-
-    [Key]
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-
-    [Required]
-    public string BusinessName { get; set; } = string.Empty;
-
-    [Required]
-    public string Industry { get; set; } = string.Empty;
-
-    [MaxLength(1000)]
-    public string BusinessDescription { get; set; } = string.Empty;
-
-    // ---- SEO & PUBLIC VISIBILITY ----
-    public string? Slug { get; set; } = string.Empty;
-
-    [MaxLength(160)]
-    public string MetaDescription { get; set; } = string.Empty;
-
-    [MaxLength(250)]
-    public string Keywords { get; set; } = string.Empty;
-
-    // ---- CONTACT & SOCIAL ----
-    public string WebsiteUrl { get; set; } = string.Empty;
-    public string BusinessEmail { get; set; } = string.Empty;
-    public string BusinessPhone { get; set; } = string.Empty;
-    public string Location { get; set; } = string.Empty;
-
-    public virtual ICollection<SocialLink> SocialLinks { get; set; }
-
-    // ---- BUSINESS RELATIONSHIPS ----
-
-    // Business Owner (One-to-One)
-    public string OwnerId { get; set; } = string.Empty;
-    [ForeignKey("OwnerId")]
-    public virtual ShareSmallBizUser Owner { get; set; } = null!;
-
-    // Employees (One-to-Many)
-    public virtual ICollection<ShareSmallBizUser> Employees { get; set; }
-
-    public virtual ICollection<UserService> Services { get; set; }
-    public virtual ICollection<Testimonial> Testimonials { get; set; }
-    public virtual ICollection<UserCollaboration> Collaborations { get; set; }
-    public virtual ICollection<UserContentContribution> ContentContributions { get; set; }
-}
-
-
 public class UserService
 {
     [Key]
@@ -168,8 +94,6 @@ public class UserService
     public bool IsBusinessService { get; set; } = false; // If true, service is for a business
     public string? UserId { get; set; }
     public virtual ShareSmallBizUser? User { get; set; } = null!;
-    public string? BusinessId { get; set; }
-    public virtual BusinessProfile? Business { get; set; } = null!;
 }
 public class SocialLink
 {
@@ -184,9 +108,6 @@ public class SocialLink
 
     public string? UserId { get; set; }
     public virtual ShareSmallBizUser? User { get; set; } = null!;
-
-    public string? BusinessId { get; set; }
-    public virtual BusinessProfile? Business { get; set; } = null!;
 }
 public class Testimonial
 {
@@ -201,9 +122,6 @@ public class Testimonial
 
     public string? UserId { get; set; }
     public virtual ShareSmallBizUser? User { get; set; } = null!;
-
-    public string? BusinessId { get; set; }
-    public virtual BusinessProfile? Business { get; set; } = null!;
 }
 
 /// <summary>
@@ -233,15 +151,6 @@ public class UserCollaboration
     public string? UserId2 { get; set; }
     [ForeignKey("UserId2")]
     public virtual ShareSmallBizUser? User2 { get; set; } = null!;
-
-    // Collaboration Between Businesses
-    public string? BusinessId1 { get; set; }
-    [ForeignKey("BusinessId1")]
-    public virtual BusinessProfile? Business1 { get; set; } = null!;
-
-    public string? BusinessId2 { get; set; }
-    [ForeignKey("BusinessId2")]
-    public virtual BusinessProfile? Business2 { get; set; } = null!;
 }
 
 /// <summary>
@@ -265,13 +174,7 @@ public class UserContentContribution
 
     public DateTime DatePublished { get; set; } = DateTime.UtcNow;
 
-    // ---- RELATIONSHIPS ----
-
     public string? UserId { get; set; }
     [ForeignKey("UserId")]
     public virtual ShareSmallBizUser? User { get; set; } = null!;
-
-    public string? BusinessId { get; set; }
-    [ForeignKey("BusinessId")]
-    public virtual BusinessProfile? Business { get; set; } = null!;
 }

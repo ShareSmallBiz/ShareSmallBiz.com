@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using ShareSmallBiz.Portal.Infrastructure.Services;
+﻿using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Areas.Forum.Controllers;
 

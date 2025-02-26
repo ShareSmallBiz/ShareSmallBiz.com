@@ -4,7 +4,6 @@
 
 using ShareSmallBiz.Portal.Data;
 using System;
-using System.ComponentModel.DataAnnotations;
 
 namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 {

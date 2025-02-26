@@ -1,4 +1,4 @@
-﻿namespace ShareSmallBiz.Portal.Infrastructure;
+﻿namespace ShareSmallBiz.Portal.Extensions;
 
 /// <summary>
 /// 
@@ -14,7 +14,7 @@ public static class FormatHelper
     {
         return name == null
             ? string.Empty
-            : $"{(name.Replace("&", "-").Replace("\n", string.Empty).Replace("/", "-").Replace("'", "-").Replace(" ", "-").ToLower(CultureInfo.CurrentCulture))}";
+            : $"{name.Replace("&", "-").Replace("\n", string.Empty).Replace("/", "-").Replace("'", "-").Replace(" ", "-").ToLower(CultureInfo.CurrentCulture)}";
     }
     /// <summary>
     /// 

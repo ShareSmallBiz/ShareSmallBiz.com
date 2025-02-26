@@ -4,8 +4,6 @@
 
 using ShareSmallBiz.Portal.Data;
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.Globalization;
 using System.Linq;
 using System.Text.Encodings.Web;
 

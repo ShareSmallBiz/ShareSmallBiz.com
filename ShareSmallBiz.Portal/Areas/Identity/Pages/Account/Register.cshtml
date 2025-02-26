@@ -28,7 +28,8 @@
                         <input asp-for="Input.UserName" class="form-control" autocomplete="username" aria-required="true" />
                         <label asp-for="Input.UserName"></label>
                         <span asp-validation-for="Input.UserName" class="text-danger"></span>
-                        <strong>Used for your public profile on the site (/profiles/{username})</strong>
+                        <strong>Used for your public profile on the site (/profiles/{username}).</strong><br />
+                        <small>Must be letters and numbers with no spaces or other special characters</small>
                     </div>
 
                     <!-- Email Input -->

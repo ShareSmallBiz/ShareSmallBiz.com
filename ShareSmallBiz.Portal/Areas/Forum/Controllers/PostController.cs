@@ -1,13 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using ShareSmallBiz.Portal.Data;
-using ShareSmallBiz.Portal.Infrastructure.Services;
-using System.Security.Claims;
-using System.Threading.Tasks;
+﻿using ShareSmallBiz.Portal.Infrastructure.Services;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
@@ -75,7 +68,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error creating discussionModel");
-                ModelState.AddModelError("", "An error occurred while creating the discussionModel.");
+                ModelState.AddModelError(string.Empty, "An error occurred while creating the discussionModel.");
                 discussionModel.Keywords = await GetCachedKeywordNamesAsync();
                 return View("Edit", discussionModel);
             }
@@ -137,7 +130,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error updating discussionModel");
-                ModelState.AddModelError("", "An error occurred while updating the discussionModel.");
+                ModelState.AddModelError(string.Empty, "An error occurred while updating the discussionModel.");
                 discussionModel.Keywords = await GetCachedKeywordNamesAsync();
                 return View(discussionModel);
             }

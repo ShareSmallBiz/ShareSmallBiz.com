@@ -11,7 +11,6 @@ using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Logging;
 using ShareSmallBiz.Portal.Infrastructure.Middleware;
 using ShareSmallBiz.Portal.Infrastructure.Services;
-using ShareSmallBiz.Portal.Interfaces;
 using ShareSmallBiz.Portal.Models;
 using System.Text.Json;
 using Westwind.AspNetCore.Markdown;
@@ -140,7 +139,7 @@ builder.Services.AddSwaggerGen(options =>
         {
             Name = "Support",
             Email = "support@sharesmallbiz.com",
-            Url = new Uri("https://sharesmallbiz.com/contact")
+            Url = new Uri("https://sharesmallbiz.com/")
         }
     });
 
@@ -160,7 +159,6 @@ builder.Services.AddSingleton<IStorageProvider, StorageProvider>();
 builder.Services.AddSingleton<IStringConverter, NewtonsoftJsonStringConverter>();
 builder.Services.AddSingleton(new ApplicationStatus(Assembly.GetExecutingAssembly()));
 builder.Services.AddSingleton<ChatHistoryStore>();
-builder.Services.AddSingleton<IScopeInformation, ScopeInformation>();
 
 builder.Services.AddScoped<ShareSmallBizUserManager, ShareSmallBizUserManager>();
 
@@ -275,6 +273,8 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}"
 );
+
+app.Logger.LogWarning("🔹 Application started successfully.");
 
 app.Run();
 

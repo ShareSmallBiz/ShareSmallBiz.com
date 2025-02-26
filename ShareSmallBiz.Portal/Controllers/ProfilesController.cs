@@ -1,13 +1,11 @@
-﻿using Markdig.Extensions.MediaLinks;
-using Microsoft.AspNetCore.Mvc;
-using ShareSmallBiz.Portal.Infrastructure.Services;
+﻿using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Controllers;
 
 
 [Route("Profiles")]
 public class ProfilesController(
-    UserProvider userProvider, 
+    UserProvider userProvider,
     ILogger<ProfilesController> logger) : Controller
 {
     public IActionResult Index()

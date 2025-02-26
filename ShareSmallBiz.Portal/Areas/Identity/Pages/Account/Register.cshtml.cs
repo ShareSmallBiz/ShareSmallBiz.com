@@ -2,21 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
 using ShareSmallBiz.Portal.Data;
+using System;
+using System.Linq;
+using System.Text.Encodings.Web;
 
 namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
 {
@@ -85,7 +76,12 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
+
+            try
             {
                 // Optional: Pre-check for unique username and email to provide early error messages.
                 var existingUserByName = await _userManager.FindByNameAsync(Input.UserName);
@@ -103,12 +99,12 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
                 }
 
                 var user = CreateUser();
-                // Set any additional properties.
-                user.FirstName = "First";
-                user.LastName = "Last";
+                user.FirstName = " ";
+                user.LastName = " ";
+                user.Slug = Input.UserName;
+                user.DisplayName = Input.UserName;
                 user.ProfilePicture = null;
 
-                // Set the username from Input.UserName and the email from Input.Email.
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
 
@@ -139,10 +135,19 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
                         return LocalRedirect(returnUrl);
                     }
                 }
+
+                // Handle identity errors
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while registering a new user.");
+
+                // Display a generic error message
+                ModelState.AddModelError(string.Empty, "An unexpected error occurred. Please try again later.");
             }
 
             // If we got this far, something failed, redisplay form.

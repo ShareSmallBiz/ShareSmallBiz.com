@@ -1,5 +1,5 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+using System;
 
 #nullable disable
 
@@ -67,7 +67,7 @@ namespace ShareSmallBiz.Portal.Migrations
                 type: "TEXT",
                 maxLength: 250,
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
             migrationBuilder.AddColumn<string>(
                 name: "MetaDescription",
@@ -75,7 +75,7 @@ namespace ShareSmallBiz.Portal.Migrations
                 type: "TEXT",
                 maxLength: 160,
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
             migrationBuilder.AddColumn<string>(
                 name: "OwnedBusinessId",

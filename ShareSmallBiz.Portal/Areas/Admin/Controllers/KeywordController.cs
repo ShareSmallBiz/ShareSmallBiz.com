@@ -1,9 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc;
-using ShareSmallBiz.Portal.Data;
+﻿using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
 
@@ -19,7 +16,7 @@ public class KeywordController(KeywordProvider keywordService,
     public async Task<IActionResult> Index()
     {
         var keywords = await keywordService.GetAllKeywordsAsync();
-        return View(keywords.OrderBy(o=>o.Name));
+        return View(keywords.OrderBy(o => o.Name));
     }
 
     // GET: /Keyword/Create
@@ -104,7 +101,7 @@ public class KeywordController(KeywordProvider keywordService,
     {
         if (file == null || file.Length == 0)
         {
-            ModelState.AddModelError("", "Please select a non-empty CSV file to upload.");
+            ModelState.AddModelError(string.Empty, "Please select a non-empty CSV file to upload.");
             return PartialView("_UploadPartial");
         }
 
@@ -138,7 +135,7 @@ public class KeywordController(KeywordProvider keywordService,
         }
         catch (Exception ex)
         {
-            ModelState.AddModelError("", $"Error processing file: {ex.Message}");
+            ModelState.AddModelError(string.Empty, $"Error processing file: {ex.Message}");
             return PartialView("_UploadPartial");
         }
 

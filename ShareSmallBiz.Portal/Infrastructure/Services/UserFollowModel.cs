@@ -1,7 +1,6 @@
-﻿namespace ShareSmallBiz.Portal.Infrastructure.Services
+﻿namespace ShareSmallBiz.Portal.Infrastructure.Services;
+
+public class UserFollowModel : BaseModel
 {
-    public class UserFollowModel : BaseModel
-    {
-        public string FollowingId { get; set; } = string.Empty;
-    }
+    public string FollowingId { get; set; } = string.Empty;
 }

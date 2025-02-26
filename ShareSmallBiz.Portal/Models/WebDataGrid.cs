@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace ShareSmallBiz.Portal.Models;
 
 /// <summary>

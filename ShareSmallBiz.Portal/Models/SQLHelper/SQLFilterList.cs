@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace ShareSmallBiz.Portal.Models.SQLHelper;
+﻿namespace ShareSmallBiz.Portal.Models.SQLHelper;
 
 public class SQLFilterList : List<SQLFilterClause>
 {

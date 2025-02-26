@@ -40,7 +40,7 @@ public class DiscussionProvider(
         cleaned = Regex.Replace(cleaned, @"\s+", "-");
 
         // Remove invalid URL characters
-        cleaned = Regex.Replace(cleaned, @"[^a-z0-9\-]", "");
+        cleaned = Regex.Replace(cleaned, @"[^a-z0-9\-]", string.Empty);
 
         // Trim dashes from start and end
         cleaned = cleaned.Trim('-');

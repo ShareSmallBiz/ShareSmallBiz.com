@@ -1,14 +1,7 @@
 ﻿#nullable disable
-
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Services;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 {

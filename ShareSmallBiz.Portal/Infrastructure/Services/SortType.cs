@@ -1,6 +1,4 @@
-﻿using System.Security.Claims;
-
-namespace ShareSmallBiz.Portal.Infrastructure.Services;
+﻿namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
 /// <summary>
 /// Defines the supported sorting options.

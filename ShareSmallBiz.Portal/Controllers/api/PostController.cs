@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using ShareSmallBiz.Portal.Infrastructure.Services;
+﻿using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Controllers.api;
 

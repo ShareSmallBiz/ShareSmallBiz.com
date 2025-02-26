@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
-
-namespace ShareSmallBiz.Portal.Infrastructure.Middleware;
+﻿namespace ShareSmallBiz.Portal.Infrastructure.Middleware;
 
 /// <summary>
 /// 

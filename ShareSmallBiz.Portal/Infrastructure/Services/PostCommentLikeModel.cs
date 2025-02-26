@@ -1,7 +1,6 @@
-﻿namespace ShareSmallBiz.Portal.Infrastructure.Services
+﻿namespace ShareSmallBiz.Portal.Infrastructure.Services;
+
+public class PostCommentLikeModel : BaseModel
 {
-    public class PostCommentLikeModel : BaseModel
-    {
-        public int PostCommentId { get; set; }
-    }
+    public int PostCommentId { get; set; }
 }

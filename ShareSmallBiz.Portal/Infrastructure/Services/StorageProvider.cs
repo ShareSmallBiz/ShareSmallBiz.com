@@ -1,12 +1,6 @@
 ﻿using Serilog;
-using System.Net.Http;
-using System.Text.Json;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using System.IO;
-using System;
-using System.Threading.Tasks;
 using ShareSmallBiz.Portal.Extensions;
+using System;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
@@ -53,7 +47,7 @@ public class StorageProvider : IStorageProvider
 
     private string PathToUrl(string path)
     {
-        return $"data/{path.Replace(_storageRoot, "").TrimStart(Path.DirectorySeparatorChar).Replace(Path.DirectorySeparatorChar, '/')}";
+        return $"data/{path.Replace(_storageRoot, string.Empty).TrimStart(Path.DirectorySeparatorChar).Replace(Path.DirectorySeparatorChar, '/')}";
     }
 
     private static string TitleFromUri(Uri uri)
@@ -103,17 +97,17 @@ public class StorageProvider : IStorageProvider
 
             if (imgSrc.StartsWith("data:image/png;base64,"))
             {
-                imgSrc = imgSrc.Replace("data:image/png;base64,", "");
+                imgSrc = imgSrc.Replace("data:image/png;base64,", string.Empty);
             }
             else if (imgSrc.StartsWith("data:image/jpeg;base64,"))
             {
                 fileName = $"{Guid.NewGuid():N}.jpeg";
-                imgSrc = imgSrc.Replace("data:image/jpeg;base64,", "");
+                imgSrc = imgSrc.Replace("data:image/jpeg;base64,", string.Empty);
             }
             else if (imgSrc.StartsWith("data:image/gif;base64,"))
             {
                 fileName = $"{Guid.NewGuid():N}.gif";
-                imgSrc = imgSrc.Replace("data:image/gif;base64,", "");
+                imgSrc = imgSrc.Replace("data:image/gif;base64,", string.Empty);
             }
 
             var filePath = string.IsNullOrEmpty(path) ?
