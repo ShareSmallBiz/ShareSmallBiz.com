@@ -36,7 +36,7 @@ public class UsersController(UserProvider userService, ILogger<UsersController> 
     public async Task<IActionResult> GetAllUsers()
     {
         logger.LogInformation("Received request to get all users");
-        var users = await userService.GetAllUsersAsync();
+        var users = await userService.GetAllPublicUsersAsync();
         return Ok(users);
     }
 

@@ -1,4 +1,29 @@
-﻿
+﻿@model IEnumerable<UserModel>
 
-
-<h1>Profiles</h1>
+<div class="container my-4">
+    <h2 class="mb-4">User List</h2>
+    <div class="list-group">
+        @foreach (var user in Model)
+        {
+            <a href="@Url.Action("Details", "User", new { id = user.Id })"
+               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    @if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+                    {
+                        <img src="@user.ProfilePictureUrl" alt="@user.DisplayName"
+                             class="rounded-circle me-3" style="width:50px; height:50px;" />
+                    }
+                    else
+                    {
+                        <i class="bi bi-person-circle fs-2 me-3"></i>
+                    }
+                    <div>
+                        <h5 class="mb-1">@user.DisplayName (@user.UserName)</h5>
+                        <p class="mb-1 text-muted">@user.Email</p>
+                    </div>
+                </div>
+                <span class="badge bg-primary rounded-pill">@user.PostCount Posts</span>
+            </a>
+        }
+    </div>
+</div>

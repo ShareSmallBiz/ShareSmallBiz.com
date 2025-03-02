@@ -120,11 +120,13 @@ public class UserProvider(
 
 
     // Retrieve all users
-    public async Task<List<UserModel>> GetAllUsersAsync()
+    public async Task<List<UserModel>> GetAllPublicUsersAsync()
     {
-        var users = await context.Users.AsNoTracking().ToListAsync();
+        var users = await context.Users
+            .Where(u => u.Email != u.UserName)
+            .AsNoTracking().ToListAsync();
         logger.LogInformation("Retrieved {UserCount} users.", users.Count);
-        return users.Select(MapToUserModel).ToList();
+        return [.. users.Select(MapToUserModel)];
     }
 
     // Update user details

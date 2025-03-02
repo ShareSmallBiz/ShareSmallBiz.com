@@ -8,9 +8,10 @@ public class ProfilesController(
     ILogger<ProfilesController> logger) : Controller
 {
     [HttpGet("")]
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        return View();
+        var users = await userProvider.GetAllPublicUsersAsync();
+        return View(users);
     }
     [HttpGet("{id}")]
     public async Task<IActionResult> ViewProfile(string id)
