@@ -2,12 +2,12 @@
 
 namespace ShareSmallBiz.Portal.Controllers;
 
-
 [Route("Profiles")]
 public class ProfilesController(
     UserProvider userProvider,
     ILogger<ProfilesController> logger) : Controller
 {
+    [HttpGet("")]
     public IActionResult Index()
     {
         return View();

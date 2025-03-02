@@ -74,12 +74,12 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
 
 
 
-    [HttpGet("all")]
-    public async Task<IActionResult> GetAllPosts()
-    {
-        var posts = await postProvider.GetAllPostsAsync();
-        return Ok(posts);
-    }
+    //[HttpGet("all")]
+    //public async Task<IActionResult> GetAllPosts()
+    //{
+    //    var posts = await postProvider.GetAllPostsAsync();
+    //    return Ok(posts);
+    //}
 
     [HttpGet("my/{count}")]
     public async Task<IActionResult> MyPosts(int count = 100)
