@@ -59,7 +59,7 @@
         "pdfmake": "^0.2.18",
         "prismjs": "^1.29.0",
         "terser": "^5.39.0",
-        "trumbowyg": "^2.30.0"
+        "trumbowyg": "^2.31.0"
     },
     "devDependencies": {
         "@fullhuman/postcss-purgecss": "^7.0.2",
@@ -74,7 +74,7 @@
         "ncp": "^2.0.0",
         "p-limit": "6.2.0",
         "postcss": "8.5.3",
-        "prettier": "3.5.2",
+        "prettier": "3.5.3",
         "sass": "^1.85.1",
         "shelljs": "0.8.5",
         "uglify-js": "^3.19.3",

@@ -6,26 +6,16 @@ namespace ShareSmallBiz.Portal.Data;
 public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUserContext> options)
     : IdentityDbContext<ShareSmallBizUser>(options)
 {
-    public virtual DbSet<Keyword> Keywords { get; set; }
-    public virtual DbSet<Post> Posts { get; set; }
-    public virtual DbSet<PostLike> PostLikes { get; set; }
-    public virtual DbSet<PostComment> PostComments { get; set; }
-    public virtual DbSet<PostCommentLike> PostCommentLikes { get; set; }
-    public virtual DbSet<UserFollow> UserFollows { get; set; }
-    public virtual DbSet<UserCollaboration> UserCollaborations { get; set; }
-    public virtual DbSet<UserContentContribution> UserContentContributions { get; set; }
-    public virtual DbSet<UserService> UserServices { get; set; }
-    public virtual DbSet<SocialLink> SocialLinks { get; set; }
-    public virtual DbSet<Testimonial> Testimonials { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder builder)
+    private void ConfigureEntities(ModelBuilder builder)
     {
-        base.OnModelCreating(builder);
-        ConfigureRelationships(builder);
-        ConfigureEntities(builder);
-        ConfigureManyToMany(builder);
+        builder.Entity<ShareSmallBizUser>()
+            .HasIndex(u => u.Slug)
+            .IsUnique();
     }
 
+    private void ConfigureManyToMany(ModelBuilder builder)
+    {
+    }
 
     private void ConfigureRelationships(ModelBuilder builder)
     {
@@ -68,59 +58,39 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
             .HasOne(uf => uf.Following)
             .WithMany(u => u.Followers)
             .HasForeignKey(uf => uf.FollowingId);
-
-        // ---- USER COLLABORATIONS ----
-        builder.Entity<UserCollaboration>()
-            .HasOne(uc => uc.User1)
-            .WithMany()
-            .HasForeignKey(uc => uc.UserId1);
-
-        builder.Entity<UserCollaboration>()
-            .HasOne(uc => uc.User2)
-            .WithMany()
-            .HasForeignKey(uc => uc.UserId2);
-
-        // ---- USER CONTENT CONTRIBUTIONS ----
-        builder.Entity<UserContentContribution>()
-            .HasOne(ucc => ucc.User)
-            .WithMany(u => u.ContentContributions)
-            .HasForeignKey(ucc => ucc.UserId);
     }
-
-
-    private void ConfigureEntities(ModelBuilder builder)
-    {
-        builder.Entity<ShareSmallBizUser>()
-            .HasIndex(u => u.Slug)
-            .IsUnique();
-    }
-
-    private void ConfigureManyToMany(ModelBuilder builder)
-    {
-    }
-
     private void UpdateDateTrackingFields()
     {
         var entries = ChangeTracker
             .Entries()
-            .Where(e => e.Entity is BaseEntity &&
-                        (e.State == EntityState.Added || e.State == EntityState.Modified));
+            .Where(e => e.Entity is BaseEntity && (e.State == EntityState.Added || e.State == EntityState.Modified));
 
-        foreach (var entityEntry in entries)
+        foreach (var entry in entries)
         {
-            ((BaseEntity)entityEntry.Entity).ModifiedDate = DateTime.UtcNow;
-
-            if (entityEntry.State == EntityState.Added)
+            if (entry.Entity is BaseEntity entity)
             {
-                ((BaseEntity)entityEntry.Entity).CreatedDate = DateTime.UtcNow;
+                entity.ModifiedDate = DateTime.UtcNow;
+                if (entry.State == EntityState.Added)
+                {
+                    entity.CreatedDate = DateTime.UtcNow;
+                }
             }
         }
     }
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ConfigureWarnings(warnings =>
             warnings.Ignore(RelationalEventId.NonTransactionalMigrationOperationWarning));
+    }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        ConfigureRelationships(builder);
+        ConfigureEntities(builder);
+        ConfigureManyToMany(builder);
     }
 
     public override int SaveChanges()
@@ -134,4 +104,12 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
         UpdateDateTrackingFields();
         return await base.SaveChangesAsync(cancellationToken);
     }
+
+    public virtual DbSet<Keyword> Keywords { get; set; }
+    public virtual DbSet<PostCommentLike> PostCommentLikes { get; set; }
+    public virtual DbSet<PostComment> PostComments { get; set; }
+    public virtual DbSet<PostLike> PostLikes { get; set; }
+    public virtual DbSet<Post> Posts { get; set; }
+    public virtual DbSet<SocialLink> SocialLinks { get; set; }
+    public virtual DbSet<UserFollow> UserFollows { get; set; }
 }
