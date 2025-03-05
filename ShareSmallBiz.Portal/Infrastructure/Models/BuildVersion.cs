@@ -1,4 +1,4 @@
-namespace ShareSmallBiz.Portal.Models;
+namespace ShareSmallBiz.Portal.Infrastructure.Models;
 
 /// <summary>
 /// Build Version

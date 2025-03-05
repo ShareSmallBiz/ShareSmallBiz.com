@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Text.RegularExpressions;
 using System.Web;
 
-namespace ShareSmallBiz.Portal.Extensions;
+namespace ShareSmallBiz.Portal.Infrastructure.Extensions;
 
 public static partial class StringExtensions
 {

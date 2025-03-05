@@ -1,4 +1,5 @@
 ﻿using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Infrastructure.Models.ViewModels;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;

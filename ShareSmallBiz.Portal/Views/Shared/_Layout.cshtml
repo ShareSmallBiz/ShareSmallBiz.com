@@ -1,4 +1,11 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using ShareSmallBiz.Portal.Data
+
+@inject SignInManager<ShareSmallBizUser> SignInManager
+@inject UserManager<ShareSmallBizUser> UserManager
+
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     @await Html.PartialAsync("Sections/Meta/_metatags")
@@ -11,46 +18,18 @@
 <body>
     @await Html.PartialAsync("Sections/NavBar/_navbar")
     <!-- Navbar -->
-
-
     <!-- Main Container -->
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
             <div class="col-md-3 col-lg-2 d-none d-md-block bg-light sidebar">
-                <div class="list-group">
-                </div>
-                <hr/>
-                <div class="container text-center">
-                    <h2>Why Join ShareSmallBiz?</h2>
-                    <p class="text-muted">A platform built for small businesses to connect, collaborate, and succeed.</p>
-
-                    <div class="row g-4">
-                        <div class="col-12">
-                            <div class="card border-0 shadow-sm p-4">
-                                <i class="bi bi-megaphone fs-1 text-primary"></i>
-                                <h5 class="mt-3">Increased Visibility</h5>
-                                <p>Expand your reach by sharing your content across a thriving business network.</p>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="card border-0 shadow-sm p-4">
-                                <i class="bi bi-people fs-1 text-primary"></i>
-                                <h5 class="mt-3">Supportive Community</h5>
-                                <p>Connect with like-minded entrepreneurs and grow through mutual collaboration.</p>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="card border-0 shadow-sm p-4">
-                                <i class="bi bi-bar-chart fs-1 text-primary"></i>
-                                <h5 class="mt-3">Business Growth</h5>
-                                <p>Leverage shared marketing efforts to drive organic engagement and sales.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
+                @if (User.Identity.IsAuthenticated)
+                {
+                }
+                else
+                {
+                    @await Html.PartialAsync("Sections/_whyJoin")
+                }
             </div>
 
             <!-- Main Content Area -->
@@ -61,22 +40,26 @@
 
             <!-- Sidebar (Right) -->
             <aside class="col-md-3 col-lg-2 d-none d-md-block bg-light">
-                <!-- Call to Action -->
-                <section class="bg-light py-5">
-                    <div class="container text-center">
-                        <h2>Join ShareSmallBiz Today</h2>
-                        <p class="text-muted">Get started for free and start collaborating with businesses worldwide.</p>
-                        <a href="/Identity/Account/Login" class="btn btn-primary btn-lg"><i class="bi bi-arrow-right-circle"></i> Sign Up Now</a>
-                    </div>
-                </section>
+                @if (User.Identity.IsAuthenticated)
+                {
+                }
+                else
+                {
+                    <!-- Call to Action -->
+                    <section class="bg-light py-5">
+                        <div class="container text-center">
+                            <h2>Join ShareSmallBiz Today</h2>
+                            <p class="text-muted">Get started for free and start collaborating with businesses worldwide.</p>
+                            <a href="/Identity/Account/Login" class="btn btn-primary btn-lg"><i class="bi bi-arrow-right-circle"></i> Sign Up Now</a>
+                        </div>
+                    </section>
+                }
             </aside>
         </div>
     </div>
     <section>
-
         <p></p>
         <p> </p>
-
     </section>
     @await Html.PartialAsync("Sections/Footer/_footer")
     @await Html.PartialAsync("Sections/Footer/_footer_scripts")

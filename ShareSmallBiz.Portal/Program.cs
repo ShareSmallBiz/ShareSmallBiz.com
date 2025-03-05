@@ -10,7 +10,7 @@ using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Logging;
 using ShareSmallBiz.Portal.Infrastructure.Middleware;
 using ShareSmallBiz.Portal.Infrastructure.Services;
-using ShareSmallBiz.Portal.Models;
+using ShareSmallBiz.Portal.Infrastructure.Models;
 using System.Text.Json;
 
 
@@ -156,7 +156,6 @@ builder.Services.AddSingleton<ILogger<Program>, Logger<Program>>();
 builder.Services.AddSingleton<StorageProvider, StorageProvider>();
 builder.Services.AddSingleton<IStringConverter, NewtonsoftJsonStringConverter>();
 builder.Services.AddSingleton(new ApplicationStatus(Assembly.GetExecutingAssembly()));
-builder.Services.AddSingleton<ChatHistoryStore>();
 
 builder.Services.AddScoped<ShareSmallBizUserManager, ShareSmallBizUserManager>();
 

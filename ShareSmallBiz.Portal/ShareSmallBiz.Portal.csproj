@@ -55,9 +55,4 @@
 	<ItemGroup>
 		<ProjectReference Include="..\HttpClientUtility\HttpClientUtility.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Extensions\" />
-	  <Folder Include="Infrastructure\Middleware\" />
-	  <Folder Include="Models\ViewModels\" />
-	</ItemGroup>
 </Project>

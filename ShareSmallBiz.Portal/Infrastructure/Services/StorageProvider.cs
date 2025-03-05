@@ -1,5 +1,5 @@
 ﻿using Serilog;
-using ShareSmallBiz.Portal.Extensions;
+using ShareSmallBiz.Portal.Infrastructure.Extensions;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 

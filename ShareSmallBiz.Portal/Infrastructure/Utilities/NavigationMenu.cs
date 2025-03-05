@@ -1,4 +1,4 @@
-﻿namespace ShareSmallBiz.Portal.Utilities;
+﻿namespace ShareSmallBiz.Portal.Infrastructure.Utilities;
 
 
 public class MenuItem

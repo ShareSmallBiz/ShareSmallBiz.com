@@ -1,4 +1,4 @@
-﻿namespace ShareSmallBiz.Portal.Utilities;
+﻿namespace ShareSmallBiz.Portal.Infrastructure.Middleware;
 
 public class NotFoundMiddleware(RequestDelegate next, ILogger<NotFoundMiddleware> _logger)
 {

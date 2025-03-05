@@ -1,4 +1,4 @@
-﻿namespace ShareSmallBiz.Portal.Models.ViewModels;
+﻿namespace ShareSmallBiz.Portal.Infrastructure.Models.ViewModels;
 
 public class ManageUserRolesVM
 {
