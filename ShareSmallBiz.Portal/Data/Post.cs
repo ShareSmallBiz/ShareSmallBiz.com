@@ -1,4 +1,10 @@
 ﻿namespace ShareSmallBiz.Portal.Data;
+public enum PostType
+{
+    Unknown,
+    Post
+}
+
 
 public class Post : BaseEntity
 {
@@ -14,7 +20,7 @@ public class Post : BaseEntity
     public bool IsPublic { get; set; }
     public virtual ICollection<PostLike> Likes { get; set; } = [];
     public virtual ICollection<Keyword> PostCategories { get; set; } = [];
-    public Models.PostType PostType { get; set; } = Models.PostType.Post;
+    public PostType PostType { get; set; } = PostType.Post;
     public int PostViews { get; set; }
     public DateTime Published { get; set; }
     public double Rating { get; set; }

@@ -11,7 +11,7 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
     public string Cover { get; set; } = "https://sharesmallbiz.com/";
     public bool IsFeatured { get; set; } = false;
     public bool IsPublic { get; set; } = true;
-    public Models.PostType PostType { get; set; } = Models.PostType.Post;
+    public PostType PostType { get; set; } = PostType.Post;
     public int PostViews { get; set; } = 0;
     public DateTime Published { get; set; } = DateTime.UtcNow;
     public double Rating { get; set; } = 0;

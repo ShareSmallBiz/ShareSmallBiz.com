@@ -6,14 +6,12 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Microsoft.SemanticKernel;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Logging;
 using ShareSmallBiz.Portal.Infrastructure.Middleware;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 using ShareSmallBiz.Portal.Models;
 using System.Text.Json;
-using Westwind.AspNetCore.Markdown;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -155,7 +153,7 @@ builder.Services.AddSwaggerGen(options =>
 // Application Services
 // ======================
 builder.Services.AddSingleton<ILogger<Program>, Logger<Program>>();
-builder.Services.AddSingleton<IStorageProvider, StorageProvider>();
+builder.Services.AddSingleton<StorageProvider, StorageProvider>();
 builder.Services.AddSingleton<IStringConverter, NewtonsoftJsonStringConverter>();
 builder.Services.AddSingleton(new ApplicationStatus(Assembly.GetExecutingAssembly()));
 builder.Services.AddSingleton<ChatHistoryStore>();
@@ -167,10 +165,6 @@ builder.Services.AddScoped<UserProvider, UserProvider>();
 builder.Services.AddScoped<CommentProvider, CommentProvider>();
 builder.Services.AddScoped<KeywordProvider, KeywordProvider>();
 
-// ========================
-// Markdown Support
-// ========================
-builder.Services.AddMarkdown();
 
 // ========================
 // MVC, Razor Pages, SignalR
@@ -178,7 +172,7 @@ builder.Services.AddMarkdown();
 builder.Services.AddControllers();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
-builder.Services.AddMvc().AddApplicationPart(typeof(MarkdownPageProcessorMiddleware).Assembly);
+builder.Services.AddMvc();
 
 builder.Services.AddCors(options =>
 {
@@ -196,12 +190,6 @@ builder.Services.AddSignalR().AddJsonProtocol(options =>
     options.PayloadSerializerOptions.PropertyNamingPolicy = null;
 });
 
-// ========================
-// OpenAI Chat Completion Service
-// ========================
-string apikey = builder.Configuration.GetValue<string>("OPENAI_API_KEY") ?? "not found";
-string modelId = builder.Configuration.GetValue<string>("MODEL_ID") ?? "gpt-4o";
-builder.Services.AddOpenAIChatCompletion(modelId, apikey);
 
 // ========================
 // Json Serializer Configuration
@@ -279,9 +267,6 @@ app.Logger.LogWarning("🔹 Application started successfully.");
 app.Run();
 
 
-
-
-
 static void RegisterHttpClientUtilities(WebApplicationBuilder builder)
 {
     builder.Services.AddHttpClient("HttpClientService", client =>
@@ -292,8 +277,6 @@ static void RegisterHttpClientUtilities(WebApplicationBuilder builder)
         client.DefaultRequestHeaders.Add("X-Request-ID", Guid.NewGuid().ToString());
         client.DefaultRequestHeaders.Add("X-Request-Source", "HttpClientService");
     });
-
-
     // HTTP Send Service with Decorator Pattern
     builder.Services.AddSingleton(serviceProvider =>
     {

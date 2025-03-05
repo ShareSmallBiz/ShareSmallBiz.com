@@ -1,19 +1,11 @@
 ﻿using Serilog;
 using ShareSmallBiz.Portal.Extensions;
-using System;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
-public class StorageProvider : IStorageProvider
+public class StorageProvider(IWebHostEnvironment env, IHttpClientFactory httpClientFactory)
 {
-    private readonly string _storageRoot;
-    private readonly IHttpClientFactory _httpClientFactory;
-
-    public StorageProvider(IWebHostEnvironment env, IHttpClientFactory httpClientFactory)
-    {
-        _storageRoot = Path.Combine(env.WebRootPath, "data");
-        _httpClientFactory = httpClientFactory;
-    }
+    private readonly string _storageRoot = Path.Combine(env.WebRootPath, "data");
 
     private static string GetFileName(string fileName)
     {
@@ -166,7 +158,7 @@ public class StorageProvider : IStorageProvider
                 Path.Combine(_storageRoot, fileName) :
                 Path.Combine(_storageRoot, path, fileName);
 
-            var client = _httpClientFactory.CreateClient();
+            var client = httpClientFactory.CreateClient();
             var response = await client.GetAsync(requestUri);
             response.EnsureSuccessStatusCode();
 

@@ -18,22 +18,6 @@ public class ShareSmallBizUserManager(
     ) : UserManager<ShareSmallBizUser>(store, optionsAccessor, passwordHasher, userValidators,
          passwordValidators, keyNormalizer, errors, services, logger)
 {
-
-    /// <summary>
-    /// Retrieves the social links of a user by their ID.
-    /// </summary>
-    /// <param name="userId">The ID of the user.</param>
-    /// <returns>A list of SocialLink objects.</returns>
-    public async Task<List<SocialLink>> GetUserSocialLinksAsync(string userId, CancellationToken ct = default)
-    {
-        var socialLinks = await context.SocialLinks
-            .Where(sl => sl.UserId == userId)
-            .AsNoTracking().ToListAsync(ct).ConfigureAwait(false);
-
-        logger.LogInformation("Retrieved {Count} social links for user {UserId}.",
-                              socialLinks.Count, userId);
-        return socialLinks ?? [];
-    }
     public async Task<ShareSmallBizUser?> GetFullUserAsync(ClaimsPrincipal principal)
     {
         var id = GetUserId(principal);
@@ -50,6 +34,22 @@ public class ShareSmallBizUserManager(
         return user;
     }
 
+    /// <summary>
+    /// Retrieves the social links of a user by their ID.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <returns>A list of SocialLink objects.</returns>
+    public async Task<List<SocialLink>> GetUserSocialLinksAsync(string userId, CancellationToken ct = default)
+    {
+        var socialLinks = await context.SocialLinks
+            .Where(sl => sl.UserId == userId)
+            .AsNoTracking().ToListAsync(ct).ConfigureAwait(false);
+
+        logger.LogInformation("Retrieved {Count} social links for user {UserId}.",
+                              socialLinks.Count, userId);
+        return socialLinks ?? [];
+    }
+
 }
 
 
@@ -59,6 +59,12 @@ public class UserProvider(
     ILogger<UserProvider> logger
     )
 {
+
+    // Private method to map from EF entity to UserModel
+    private static UserModel MapToUserModel(ShareSmallBizUser user)
+    {
+        return new UserModel(user);
+    }
 
     // Create a new user
     public async Task<bool> CreateUserAsync(UserModel model, string password)
@@ -82,77 +88,6 @@ public class UserProvider(
         else
         {
             logger.LogError("Failed to create user {UserName}. Errors: {Errors}", user.UserName, result.Errors);
-        }
-        return result.Succeeded;
-    }
-
-    // Retrieve a user by ID
-    public async Task<UserModel?> GetUserByIdAsync(string userId)
-    {
-        var user = await context.Users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == userId);
-
-        if (user == null)
-        {
-            logger.LogWarning("User with ID {UserId} not found.", userId);
-            return null;
-        }
-
-        return MapToUserModel(user);
-    }
-
-    public async Task<UserModel?> GetUserByUsernameAsync(string username)
-    {
-        var user = await context.Users.Include(u => u.Posts).Include(u => u.LikedPosts)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.UserName == username);
-
-        if (user == null)
-        {
-            logger.LogWarning("User with username {Username} not found.", username);
-            return null;
-        }
-
-        return MapToUserModel(user);
-    }
-
-
-
-    // Retrieve all users
-    public async Task<List<UserModel>> GetAllPublicUsersAsync()
-    {
-        var users = await context.Users
-            .Where(u => u.Email != u.UserName)
-            .AsNoTracking().ToListAsync();
-        logger.LogInformation("Retrieved {UserCount} users.", users.Count);
-        return [.. users.Select(MapToUserModel)];
-    }
-
-    // Update user details
-    public async Task<bool> UpdateUserAsync(string userId, UserModel model)
-    {
-        var user = await userManager.FindByIdAsync(userId);
-        if (user == null)
-        {
-            logger.LogWarning("User with ID {UserId} not found.", userId);
-            return false;
-        }
-
-        user.DisplayName = model.DisplayName;
-        user.Bio = model.Bio;
-        user.FirstName = model.FirstName;
-        user.LastName = model.LastName;
-        user.ProfilePictureUrl = model.ProfilePictureUrl;
-
-        var result = await userManager.UpdateAsync(user);
-        if (result.Succeeded)
-        {
-            logger.LogInformation("User {UserName} updated successfully.", user.UserName);
-        }
-        else
-        {
-            logger.LogError("Failed to update user {UserName}. Errors: {Errors}", user.UserName, result.Errors);
         }
         return result.Succeeded;
     }
@@ -203,22 +138,16 @@ public class UserProvider(
         return false;
     }
 
-    // Unfollow a user
-    public async Task<bool> UnfollowUserAsync(string followerId, string followingId)
+
+
+    // Retrieve all users
+    public async Task<List<UserModel>> GetAllPublicUsersAsync()
     {
-        var follow = await context.UserFollows
-            .FirstOrDefaultAsync(uf => uf.FollowerId == followerId && uf.FollowingId == followingId);
-
-        if (follow != null)
-        {
-            context.UserFollows.Remove(follow);
-            await context.SaveChangesAsync();
-            logger.LogInformation("User {FollowerId} unfollowed user {FollowingId}.", followerId, followingId);
-            return true;
-        }
-
-        logger.LogWarning("User {FollowerId} is not following user {FollowingId}.", followerId, followingId);
-        return false;
+        var users = await context.Users
+            .Where(u => u.Email != u.UserName)
+            .AsNoTracking().ToListAsync();
+        logger.LogInformation("Retrieved {UserCount} users.", users.Count);
+        return [.. users.Select(MapToUserModel)];
     }
 
     // Get followers of a user
@@ -245,9 +174,80 @@ public class UserProvider(
         return following.Select(MapToUserModel).ToList();
     }
 
-    // Private method to map from EF entity to UserModel
-    private static UserModel MapToUserModel(ShareSmallBizUser user)
+    // Retrieve a user by ID
+    public async Task<UserModel?> GetUserByIdAsync(string userId)
     {
-        return new UserModel(user);
+        var user = await context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+        {
+            logger.LogWarning("User with ID {UserId} not found.", userId);
+            return null;
+        }
+
+        return MapToUserModel(user);
+    }
+
+    public async Task<UserModel?> GetUserByUsernameAsync(string username)
+    {
+        var user = await context.Users.Include(u => u.Posts).Include(u => u.LikedPosts)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.UserName == username);
+
+        if (user == null)
+        {
+            logger.LogWarning("User with username {Username} not found.", username);
+            return null;
+        }
+
+        return MapToUserModel(user);
+    }
+
+    // Unfollow a user
+    public async Task<bool> UnfollowUserAsync(string followerId, string followingId)
+    {
+        var follow = await context.UserFollows
+            .FirstOrDefaultAsync(uf => uf.FollowerId == followerId && uf.FollowingId == followingId);
+
+        if (follow != null)
+        {
+            context.UserFollows.Remove(follow);
+            await context.SaveChangesAsync();
+            logger.LogInformation("User {FollowerId} unfollowed user {FollowingId}.", followerId, followingId);
+            return true;
+        }
+
+        logger.LogWarning("User {FollowerId} is not following user {FollowingId}.", followerId, followingId);
+        return false;
+    }
+
+    // Update user details
+    public async Task<bool> UpdateUserAsync(string userId, UserModel model)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            logger.LogWarning("User with ID {UserId} not found.", userId);
+            return false;
+        }
+
+        user.DisplayName = model.DisplayName;
+        user.Bio = model.Bio;
+        user.FirstName = model.FirstName;
+        user.LastName = model.LastName;
+        user.ProfilePictureUrl = model.ProfilePictureUrl;
+
+        var result = await userManager.UpdateAsync(user);
+        if (result.Succeeded)
+        {
+            logger.LogInformation("User {UserName} updated successfully.", user.UserName);
+        }
+        else
+        {
+            logger.LogError("Failed to update user {UserName}. Errors: {Errors}", user.UserName, result.Errors);
+        }
+        return result.Succeeded;
     }
 }
