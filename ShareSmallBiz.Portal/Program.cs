@@ -3,6 +3,7 @@ using HttpClientUtility.RequestResult;
 using HttpClientUtility.StringConverter;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -10,7 +11,6 @@ using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Logging;
 using ShareSmallBiz.Portal.Infrastructure.Middleware;
 using ShareSmallBiz.Portal.Infrastructure.Services;
-using ShareSmallBiz.Portal.Infrastructure.Models;
 using System.Text.Json;
 
 
@@ -51,7 +51,16 @@ builder.Services.AddSession(options =>
 // ========================
 var adminConnectionString = builder.Configuration.GetValue("ShareSmallBizUserContext", "Data Source=c:\\websites\\ShareSmallBiz\\ShareSmallBizUser.db");
 builder.Services.AddDbContext<ShareSmallBizUserContext>(options =>
-    options.UseSqlite(adminConnectionString));
+{
+    options.UseSqlite(adminConnectionString, sqliteOptions =>
+    {
+        // Use split queries to avoid large, inefficient joins for multiple collection includes.
+        sqliteOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+    });
+    // Configure warnings to throw an exception when a query includes multiple collections.
+    options.ConfigureWarnings(warnings =>
+        warnings.Throw(RelationalEventId.MultipleCollectionIncludeWarning));
+});
 
 // ========================
 // Identity Configuration
@@ -232,7 +241,7 @@ app.Use(async (context, next) =>
     }
     else
     {
-        app.Logger.LogWarning("⚠️ Middleware: User is NOT authenticated.");
+        app.Logger.LogInformation("⚠️ Middleware: User is NOT authenticated.");
     }
 
     var authCookie = context.Request.Cookies[".AspNetCore.Identity.Application"];
@@ -242,7 +251,7 @@ app.Use(async (context, next) =>
     }
     else
     {
-        app.Logger.LogWarning("⚠️ No Authentication Cookie Found in Request!");
+        app.Logger.LogInformation("⚠️ No Authentication Cookie Found in Request!");
     }
 
     await next();

@@ -27,7 +27,7 @@
 </section>
 
 <section>
-    @await Html.PartialAsync("_postList",Model)
+    @await Html.PartialAsync("_postList", Model)
 </section>
 
 <section class="container-fluid my-3">
@@ -44,56 +44,62 @@
     </div>
 </section>
 
+@if (User.Identity.IsAuthenticated)
+{
+}
+else
+{
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center">Why Join ShareSmallBiz?</h2>
+            <p class="text-muted text-center">Discover the key advantages of being part of a thriving business network.</p>
 
-<section class="py-5">
-    <div class="container">
-        <h2 class="text-center">Why Join ShareSmallBiz?</h2>
-        <p class="text-muted text-center">Discover the key advantages of being part of a thriving business network.</p>
+            <!-- Section 1 -->
+            <div class="mb-5">
+                <h3><i class="bi bi-megaphone text-primary"></i> Expand Your Reach and Visibility</h3>
+                <p>Marketing alone can be tough, but when businesses support each other, visibility multiplies. By joining ShareSmallBiz, your content gets shared across a growing network of like-minded entrepreneurs, helping you reach potential customers far beyond your own social media following.</p>
+                <p>When businesses collaborate, they amplify each other’s messages. ShareSmallBiz enables you to cross-promote with other businesses, allowing you to leverage existing audiences and build credibility faster.</p>
+                <p>Imagine your posts being featured on multiple platforms, reaching thousands of potential customers effortlessly. This type of exposure is invaluable and difficult to achieve alone.</p>
+            </div>
 
-        <!-- Section 1 -->
-        <div class="mb-5">
-            <h3><i class="bi bi-megaphone text-primary"></i> Expand Your Reach and Visibility</h3>
-            <p>Marketing alone can be tough, but when businesses support each other, visibility multiplies. By joining ShareSmallBiz, your content gets shared across a growing network of like-minded entrepreneurs, helping you reach potential customers far beyond your own social media following.</p>
-            <p>When businesses collaborate, they amplify each other’s messages. ShareSmallBiz enables you to cross-promote with other businesses, allowing you to leverage existing audiences and build credibility faster.</p>
-            <p>Imagine your posts being featured on multiple platforms, reaching thousands of potential customers effortlessly. This type of exposure is invaluable and difficult to achieve alone.</p>
+            <!-- Section 2 -->
+            <div class="mb-5">
+                <h3><i class="bi bi-people text-primary"></i> Build a Supportive Network</h3>
+                <p>Entrepreneurship can sometimes feel isolating, but at ShareSmallBiz, you're never alone. Engage with a vibrant community of business owners, exchange ideas, get feedback, and find valuable collaborations that push your business forward.</p>
+                <p>Building connections is crucial in today’s business landscape. Whether you’re looking for mentorship, partnerships, or just friendly advice, our network is here to help you grow.</p>
+                <p>With an active discussion forum, live events, and community-driven initiatives, ShareSmallBiz ensures that your journey as a business owner is filled with support and valuable relationships.</p>
+            </div>
+
+            <!-- Section 3 -->
+            <div class="mb-5">
+                <h3><i class="bi bi-bar-chart-line text-primary"></i> Increase Sales Organically</h3>
+                <p>Paid ads can be expensive, and their impact isn’t always guaranteed. ShareSmallBiz offers an organic marketing approach where members actively promote each other's businesses, leading to authentic growth and customer engagement without high advertising costs.</p>
+                <p>Organic reach is not only more affordable but also more effective in building trust. Customers are more likely to engage with businesses recommended by peers rather than random ads.</p>
+                <p>By working together with other business owners, you ensure steady traffic to your business while supporting others in return—a win-win strategy for sustainable growth.</p>
+            </div>
+
+            <!-- Section 4 -->
+            <div class="mb-5">
+                <h3><i class="bi bi-lightbulb text-primary"></i> Learn and Stay Inspired</h3>
+                <p>Growing a business is a continuous learning process. At ShareSmallBiz, you’ll gain access to expert insights, training sessions, and valuable resources designed to help you make informed decisions.</p>
+                <p>Our blog, webinars, and discussion groups provide up-to-date strategies on marketing, customer engagement, and business development, ensuring you stay ahead of industry trends.</p>
+                <p>By learning from other successful entrepreneurs, you can avoid common pitfalls and fast-track your success, saving time and resources along the way.</p>
+            </div>
+
+            <!-- Section 5 -->
+            <div class="mb-5">
+                <h3><i class="bi bi-briefcase text-primary"></i> Monetize and Diversify Income</h3>
+                <p>ShareSmallBiz isn’t just about networking—it’s also about revenue generation. We offer multiple opportunities for members to monetize their expertise, from drop-shipping to service-based businesses.</p>
+                <p>Our marketplace allows business owners to showcase their products and services, creating new revenue streams beyond their usual customer base.</p>
+                <p>With guidance from experienced professionals and community members, you can explore new income opportunities and create a more financially secure business model.</p>
+            </div>
         </div>
+    </section>
+}
 
-        <!-- Section 2 -->
-        <div class="mb-5">
-            <h3><i class="bi bi-people text-primary"></i> Build a Supportive Network</h3>
-            <p>Entrepreneurship can sometimes feel isolating, but at ShareSmallBiz, you're never alone. Engage with a vibrant community of business owners, exchange ideas, get feedback, and find valuable collaborations that push your business forward.</p>
-            <p>Building connections is crucial in today’s business landscape. Whether you’re looking for mentorship, partnerships, or just friendly advice, our network is here to help you grow.</p>
-            <p>With an active discussion forum, live events, and community-driven initiatives, ShareSmallBiz ensures that your journey as a business owner is filled with support and valuable relationships.</p>
-        </div>
-
-        <!-- Section 3 -->
-        <div class="mb-5">
-            <h3><i class="bi bi-bar-chart-line text-primary"></i> Increase Sales Organically</h3>
-            <p>Paid ads can be expensive, and their impact isn’t always guaranteed. ShareSmallBiz offers an organic marketing approach where members actively promote each other's businesses, leading to authentic growth and customer engagement without high advertising costs.</p>
-            <p>Organic reach is not only more affordable but also more effective in building trust. Customers are more likely to engage with businesses recommended by peers rather than random ads.</p>
-            <p>By working together with other business owners, you ensure steady traffic to your business while supporting others in return—a win-win strategy for sustainable growth.</p>
-        </div>
-
-        <!-- Section 4 -->
-        <div class="mb-5">
-            <h3><i class="bi bi-lightbulb text-primary"></i> Learn and Stay Inspired</h3>
-            <p>Growing a business is a continuous learning process. At ShareSmallBiz, you’ll gain access to expert insights, training sessions, and valuable resources designed to help you make informed decisions.</p>
-            <p>Our blog, webinars, and discussion groups provide up-to-date strategies on marketing, customer engagement, and business development, ensuring you stay ahead of industry trends.</p>
-            <p>By learning from other successful entrepreneurs, you can avoid common pitfalls and fast-track your success, saving time and resources along the way.</p>
-        </div>
-
-        <!-- Section 5 -->
-        <div class="mb-5">
-            <h3><i class="bi bi-briefcase text-primary"></i> Monetize and Diversify Income</h3>
-            <p>ShareSmallBiz isn’t just about networking—it’s also about revenue generation. We offer multiple opportunities for members to monetize their expertise, from drop-shipping to service-based businesses.</p>
-            <p>Our marketplace allows business owners to showcase their products and services, creating new revenue streams beyond their usual customer base.</p>
-            <p>With guidance from experienced professionals and community members, you can explore new income opportunities and create a more financially secure business model.</p>
-        </div>
-    </div>
-</section>
 
 <section class="bg-light py-5">
     <div class="container text-center">
-        <br/>
+        <br />
     </div>
 </section>
