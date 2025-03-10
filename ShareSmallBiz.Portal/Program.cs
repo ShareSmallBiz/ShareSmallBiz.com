@@ -8,6 +8,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Infrastructure.Extensions;
 using ShareSmallBiz.Portal.Infrastructure.Logging;
 using ShareSmallBiz.Portal.Infrastructure.Middleware;
 using ShareSmallBiz.Portal.Infrastructure.Services;
@@ -198,7 +199,6 @@ builder.Services.AddSignalR().AddJsonProtocol(options =>
     options.PayloadSerializerOptions.PropertyNamingPolicy = null;
 });
 
-
 // ========================
 // Json Serializer Configuration
 // ========================
@@ -207,6 +207,7 @@ builder.Services.AddSingleton(new JsonSerializerOptions
     PropertyNameCaseInsensitive = true,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
 });
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 app.UseGlobalExceptionHandling();
@@ -271,6 +272,18 @@ app.MapControllerRoute(
 );
 
 app.Logger.LogWarning("🔹 Application started successfully.");
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapSitemap();
+
+    // Map other endpoints like controllers, Razor Pages, etc.
+    endpoints.MapRazorPages();
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}");
+});
+
 
 app.Run();
 

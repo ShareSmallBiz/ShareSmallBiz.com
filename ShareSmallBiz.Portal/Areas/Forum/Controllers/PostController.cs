@@ -18,15 +18,15 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
         {
             if (User.IsInRole("Admin"))
             {
-                return View(await postService.GetAllPostsAsync());
+                return View(await postService.GetAllDiscussionsAsync());
             }
-            return View(await postService.GetAllUserPostsAsync());
+            return View(await postService.GetAllUserDiscussionsAsync());
         }
 
         [HttpGet, ActionName("MyPosts")]
         public async Task<IActionResult> MyPosts()
         {
-            var post = await postService.GetAllUserPostsAsync();
+            var post = await postService.GetAllUserDiscussionsAsync();
             if (post == null)
             {
                 return NotFound();
@@ -62,7 +62,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
                     return Unauthorized();
                 }
                 discussionModel.CreatedID = user.Id;
-                await postService.CreatePostAsync(discussionModel, currentUser);
+                await postService.CreateDiscussionAsync(discussionModel, currentUser);
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
@@ -153,7 +153,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
         {
             try
             {
-                var success = await postService.DeletePostAsync(id);
+                var success = await postService.DeleteDiscussionAsync(id);
                 if (!success)
                 {
                     return NotFound();

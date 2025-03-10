@@ -21,6 +21,15 @@ public class ProfilesController(
         {
             return NotFound();
         }
+
+        // Check if the requested id exactly matches the canonical username
+        if (!string.Equals(id, profile.UserName, StringComparison.Ordinal))
+        {
+            // Permanent redirect (301) to the correct profile URL
+            return RedirectPermanent($"/Profiles/{profile.UserName}");
+        }
+
         return View(profile);
     }
+
 }

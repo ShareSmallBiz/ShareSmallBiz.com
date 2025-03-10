@@ -192,18 +192,36 @@ public class UserProvider(
 
     public async Task<UserModel?> GetUserByUsernameAsync(string username)
     {
-        var user = await context.Users.Include(u => u.Posts).Include(u => u.LikedPosts)
+        // First try to find an exact match
+        var user = await context.Users
+            .Include(u => u.Posts)
+            .Include(u => u.LikedPosts)
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.UserName == username);
 
+        // If exact match is not found, try a fuzzy search:
         if (user == null)
         {
-            logger.LogWarning("User with username {Username} not found.", username);
-            return null;
+            // Normalize the input username
+            var normalizedInput = username.Replace(" ", "").ToLowerInvariant();
+
+            user = await context.Users
+                .Include(u => u.Posts)
+                .Include(u => u.LikedPosts)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u =>
+                    u.UserName.Replace(" ", "").ToLower() == normalizedInput);
+
+            if (user == null)
+            {
+                logger.LogWarning("User with username {Username} not found.", username);
+                return null;
+            }
         }
 
         return MapToUserModel(user);
     }
+
 
     // Unfollow a user
     public async Task<bool> UnfollowUserAsync(string followerId, string followingId)

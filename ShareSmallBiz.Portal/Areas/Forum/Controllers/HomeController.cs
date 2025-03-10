@@ -30,7 +30,7 @@ public class HomeController(DiscussionProvider postProvider, ILogger<HomeControl
     public async Task<IActionResult> CreateDiscussion([FromBody] DiscussionModel discussionModel)
     {
         var user = User;
-        var createdPost = await postProvider.CreatePostAsync(discussionModel, user);
+        var createdPost = await postProvider.CreateDiscussionAsync(discussionModel, user);
         if (createdPost == null)
         {
             return BadRequest("Discussion creation failed.");
@@ -51,7 +51,7 @@ public class HomeController(DiscussionProvider postProvider, ILogger<HomeControl
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> DeletePost(int id)
     {
-        var result = await postProvider.DeletePostAsync(id);
+        var result = await postProvider.DeleteDiscussionAsync(id);
         return result ? Ok() : NotFound("Post not found or could not be deleted.");
     }
 
@@ -67,7 +67,7 @@ public class HomeController(DiscussionProvider postProvider, ILogger<HomeControl
     [HttpPost("comment/{postId}")]
     public async Task<IActionResult> CommentPost(int postId, [FromBody] string comment)
     {
-        var result = await postProvider.CommentPostAsync(postId, comment, User);
+        var result = await postProvider.DiscussionCommentPostAsync(postId, comment, User);
         if (!result)
         {
             return BadRequest("Failed to add comment.");
@@ -79,14 +79,14 @@ public class HomeController(DiscussionProvider postProvider, ILogger<HomeControl
     [HttpGet("all")]
     public async Task<IActionResult> GetAllPosts()
     {
-        var posts = await postProvider.GetAllPostsAsync();
+        var posts = await postProvider.GetAllDiscussionsAsync();
         return Ok(posts);
     }
 
     [HttpGet("my/{count}")]
     public async Task<IActionResult> MyPosts(int count = 100)
     {
-        var posts = await postProvider.GetAllUserPostsAsync();
+        var posts = await postProvider.GetAllUserDiscussionsAsync();
         return PartialView("_postList", posts);
     }
 
@@ -115,7 +115,7 @@ public class HomeController(DiscussionProvider postProvider, ILogger<HomeControl
     [HttpGet("paged")]
     public async Task<IActionResult> GetPosts([FromQuery] int pageNumber, [FromQuery] int pageSize)
     {
-        var result = await postProvider.GetPostsAsync(pageNumber, pageSize, SortType.Recent);
+        var result = await postProvider.GetDiscussionsAsync(pageNumber, pageSize, SortType.Recent);
         return PartialView("_postList", result.Posts);
     }
 

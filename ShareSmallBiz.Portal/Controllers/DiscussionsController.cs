@@ -25,7 +25,7 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
     [HttpGet("tag/{id}")]
     public async Task<IActionResult> tag(string id)
     {
-        var posts = await postProvider.GetPostsByTagAsync(id).ConfigureAwait(true);
+        var posts = await postProvider.GetDiscussionsByTagAsync(id).ConfigureAwait(true);
         return View(posts);
     }
 
@@ -53,7 +53,7 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
             return Unauthorized();
         }
         var userPrincipal = HttpContext.User;
-        await postProvider.CommentPostAsync(postId, comment, userPrincipal);
+        await postProvider.DiscussionCommentPostAsync(postId, comment, userPrincipal);
         var model = await postProvider.GetPostByIdAsync(postId);
         return PartialView("_CommentsPartial", model.Comments);
     }
@@ -75,16 +75,16 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
 
 
     //[HttpGet("all")]
-    //public async Task<IActionResult> GetAllPosts()
+    //public async Task<IActionResult> GetAllDiscussions()
     //{
-    //    var posts = await postProvider.GetAllPostsAsync();
+    //    var posts = await postProvider.GetAllDiscussionsAsync();
     //    return Ok(posts);
     //}
 
     [HttpGet("my/{count}")]
     public async Task<IActionResult> MyPosts(int count = 100)
     {
-        var posts = await postProvider.GetAllUserPostsAsync();
+        var posts = await postProvider.GetAllUserDiscussionsAsync();
         return PartialView("_postList", posts);
     }
 
@@ -113,7 +113,7 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
     [HttpGet("paged")]
     public async Task<IActionResult> GetPosts([FromQuery] int pageNumber, [FromQuery] int pageSize)
     {
-        var result = await postProvider.GetPostsAsync(pageNumber, pageSize, SortType.Recent);
+        var result = await postProvider.GetDiscussionsAsync(pageNumber, pageSize, SortType.Recent);
         return PartialView("_postList", result.Posts);
     }
 

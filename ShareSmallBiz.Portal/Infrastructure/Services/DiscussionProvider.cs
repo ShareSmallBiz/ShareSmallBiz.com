@@ -63,13 +63,13 @@ public class DiscussionProvider(
 
 
     /// <summary>
-    /// Allows a logged-in user to comment on a post.
+    /// Allows a logged-in user to comment on a discussion.
     /// </summary>
-    /// <param name="postId">ID of the post to comment on.</param>
+    /// <param name="id">ID of the discussion to comment on.</param>
     /// <param name="comment">The comment text.</param>
     /// <param name="userPrincipal">The current user's claims principal.</param>
     /// <returns>True if the comment was added successfully, otherwise false.</returns>
-    public async Task<bool> CommentPostAsync(int postId, string comment, ClaimsPrincipal userPrincipal)
+    public async Task<bool> DiscussionCommentPostAsync(int id, string comment, ClaimsPrincipal userPrincipal)
     {
         // Validate user
         var user = await userManager.GetUserAsync(userPrincipal);
@@ -79,19 +79,19 @@ public class DiscussionProvider(
             return false;
         }
 
-        logger.LogInformation("User {UserId} adding comment to post with ID: {PostId}", user.Id, postId);
+        logger.LogInformation("User {UserId} adding comment to discussion with ID: {id}", user.Id, id);
 
-        var post = await context.Posts.FindAsync(postId);
+        var post = await context.Posts.FindAsync(id);
         if (post == null)
         {
-            logger.LogWarning("Post with ID {PostId} not found.", postId);
+            logger.LogWarning("Discussion with ID {id} not found.", id);
             return false;
         }
 
         // Create new comment
         var postComment = new PostComment
         {
-            PostId = postId,
+            PostId = id,
             Content = comment,
             CreatedDate = DateTime.UtcNow,
             Author = user // Or store user.Id separately if you prefer
@@ -105,17 +105,17 @@ public class DiscussionProvider(
 
 
     /// <inheritdoc/>
-    public async Task<DiscussionModel?> CreatePostAsync(DiscussionModel discussionModel, ClaimsPrincipal userPrincipal)
+    public async Task<DiscussionModel?> CreateDiscussionAsync(DiscussionModel discussionModel, ClaimsPrincipal userPrincipal)
     {
         var user = await userManager.GetUserAsync(userPrincipal);
         if (user == null)
         {
-            logger.LogWarning("No logged-in user found. Aborting post creation.");
+            logger.LogWarning("No logged-in user found. Aborting discussion creation.");
             return null;
         }
 
-        logger.LogInformation("Creating a new post with title: {Title}", discussionModel.Title);
-        var post = new Post
+        logger.LogInformation("Creating a new discussion with title: {Title}", discussionModel.Title);
+        var discussion = new Post
         {
             Title = discussionModel.Title,
             Content = discussionModel.Content,
@@ -136,24 +136,24 @@ public class DiscussionProvider(
             AuthorId = user.Id
         };
 
-        context.Posts.Add(post);
+        context.Posts.Add(discussion);
         await context.SaveChangesAsync();
-        return new DiscussionModel(post);
+        return new DiscussionModel(discussion);
     }
 
     /// <inheritdoc/>
-    public async Task<bool> DeletePostAsync(int postId)
+    public async Task<bool> DeleteDiscussionAsync(int id)
     {
-        logger.LogInformation("Deleting post with ID: {PostId}", postId);
-        var post = await context.Posts.FindAsync(postId);
-        if (post == null)
+        logger.LogInformation("Deleting discussion with ID: {id}", id);
+        var discussion = await context.Posts.FindAsync(id);
+        if (discussion == null)
             return false;
 
-        context.Posts.Remove(post);
+        context.Posts.Remove(discussion);
         await context.SaveChangesAsync();
         return true;
     }
-    public async Task<List<DiscussionModel>> GetAllUserPostsAsync(bool onlyPublic = true)
+    public async Task<List<DiscussionModel>> GetAllUserDiscussionsAsync(bool onlyPublic = true)
     {
         // Get The Current User Id
         var userId = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -169,9 +169,9 @@ public class DiscussionProvider(
         return [.. posts.Select(p => new DiscussionModel(p))];
     }
     /// <inheritdoc/>
-    public async Task<List<DiscussionModel>> GetAllPostsAsync(bool onlyPublic = true)
+    public async Task<List<DiscussionModel>> GetAllDiscussionsAsync(bool onlyPublic = true)
     {
-        logger.LogInformation("Retrieving all posts. Only public: {OnlyPublic}", onlyPublic);
+        logger.LogInformation("Retrieving all discussions. Only public: {OnlyPublic}", onlyPublic);
         var posts = await context.Posts
             .Where(p => !onlyPublic || p.IsPublic)
             .Include(p => p.Author)
@@ -181,17 +181,17 @@ public class DiscussionProvider(
         return [.. posts.Select(p => new DiscussionModel(p))];
     }
 
-    public async Task<DiscussionModel?> GetPostByIdAsync(int postId)
+    public async Task<DiscussionModel?> GetPostByIdAsync(int id)
     {
-        logger.LogInformation("Retrieving post with ID: {PostId}", postId);
+        logger.LogInformation("Retrieving discussion with ID: {id}", id);
 
-        // Fetch the post with all related data
+        // Fetch the discussion with all related data
         var post = await context.Posts
             .Include(p => p.Author)
             .Include(p => p.PostCategories)
             .Include(p => p.Likes).ThenInclude(l => l.User)
             .Include(p => p.Comments).ThenInclude(c => c.Author)
-            .FirstOrDefaultAsync(p => p.Id == postId);
+            .FirstOrDefaultAsync(p => p.Id == id);
 
         if (post == null)
         {
@@ -209,22 +209,22 @@ public class DiscussionProvider(
         catch (DbUpdateConcurrencyException ex)
         {
             // Log the error but don't throw or interrupt the flow
-            logger.LogWarning("Concurrency conflict occurred while updating post view count for PostId: {PostId}. Error: {Message}", postId, ex.Message);
+            logger.LogWarning("Concurrency conflict occurred while updating discussion view count for PostId: {id}. Error: {Message}", id, ex.Message);
             // Optionally, you can log more details about the exception if needed
         }
 
         // Map to DiscussionModel for return
-        DiscussionModel returnPost = new(post);
-        returnPost.Content = StringToHtml(returnPost.Content);
+        DiscussionModel returnDiscussion = new(post);
+        returnDiscussion.Content = StringToHtml(returnDiscussion.Content);
 
-        return returnPost;
+        return returnDiscussion;
     }
 
 
     /// <inheritdoc/>
-    public async Task<List<DiscussionModel>> GetPostsAsync(int perPage, int pageNumber)
+    public async Task<List<DiscussionModel>> GetDiscussionsAsync(int perPage, int pageNumber)
     {
-        logger.LogInformation("Retrieving page {PageNumber} with {PerPage} posts per page", pageNumber, perPage);
+        logger.LogInformation("Retrieving page {PageNumber} with {PerPage} discussions per page", pageNumber, perPage);
 
         var posts = await context.Posts
             .Where(p => p.IsPublic)
@@ -240,7 +240,7 @@ public class DiscussionProvider(
     /// <summary>
     /// Retrieves a paginated and optionally sorted set of posts.
     /// </summary>
-    public async Task<PaginatedPostResult> GetPostsAsync(int pageNumber, int pageSize, SortType sortType)
+    public async Task<PaginatedPostResult> GetDiscussionsAsync(int pageNumber, int pageSize, SortType sortType)
     {
         logger.LogInformation("Retrieving posts with sort type: {SortType}, page number: {PageNumber}, page size: {PageSize}",
             sortType, pageNumber, pageSize);
@@ -282,11 +282,11 @@ public class DiscussionProvider(
 
 
     /// <summary>
-    /// Allows a logged-in user to "like" a post.
+    /// Allows a logged-in user to "like" a discussion.
     /// </summary>
-    /// <param name="postId">ID of the post to like.</param>
+    /// <param name="postId">ID of the discussion to like.</param>
     /// <param name="userPrincipal">The current user's claims principal.</param>
-    /// <returns>True if the post was successfully liked, otherwise false.</returns>
+    /// <returns>True if the discussion was successfully liked, otherwise false.</returns>
     public async Task<bool> LikePostAsync(int postId, ClaimsPrincipal userPrincipal)
     {
         // Validate user
@@ -297,7 +297,7 @@ public class DiscussionProvider(
             return false;
         }
 
-        logger.LogInformation("User {UserId} is liking post with ID: {PostId}", user.Id, postId);
+        logger.LogInformation("User {UserId} is liking discussion with ID: {PostId}", user.Id, postId);
 
         var post = await context.Posts.FindAsync(postId);
         if (post == null)
@@ -306,13 +306,13 @@ public class DiscussionProvider(
             return false;
         }
 
-        // Check if user already liked the post
+        // Check if user already liked the discussion
         var postLike = await context.PostLikes
             .FirstOrDefaultAsync(pl => pl.PostId == postId && pl.UserId == user.Id);
 
         if (postLike != null)
         {
-            logger.LogInformation("User {UserId} has already liked post {PostId}.", user.Id, postId);
+            logger.LogInformation("User {UserId} has already liked discussion {PostId}.", user.Id, postId);
             return false;
         }
 
@@ -398,10 +398,10 @@ public class DiscussionProvider(
         var user = await userManager.GetUserAsync(userPrincipal).ConfigureAwait(false);
         if (user == null)
         {
-            logger.LogWarning("No logged-in user found. Aborting post update.");
+            logger.LogWarning("No logged-in user found. Aborting discussion update.");
             return false;
         }
-        logger.LogInformation("Updating post with ID: {PostId}", discussionModel.Id);
+        logger.LogInformation("Updating discussion with ID: {PostId}", discussionModel.Id);
 
         var existingPost = await context.Posts.
             Where(p => p.Id == discussionModel.Id)
@@ -424,7 +424,7 @@ public class DiscussionProvider(
         existingPost.ModifiedDate = DateTime.UtcNow;
         existingPost.ModifiedID = user.Id;
 
-        // Update post categories
+        // Update discussion categories
         existingPost.PostCategories.Clear();
         foreach (var categoryName in discussionModel.Tags)
         {
@@ -440,9 +440,9 @@ public class DiscussionProvider(
         return true;
     }
     /// <summary>
-    /// Allows a logged-in user to delete a comment on a post.
+    /// Allows a logged-in user to delete a comment on a discussion.
     /// </summary>
-    /// <param name="postId">ID of the post containing the comment.</param>
+    /// <param name="postId">ID of the discussion containing the comment.</param>
     /// <param name="commentId">ID of the comment to delete.</param>
     /// <param name="userPrincipal">The current user's claims principal.</param>
     /// <returns>True if the comment was deleted successfully, otherwise false.</returns>
@@ -456,7 +456,7 @@ public class DiscussionProvider(
             return false;
         }
 
-        logger.LogInformation("User {UserId} attempting to delete comment with ID: {CommentId} from post with ID: {PostId}", user.Id, commentId, postId);
+        logger.LogInformation("User {UserId} attempting to delete comment with ID: {CommentId} from discussion with ID: {PostId}", user.Id, commentId, postId);
 
         var comment = await context.PostComments
             .Include(c => c.Post)
@@ -464,7 +464,7 @@ public class DiscussionProvider(
 
         if (comment == null)
         {
-            logger.LogWarning("Comment with ID {CommentId} not found in post with ID {PostId}.", commentId, postId);
+            logger.LogWarning("Comment with ID {CommentId} not found in discussion with ID {PostId}.", commentId, postId);
             return false;
         }
 
@@ -479,7 +479,7 @@ public class DiscussionProvider(
         return true;
     }
 
-    public async Task<List<DiscussionModel>> GetPostsByTagAsync(string id)
+    public async Task<List<DiscussionModel>> GetDiscussionsByTagAsync(string id)
     {
         logger.LogInformation("Retrieving posts by tag: {Tag}", id);
         var posts = await context.Posts
