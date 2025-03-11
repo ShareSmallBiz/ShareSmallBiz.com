@@ -57,7 +57,7 @@
         "jquery-validation-unobtrusive": "^4.0.0",
         "jszip": "^3.10.1",
         "pdfmake": "^0.2.18",
-        "prismjs": "^1.29.0",
+        "prismjs": "^1.30.0",
         "terser": "^5.39.0",
         "trumbowyg": "^2.31.0"
     },
