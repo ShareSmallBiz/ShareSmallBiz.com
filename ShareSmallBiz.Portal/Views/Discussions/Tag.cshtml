@@ -1,13 +1,13 @@
-﻿@model List<DiscussionModel>
+﻿@model DiscussionListModel
 @{
-    ViewData["Title"] = "Discussions";
+    ViewData["Title"] = $"{Model.Description} ";
     var user = User.Identity;
 }
 
 <div class="container mt-4">
-    <h2 class="text-center mb-4">
-        <i class="bi bi-chat-dots-fill"></i> Discussions
-    </h2>
+    <h1 class="text-center mb-4">
+        <i class="bi bi-chat-dots-fill"></i> @Model.Description
+    </h1>
 
     @if (user != null && user.IsAuthenticated)
     {

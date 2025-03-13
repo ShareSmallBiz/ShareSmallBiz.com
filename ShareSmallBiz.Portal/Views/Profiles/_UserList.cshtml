@@ -1,0 +1,32 @@
+﻿@model IEnumerable<UserModel>
+
+<div class="container py-3">
+    <h4 class="text-center mb-3"><i class="bi bi-people-fill"></i> Profiles</h4>
+    <div class="list-group list-group-flush">
+        @foreach (var user in Model)
+        {
+            <a href="@Url.Action("ViewProfile", "Profiles", new { id = user.DisplayName })"
+               class="list-group-item list-group-item-action">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        @if (user.ProfilePicture != null)
+                        {
+                            <img class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;"
+                                 src="data:image/*;base64,@(Convert.ToBase64String(user.ProfilePicture))" alt="Profile Picture">
+                        }
+                        else
+                        {
+                            <i class="bi bi-person-circle fs-3"></i>
+                        }
+                    </div>
+                    <div class="col-auto">
+                        <span class="fw-semibold">@user.DisplayName</span>
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge bg-primary rounded-pill">Posts: @user.PostCount</span>
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+</div>

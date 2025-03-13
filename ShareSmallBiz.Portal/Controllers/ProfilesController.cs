@@ -1,12 +1,20 @@
-﻿using ShareSmallBiz.Portal.Infrastructure.Services;
+﻿using Microsoft.AspNetCore.SignalR;
+using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Controllers;
 
 [Route("Profiles")]
-public class ProfilesController(
-    UserProvider userProvider,
-    ILogger<ProfilesController> logger) : Controller
+public class ProfilesController : Controller
 {
+    private readonly ILogger<ProfilesController> logger;
+    private readonly UserProvider userProvider;
+
+    public ProfilesController(ILogger<ProfilesController> logger, UserProvider userProvider)
+    {
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.userProvider = userProvider ?? throw new ArgumentNullException(nameof(userProvider));
+    }
+
     [HttpGet("")]
     public async Task<IActionResult> Index()
     {
@@ -16,20 +24,23 @@ public class ProfilesController(
     [HttpGet("{id}")]
     public async Task<IActionResult> ViewProfile(string id)
     {
-        var profile = await userProvider.GetUserByUsernameAsync(id).ConfigureAwait(false);
-        if (profile == null)
+        var users = await userProvider.GetAllPublicUsersAsync();
+        var userModel = await userProvider.GetUserByUsernameAsync(id).ConfigureAwait(false);
+        if (userModel == null)
         {
-            return NotFound();
+            logger.LogError("Missing Profile:{id}", id);
+            return RedirectToAction("Index");
         }
 
         // Check if the requested id exactly matches the canonical username
-        if (!string.Equals(id, profile.UserName, StringComparison.Ordinal))
+        if (!string.Equals(id, userModel.DisplayName, StringComparison.Ordinal))
         {
-            // Permanent redirect (301) to the correct profile URL
-            return RedirectPermanent($"/Profiles/{profile.UserName}");
+            // Permanent redirect (301) to the correct userModel URL
+            return RedirectPermanent($"/Profiles/{userModel.DisplayName}");
         }
-
-        return View(profile);
+        var profileModel = new ProfileModel(userModel);
+        profileModel.PublicUsers = users;
+        return View(profileModel);
     }
 
 }

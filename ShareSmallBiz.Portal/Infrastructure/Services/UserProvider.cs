@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using ShareSmallBiz.Portal.Data;
 using System.Security.Claims;
 
@@ -64,6 +65,10 @@ public class UserProvider(
     private static UserModel MapToUserModel(ShareSmallBizUser user)
     {
         return new UserModel(user);
+    }
+    private static ProfileModel MapToProfileModel(ShareSmallBizUser user)
+    {
+        return new ProfileModel(user);
     }
 
     // Create a new user
@@ -139,16 +144,37 @@ public class UserProvider(
     }
 
 
-
     // Retrieve all users
     public async Task<List<UserModel>> GetAllPublicUsersAsync()
     {
-        var users = await context.Users
-            .Where(u => u.Email != u.UserName)
-            .AsNoTracking().ToListAsync();
-        logger.LogInformation("Retrieved {UserCount} users.", users.Count);
-        return [.. users.Select(MapToUserModel)];
+        var usersInBusinessRole = await context.Users.Include(i=>i.Posts)
+            .Where(u => u.Email != u.DisplayName)
+            .Where(u => context.UserRoles
+                .Any(ur => ur.UserId == u.Id && context.Roles.Any(r => r.Id == ur.RoleId && r.Name == "Business")))
+            .AsNoTracking()
+            .ToListAsync();
+
+        foreach (var user in usersInBusinessRole)
+        {
+            if (user.UserName != user.DisplayName)
+            {
+                if (user.UserName == user.Email)
+                {
+                    var updateUser = await context.Users.SingleOrDefaultAsync(s => s.UserName == user.UserName).ConfigureAwait(true);
+                    if (updateUser != null)
+                    {
+                        logger.LogError("User {UserName} has a username that is the same as their email address. Updating username to display name.", user.UserName);
+                        updateUser.UserName = user.DisplayName;
+                        updateUser.Slug = user.DisplayName;
+                        await userManager.UpdateAsync(updateUser).ConfigureAwait(true);
+                    }
+                }
+            }
+        }
+        logger.LogInformation("Retrieved {UserCount} business users.", usersInBusinessRole.Count);
+        return [.. usersInBusinessRole.Select(MapToUserModel)];
     }
+
 
     // Get followers of a user
     public async Task<List<UserModel>> GetFollowersAsync(string userId)
@@ -190,7 +216,7 @@ public class UserProvider(
         return MapToUserModel(user);
     }
 
-    public async Task<UserModel?> GetUserByUsernameAsync(string username)
+    public async Task<ProfileModel> GetProfileByUsernameAsync(string username)
     {
         // First try to find an exact match
         var user = await context.Users
@@ -198,6 +224,40 @@ public class UserProvider(
             .Include(u => u.LikedPosts)
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.UserName == username);
+
+        // If exact match is not found, try a fuzzy search:
+        if (user == null)
+        {
+            // Normalize the input username
+            var normalizedInput = username.Replace(" ", "").ToLowerInvariant();
+
+            user = await context.Users
+                .Include(u => u.Posts)
+                .Include(u => u.LikedPosts)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u =>
+                    u.UserName.Replace(" ", "").ToLower() == normalizedInput);
+
+            if (user == null)
+            {
+                logger.LogWarning("User with username {Username} not found.", username);
+                return null;
+            }
+        }
+
+        return MapToProfileModel(user);
+    }
+
+
+
+    public async Task<UserModel?> GetUserByUsernameAsync(string username)
+    {
+        // First try to find an exact match
+        var user = await context.Users
+            .Include(u => u.Posts)
+            .Include(u => u.LikedPosts)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.DisplayName == username);
 
         // If exact match is not found, try a fuzzy search:
         if (user == null)

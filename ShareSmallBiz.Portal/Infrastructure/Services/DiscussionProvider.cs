@@ -4,8 +4,6 @@ using System.Text.RegularExpressions;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
-
-
 public class DiscussionProvider(
     ShareSmallBizUserContext context,
     ILogger<DiscussionProvider> logger,
@@ -102,9 +100,6 @@ public class DiscussionProvider(
         return true;
     }
 
-
-
-    /// <inheritdoc/>
     public async Task<DiscussionModel?> CreateDiscussionAsync(DiscussionModel discussionModel, ClaimsPrincipal userPrincipal)
     {
         var user = await userManager.GetUserAsync(userPrincipal);
@@ -133,7 +128,8 @@ public class DiscussionProvider(
             ModifiedDate = DateTime.UtcNow,
             CreatedID = user.Id,
             ModifiedID = user.Id,
-            AuthorId = user.Id
+            AuthorId = user.Id,
+            TargetId = discussionModel.TargetId
         };
 
         context.Posts.Add(discussion);
@@ -479,10 +475,11 @@ public class DiscussionProvider(
         return true;
     }
 
-    public async Task<List<DiscussionModel>> GetDiscussionsByTagAsync(string id)
+    public async Task<List<DiscussionModel>> GetDiscussionsByTagAsync(string id, bool onlyPublic = true)
     {
         logger.LogInformation("Retrieving posts by tag: {Tag}", id);
         var posts = await context.Posts
+            .Where(p => !onlyPublic || p.IsPublic)
             .Include(p => p.Author)
             .Include(p => p.PostCategories)
             .Where(p => p.IsPublic)

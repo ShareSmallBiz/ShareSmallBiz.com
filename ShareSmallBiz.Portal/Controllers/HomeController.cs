@@ -17,6 +17,10 @@ public class HomeController(DiscussionProvider postProvider, ILogger<HomeControl
     {
         return View();
     }
+    public IActionResult UserManager()
+    {
+        return View();
+    }
     public IActionResult Terms()
     {
         return View();

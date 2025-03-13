@@ -3,6 +3,8 @@ using HttpClientUtility.RequestResult;
 using HttpClientUtility.StringConverter;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +14,7 @@ using ShareSmallBiz.Portal.Infrastructure.Extensions;
 using ShareSmallBiz.Portal.Infrastructure.Logging;
 using ShareSmallBiz.Portal.Infrastructure.Middleware;
 using ShareSmallBiz.Portal.Infrastructure.Services;
+using ShareSmallBiz.Portal.Infrastructure.Utilities;
 using System.Text.Json;
 
 
@@ -66,15 +69,19 @@ builder.Services.AddDbContext<ShareSmallBizUserContext>(options =>
 // ========================
 // Identity Configuration
 // ========================
+builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
+
 builder.Services.AddIdentity<ShareSmallBizUser, IdentityRole>(options =>
 {
-    options.SignIn.RequireConfirmedAccount = false;
+    options.SignIn.RequireConfirmedAccount = true;
+    options.SignIn.RequireConfirmedEmail = true;
     options.User.RequireUniqueEmail = true;
     options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
 })
     .AddEntityFrameworkStores<ShareSmallBizUserContext>()
     .AddDefaultTokenProviders()
     .AddSignInManager<SignInManager<ShareSmallBizUser>>()
+    .AddUserConfirmation<ShareSmallBizUser>()
     .AddDefaultUI();
 
 // ✅ Data Protection (Ensures authentication works across restarts)

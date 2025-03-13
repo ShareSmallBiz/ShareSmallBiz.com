@@ -1,0 +1,229 @@
+﻿<div class="container">
+    <h1 class="my-4">User Controller CRUD Interface</h1>
+
+    <!-- Login Section -->
+    <div class="mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title h5">Login</h2>
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="loginEmail" class="form-label">Email:</label>
+                        <input type="email" id="loginEmail" class="form-control" placeholder="test@test.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="loginPassword" class="form-label">Password:</label>
+                        <input type="password" id="loginPassword" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JWT Token -->
+    <div class="mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title h5">JWT Token</h2>
+                <div class="mb-3">
+                    <label for="tokenInput" class="form-label">Token:</label>
+                    <input type="text" id="tokenInput" class="form-control" placeholder="Token will appear here after login">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User List Section -->
+    <div class="mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title h5">User List</h2>
+                <button id="getAllUsersButton" class="btn btn-secondary mb-3">Load Users</button>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>User Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Users will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="mb-3">
+                            <label for="editUserName" class="form-label">User Name:</label>
+                            <input type="text" id="editUserName" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title h5">Results</h2>
+                <pre id="results"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        // Helper to get common headers (including JWT if provided)
+        function getHeaders() {
+          const token = document.getElementById("tokenInput").value.trim();
+          const headers = { "Content-Type": "application/json" };
+          if (token) {
+            headers["Authorization"] = "Bearer " + token;
+          }
+          return headers;
+        }
+
+        // Helper to display results in the pre block
+        function displayResult(message) {
+          const results = document.getElementById("results");
+          results.textContent = message;
+        }
+
+        // Helper to handle fetch responses
+        async function handleResponse(response) {
+          const text = await response.text();
+          try {
+            const json = JSON.parse(text);
+            return JSON.stringify(json, null, 2);
+          } catch (e) {
+            return text;
+          }
+        }
+
+        // Login
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const email = document.getElementById("loginEmail").value.trim();
+          const password = document.getElementById("loginPassword").value.trim();
+          const body = JSON.stringify({ email, password });
+          try {
+            const response = await fetch("/api/auth/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: body
+            });
+            const resultText = await handleResponse(response);
+            let result;
+            try {
+              result = JSON.parse(resultText);
+            } catch (e) {
+              displayResult("Invalid response from server: " + resultText);
+              return;
+            }
+            if (result.token) {
+              document.getElementById("tokenInput").value = result.token;
+              displayResult("Login successful. Token set:\n" + result.token);
+            } else {
+              displayResult("Login response received:\n" + resultText);
+            }
+          } catch (error) {
+            displayResult("Error: " + error);
+          }
+        });
+
+        // Load All Users and populate the table
+        document.getElementById("getAllUsersButton").addEventListener("click", async () => {
+          try {
+            const response = await fetch("/api/Users/all", {
+              method: "GET",
+              headers: getHeaders()
+            });
+            const resultText = await handleResponse(response);
+            let users;
+            try {
+              users = JSON.parse(resultText);
+            } catch (e) {
+              displayResult("Error parsing users: " + resultText);
+              return;
+            }
+            const tbody = document.getElementById("usersTable").querySelector("tbody");
+            tbody.innerHTML = "";
+            users.forEach(user => {
+              const userId = user.id || user.userId || "";
+              const userName = user.userName || "";
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${userId}</td>
+                <td>${userName}</td>
+                <td>
+                  <button class="btn btn-sm btn-primary edit-btn" data-user='${JSON.stringify(user)}'>Edit</button>
+                </td>
+              `;
+              tbody.appendChild(tr);
+            });
+            displayResult("Loaded users successfully.");
+
+            // Attach click listeners to edit buttons
+            document.querySelectorAll(".edit-btn").forEach(btn => {
+              btn.addEventListener("click", (e) => {
+                const user = JSON.parse(e.target.getAttribute("data-user"));
+                // Prepopulate modal fields with user data
+                document.getElementById("editUserId").value = user.id || user.userId || "";
+                document.getElementById("editUserName").value = user.userName || "";
+                // Show the modal
+                const editModal = new bootstrap.Modal(document.getElementById("editUserModal"));
+                editModal.show();
+              });
+            });
+          } catch (error) {
+            displayResult("Error: " + error);
+          }
+        });
+
+        // Save Updated User from Modal
+        document.getElementById("editUserForm").addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const userId = document.getElementById("editUserId").value.trim();
+          const userName = document.getElementById("editUserName").value.trim();
+          const body = JSON.stringify({ userName });
+          try {
+            const response = await fetch(`/api/Users/${encodeURIComponent(userId)}`, {
+              method: "PUT",
+              headers: getHeaders(),
+              body: body
+            });
+            const result = await handleResponse(response);
+            displayResult(result);
+            // Close the modal
+            const modalEl = document.getElementById("editUserModal");
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+            // Refresh the user list
+            document.getElementById("getAllUsersButton").click();
+          } catch (error) {
+            displayResult("Error: " + error);
+          }
+        });
+    </script>
+}

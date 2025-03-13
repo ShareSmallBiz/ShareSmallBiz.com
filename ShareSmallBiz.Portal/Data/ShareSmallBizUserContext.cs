@@ -58,6 +58,13 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
             .HasOne(uf => uf.Following)
             .WithMany(u => u.Followers)
             .HasForeignKey(uf => uf.FollowingId);
+
+        builder.Entity<Post>()
+            .HasOne(p => p.Target)
+            .WithMany(u => u.ReceivedPosts)
+            .HasForeignKey(p => p.TargetId)
+            .IsRequired(false);
+
     }
     private void UpdateDateTrackingFields()
     {

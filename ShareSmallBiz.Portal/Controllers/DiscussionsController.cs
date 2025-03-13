@@ -13,7 +13,8 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
         var post = await postProvider.GetPostByIdAsync(id);
         if (post == null)
         {
-            return NotFound();
+            logger.LogWarning("ViewPost Not Found. {Id}:{Slug}", id, slug);
+            return RedirectToAction("Index");
         }
         if (!string.Equals(post.Slug, slug, StringComparison.OrdinalIgnoreCase))
         {
@@ -25,8 +26,15 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
     [HttpGet("tag/{id}")]
     public async Task<IActionResult> tag(string id)
     {
-        var posts = await postProvider.GetDiscussionsByTagAsync(id).ConfigureAwait(true);
-        return View(posts);
+        DiscussionListModel discussionModels = [.. await postProvider.GetDiscussionsByTagAsync(id).ConfigureAwait(true)];
+
+        if (discussionModels == null || discussionModels?.Count == 0)
+        {
+            logger.LogWarning("TagPost Not Found. {id}", id);
+            return RedirectToAction("Index");
+        }
+        discussionModels.Description = $"Discussions tagged with {id}";
+        return View(discussionModels);
     }
 
     // GET: /post
@@ -36,50 +44,43 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
         return View();
     }
 
-    // GET: /post/{postId}/comment
-    [HttpGet("{postId}/comment")]
+    // GET: /post/{id}/comment
+    [HttpGet("{id}/comment")]
     public async Task<IActionResult> GetComments(int postId)
     {
         var model = await postProvider.GetPostByIdAsync(postId);
         return PartialView("_CommentsPartial", model.Comments);
     }
 
-    // POST: /post/{postId}/comment
-    [HttpPost("{postId}/comment")]
-    public async Task<IActionResult> AddComment(int postId, [FromForm] string comment)
+    // POST: /post/{id}/comment
+    [HttpPost("{id}/comment")]
+    public async Task<IActionResult> AddComment(int id, [FromForm] string comment)
     {
         if (!User.Identity.IsAuthenticated)
         {
-            return Unauthorized();
+            logger.LogWarning("Unauthorized Comment. User is not authenticated id:{id} - {comment}",id, comment);
+            return RedirectToAction("Index");
         }
         var userPrincipal = HttpContext.User;
-        await postProvider.DiscussionCommentPostAsync(postId, comment, userPrincipal);
-        var model = await postProvider.GetPostByIdAsync(postId);
+        await postProvider.DiscussionCommentPostAsync(id, comment, userPrincipal);
+        var model = await postProvider.GetPostByIdAsync(id);
         return PartialView("_CommentsPartial", model.Comments);
     }
 
-    // DELETE: /post/{postId}/comment/{commentId}
-    [HttpDelete("{postId}/comment/{commentId}")]
-    public async Task<IActionResult> DeleteComment(int postId, int commentId, CancellationToken ct = default)
+    // DELETE: /post/{id}/comment/{commentId}
+    [HttpDelete("{id}/comment/{commentId}")]
+    public async Task<IActionResult> DeleteComment(int id, int commentId, CancellationToken ct = default)
     {
         if (!User?.Identity?.IsAuthenticated ?? true)
         {
-            return Unauthorized();
+            logger.LogWarning("Unauthorized Delete Comment. User is not authenticated");
+            return RedirectToAction("Index");
         }
         var userPrincipal = HttpContext.User;
-        await postProvider.DeleteCommentAsync(postId, commentId, userPrincipal, ct).ConfigureAwait(false);
-        var model = await postProvider.GetPostByIdAsync(postId).ConfigureAwait(false);
+        await postProvider.DeleteCommentAsync(id, commentId, userPrincipal, ct).ConfigureAwait(false);
+        var model = await postProvider.GetPostByIdAsync(id).ConfigureAwait(false);
         return PartialView("_CommentsPartial", model.Comments);
     }
-
-
-
-    //[HttpGet("all")]
-    //public async Task<IActionResult> GetAllDiscussions()
-    //{
-    //    var posts = await postProvider.GetAllDiscussionsAsync();
-    //    return Ok(posts);
-    //}
 
     [HttpGet("my/{count}")]
     public async Task<IActionResult> MyPosts(int count = 100)
@@ -116,6 +117,4 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
         var result = await postProvider.GetDiscussionsAsync(pageNumber, pageSize, SortType.Recent);
         return PartialView("_postList", result.Posts);
     }
-
-
 }

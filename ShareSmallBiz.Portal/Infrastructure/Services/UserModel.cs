@@ -2,6 +2,44 @@
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
+public class ProfileModel : UserModel
+{
+    public ProfileModel()
+    {
+
+    }
+    public ProfileModel(ShareSmallBizUser author) : base(author)
+    {
+    }
+    public ProfileModel(UserModel author)
+    {
+        if (author == null)
+            return;
+
+        Id = author.Id;
+        Email = author.Email ?? string.Empty;
+        UserName = author.UserName ?? string.Empty;
+        DisplayName = author.DisplayName;
+        WebsiteUrl = author.WebsiteUrl ?? string.Empty;
+        FirstName = author.FirstName;
+        LastName = author.LastName;
+        Bio = author.Bio;
+        ProfilePictureUrl = author.ProfilePictureUrl;
+        ProfilePicture = author.ProfilePicture;
+        PostCount = author.Posts?.Count ?? 0;
+        LikeCount = author.LikeCount;
+        Posts = author?.Posts ?? [];
+
+    }
+    public List<UserModel> PublicUsers { get; set; } = [];
+
+
+
+
+
+}
+
+
 public class UserModel
 {
     public string Id { get; set; } = string.Empty;

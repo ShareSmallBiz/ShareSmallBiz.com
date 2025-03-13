@@ -31,7 +31,7 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
             return Unauthorized(new { Message = "Invalid credentials" });
 
-        var token = GenerateJwtToken(user);
+        var token = await GenerateJwtToken(user).ConfigureAwait(true);
         return Ok(new { Token = token, UserId = user.Id, DisplayName = user.DisplayName });
     }
 
@@ -51,7 +51,7 @@ public class AuthController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(result.Errors);
 
-        var token = GenerateJwtToken(user);
+        var token = await GenerateJwtToken(user).ConfigureAwait(true);
         return Ok(new { Token = token, UserId = user.Id, DisplayName = user.DisplayName });
     }
     [HttpGet("test")]
@@ -113,7 +113,7 @@ public class AuthController : ControllerBase
     }
 
 
-    private string GenerateJwtToken(ShareSmallBizUser user)
+    private async Task<string> GenerateJwtToken(ShareSmallBizUser user)
     {
         if (user == null)
             throw new ArgumentNullException(nameof(user), "User parameter is required.");
@@ -123,6 +123,9 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(secret))
             throw new InvalidOperationException("JWT secret not configured or is empty. Check your appsettings or user secrets.");
 
+        // Get user roles
+        var userRoles = await _userManager.GetRolesAsync(user);
+
         // Build the claims
         var claims = new List<Claim>
     {
@@ -131,6 +134,12 @@ public class AuthController : ControllerBase
         new Claim("displayName", user.DisplayName ?? string.Empty),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
     };
+
+        // Add roles as claims
+        foreach (var role in userRoles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
 
         // Generate the signing credentials
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));

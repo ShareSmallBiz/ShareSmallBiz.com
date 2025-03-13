@@ -2,7 +2,7 @@
 
 namespace ShareSmallBiz.Portal.Data;
 
-public class ShareSmallBizUser : IdentityUser
+public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUser>
 {
     public ShareSmallBizUser(ShareSmallBizUser user)
     {
@@ -68,6 +68,14 @@ public class ShareSmallBizUser : IdentityUser
     public virtual ICollection<PostCommentLike> LikedPostComments { get; set; }
     public virtual ICollection<Post> Posts { get; set; }
     public string? WebsiteUrl { get; set; }
+    public DateTime LastModified { get; set; } = DateTime.Now;
+    public ICollection<Post> ReceivedPosts { get; set; } = [];
+
+    public Task<bool> IsConfirmedAsync(UserManager<ShareSmallBizUser> manager, ShareSmallBizUser user)
+    {
+        // Implement the method to check if the user is confirmed
+        return Task.FromResult(user.EmailConfirmed);
+    }
 }
 
 public class SocialLink

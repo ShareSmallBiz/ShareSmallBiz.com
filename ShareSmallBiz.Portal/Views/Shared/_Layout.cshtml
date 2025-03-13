@@ -25,9 +25,11 @@
             <div class="col-md-3 col-lg-2 d-none d-md-block bg-light sidebar">
                 @if (User.Identity.IsAuthenticated)
                 {
+                    @await RenderSectionAsync("SidebarLeft", required: false)
                 }
                 else
                 {
+                    @await RenderSectionAsync("SidebarLeft", required: false)
                     @await Html.PartialAsync("Sections/_whyJoin")
                 }
             </div>
@@ -42,9 +44,13 @@
             <aside class="col-md-3 col-lg-2 d-none d-md-block bg-light">
                 @if (User.Identity.IsAuthenticated)
                 {
+                    @await RenderSectionAsync("SidebarRight", required: false)
                 }
                 else
                 {
+                    @await RenderSectionAsync("SidebarRight", required: false)
+
+                    <hr/>
                     <!-- Call to Action -->
                     <section class="bg-light py-5">
                         <div class="container text-center">

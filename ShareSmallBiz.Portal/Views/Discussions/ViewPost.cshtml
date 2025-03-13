@@ -9,7 +9,7 @@
     var currentUserName = User.Identity.IsAuthenticated ? User.Identity.Name : "";
 }
 
-<div class="container-fluid px-3 px-md-5 my-3">
+<div class="container-fluid ">
     <article class="card shadow-lg border-0" itemscope itemtype="http://schema.org/Article">
         <meta itemprop="headline" content="@Model.Title" />
         <meta itemprop="datePublished" content="@Model.Published.ToString("yyyy-MM-dd")" />
