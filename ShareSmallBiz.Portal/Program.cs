@@ -181,6 +181,8 @@ builder.Services.AddScoped<UserProvider, UserProvider>();
 builder.Services.AddScoped<CommentProvider, CommentProvider>();
 builder.Services.AddScoped<KeywordProvider, KeywordProvider>();
 
+builder.Services.AddScoped<AdminCommentService, AdminCommentService>();
+
 
 // ========================
 // MVC, Razor Pages, SignalR

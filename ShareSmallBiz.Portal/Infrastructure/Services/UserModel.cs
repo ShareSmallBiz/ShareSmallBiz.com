@@ -32,11 +32,6 @@ public class ProfileModel : UserModel
 
     }
     public List<UserModel> PublicUsers { get; set; } = [];
-
-
-
-
-
 }
 
 
@@ -55,6 +50,9 @@ public class UserModel
     public int PostCount { get; set; } = 0;
     public List<DiscussionModel> Posts { get; set; } = [];
     public int LikeCount { get; set; } = 0;
+    public IEnumerable<string> Roles { get; set; } = [];
+    public bool IsLockedOut { get; set; }
+    public bool IsEmailConfirmed { get; set; }
     public UserModel() { }
     public UserModel(string id, string username, int postCount, int likeCount)
     {

@@ -1,17 +1,16 @@
 ﻿@using ShareSmallBiz.Portal.Infrastructure.Models.ViewModels
 @model List<ManageUserRolesVM>
-@{
-}
-<form method="post">
-    <div class="card">
-        <div class="card-header">
-            <h2>Manage User Roles</h2>
-            Add/Remove Roles for User / @ViewBag.UserName.
+
+<form method="post" class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Manage User Roles</h2>
+            <span class="text-muted">@ViewBag.UserName</span>
         </div>
         <div class="card-body">
             @for (int i = 0; i < Model.Count; i++)
             {
-                <div class="form-check m-1">
+                <div class="form-check form-switch my-2">
                     <input type="hidden" asp-for="@Model[i].RoleId" />
                     <input type="hidden" asp-for="@Model[i].RoleName" />
                     <input asp-for="@Model[i].Selected" class="form-check-input" />
@@ -22,11 +21,13 @@
             }
             <div asp-validation-summary="All" class="text-danger"></div>
         </div>
-        <div class="card-footer">
-            <input type="submit" value="Update" class="btn btn-primary"
-                   style="width:auto" />
-            <a asp-action="EditUser" asp-route-id="@ViewBag.userId"
-               class="btn btn-primary" style="width:auto">Cancel</a>
+        <div class="card-footer d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary d-flex align-items-center">
+                <i class="bi bi-check-lg me-2"></i> Update
+            </button>
+            <a asp-action="Index" class="btn btn-secondary d-flex align-items-center">
+                <i class="bi bi-arrow-left me-2"></i> Cancel
+            </a>
         </div>
     </div>
 </form>

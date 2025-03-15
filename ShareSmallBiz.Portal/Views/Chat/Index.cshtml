@@ -1,0 +1,233 @@
+﻿@model UserModel
+@{
+    ViewData["Title"] = "Chat - " + Model.UserName;
+}
+
+<style>
+    /* Chat Messages Styling */
+    #chatMessages .message {
+        padding: 8px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+    }
+
+    #chatMessages .user-message {
+        background-color: #e1ffc7;
+        text-align: right;
+    }
+
+    #chatMessages .bot-message {
+        background-color: #d3d3d3;
+        text-align: left;
+    }
+
+    .message-header {
+        font-weight: bold;
+    }
+</style>
+<div class="container">
+    <section class="bg-primary text-white text-center py-5">
+        <div class="container">
+            <h1 class="fw-bold">Supercharge Your Small Business with ShareSmallBiz</h1>
+            <p class="lead">Get expert advice, marketing tips, and networking opportunities with our AI-powered chat agent.</p>
+            <button id="joinModalButton"  class="btn btn-warning btn-lg mt-3">
+                <i class="bi bi-chat-dots-fill me-2"></i> Try the Chat Agent Now
+            </button>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="container text-center py-5">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="d-flex flex-column align-items-center">
+                    <i class="bi bi-lightbulb display-3 text-primary"></i>
+                    <h3 class="mt-3">Expert Insights</h3>
+                    <p>Receive tailored advice to help you grow your business and increase revenue.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex flex-column align-items-center">
+                    <i class="bi bi-megaphone display-3 text-primary"></i>
+                    <h3 class="mt-3">Marketing Tips</h3>
+                    <p>Boost your brand with cutting-edge marketing and digital strategies.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Fullscreen Modal for Chat -->
+    <div class="modal fade" id="chatModal" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chatModalLabel">Chat</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeModalBtn"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="chatContainer">
+                        <!-- Hidden field to store the variant name (always sharesmallbizchat) -->
+                        <span id="chatVariantName" style="display:none;">sharesmallbizchat</span>
+                        <!-- Chat Conversation -->
+                        <div id="chatConversation">
+                            <div id="chatMessages" style="height:60vh; overflow-y:auto; border:1px solid #ccc; padding:10px; margin-bottom:10px;"></div>
+                            <div id="botTyping" style="display:none; font-style:italic; text-align:center;">Bot is typing...</div>
+                            <div class="input-group">
+                                <input type="text" id="chatInput" placeholder="Type your message..." class="form-control" />
+                                <button id="sendMessageBtn" class="btn btn-primary">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Include SignalR and marked libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // --------------------
+        // Chat Functionality
+        // --------------------
+        // Set userName from the provided UserModel
+        let userName = '@Model.UserName';
+        // Always use "sharesmallbizchat" as the variant name
+        let chatVariantName = 'sharesmallbizchat';
+        let isConnecting = true;
+        let streamingBuffer = '';
+        let conversationId = new Date().getTime().toString();
+        let connection = null;
+        let streamingTimeoutRef = null;
+        let isFirstChunk = true;
+
+        // Remove any HTML tags from input
+        function sanitizeInput(input) {
+            var div = document.createElement('div');
+            div.textContent = input;
+            return div.innerHTML;
+        }
+
+        // Parse markdown using marked.js if available
+        function parseMarkdown(text) {
+            if (typeof marked !== 'undefined') {
+                return marked.parse(text);
+            }
+            return text;
+        }
+
+        // Append a new message to the chat
+        function addNewMessage(content, user) {
+            var sanitizedContent = sanitizeInput(content);
+            var chatMessages = document.getElementById('chatMessages');
+            var messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            if (user === chatVariantName) {
+                messageDiv.classList.add('bot-message');
+            } else {
+                messageDiv.classList.add('user-message');
+            }
+            var headerSpan = document.createElement('span');
+            headerSpan.classList.add('message-header');
+            headerSpan.textContent = user + ' (' + new Date().toLocaleTimeString() + '): ';
+            messageDiv.appendChild(headerSpan);
+            var contentSpan = document.createElement('span');
+            contentSpan.classList.add('message-content');
+            contentSpan.innerHTML = parseMarkdown(sanitizedContent);
+            messageDiv.appendChild(contentSpan);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Update the last message with new content (for streaming updates)
+        function updateLastMessage(chunk) {
+            var chatMessages = document.getElementById('chatMessages');
+            var lastMessage = chatMessages.lastElementChild;
+            if (lastMessage) {
+                var contentSpan = lastMessage.querySelector('.message-content');
+                if (contentSpan) {
+                    contentSpan.innerHTML += parseMarkdown(sanitizeInput(chunk));
+                }
+            }
+        }
+
+        // Handle incoming messages from the SignalR hub
+        function handleReceiveMessage(user, messageChunk) {
+            if (user === chatVariantName) {
+                document.getElementById('botTyping').style.display = 'block';
+                streamingBuffer += sanitizeInput(messageChunk);
+                if (streamingTimeoutRef) clearTimeout(streamingTimeoutRef);
+                if (isFirstChunk) {
+                    addNewMessage(messageChunk, user);
+                    isFirstChunk = false;
+                } else {
+                    updateLastMessage(messageChunk);
+                }
+                streamingTimeoutRef = setTimeout(function(){
+                    isFirstChunk = true;
+                    streamingBuffer = '';
+                    document.getElementById('botTyping').style.display = 'none';
+                }, 1000);
+            } else {
+                addNewMessage(messageChunk, user);
+            }
+        }
+
+        // Initialize the SignalR chat connection
+        function initChatConnection() {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl('https://webspark.markhazleton.com/chatHub')
+                .build();
+            connection.start().then(function(){
+                isConnecting = false;
+                console.log('Connected to SignalR hub');
+            }).catch(function(error){
+                console.error('SignalR connection failed:', error);
+                isConnecting = false;
+            });
+            connection.on('ReceiveMessage', handleReceiveMessage);
+        }
+
+        // Handle sending a message from the chat input
+        function handleSendMessage() {
+            var chatInputField = document.getElementById('chatInput');
+            if (userName && chatInputField && chatInputField.value.trim() !== '') {
+                var message = chatInputField.value.trim();
+                if (connection) {
+                    connection.invoke('SendMessage', userName, message, conversationId, chatVariantName)
+                        .catch(function(err){ console.error(err); });
+                }
+                chatInputField.value = '';
+            }
+        }
+
+        // Set up event listeners for chat once the DOM is ready
+        document.addEventListener('DOMContentLoaded', function(){
+            var joinModalButton = document.getElementById('joinModalButton');
+            joinModalButton.addEventListener('click', function() {
+                document.getElementById('chatModalLabel').textContent = 'Chat with ' + chatVariantName;
+                var chatModal = new bootstrap.Modal(document.getElementById('chatModal'));
+                chatModal.show();
+            });
+
+            var chatModal = document.getElementById('chatModal');
+            chatModal.addEventListener('shown.bs.modal', function(){
+                // Initialize connection on first modal open if not already connected
+                if (!connection) {
+                    initChatConnection();
+                }
+            });
+
+            document.getElementById('sendMessageBtn').addEventListener('click', handleSendMessage);
+
+            document.getElementById('chatInput').addEventListener('keydown', function(e){
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            });
+        });
+    </script>
+}

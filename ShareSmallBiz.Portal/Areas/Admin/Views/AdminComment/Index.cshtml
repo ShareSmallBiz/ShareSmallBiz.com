@@ -1,0 +1,65 @@
+﻿@model IEnumerable<PostCommentModel>
+
+@{
+    ViewData["Title"] = "Admin - Comments";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New Comment</a>
+</p>
+
+<table id="displayTable" class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>Discussion</th>
+            <th>Author</th>
+            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Content)</th>
+            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().CreatedDate)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var comment in Model)
+            {
+                <tr>
+                    <td>@comment.PostId</td>
+                    <td>@comment.Author?.UserName</td>
+                    <td>@comment.Content</td>
+                    <td>@comment.CreatedDate.ToString("s")</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@comment.Id">Details</a> |
+                        <a asp-action="Edit" asp-route-id="@comment.Id">Edit</a> |
+                        <a asp-action="Delete" asp-route-id="@comment.Id">Delete</a>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="6">No comments found.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            $('#displayTable').DataTable({
+                paging: false,        // Disable pagination
+                scrollY: '50vh',      // Enable vertical scrolling and set the height
+                scrollCollapse: true,  // Optional: Reduce the height of the table when there are fewer rows
+                stateSave: true,
+                colReorder: {
+                    realtime: true, // update the table as you drag the columns (default: true)
+                    fixedColumnsLeft: 1, // number of columns on the left that cannot be reordered
+                    fixedColumnsRight: 1 // number of columns on the right that cannot be reordered
+                }
+            });
+        });
+    </script>
+}

@@ -1,20 +1,20 @@
 {
   "menuItems": [
     {
-      "text": "Home",
-      "url": "/"
+      "text": "Users",
+      "url": "/admin/UserRoles"
     },
     {
       "text": "Roles",
       "url": "/admin/RoleManager"
     },
     {
-      "text": "User-Roles",
-      "url": "/admin/UserRoles"
-    },
-    {
       "text": "Keywords",
       "url": "/admin/Keyword"
+    },
+    {
+      "text": "Comments",
+      "url": "/admin/AdminComment"
     }
   ]
 }
