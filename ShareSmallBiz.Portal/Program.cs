@@ -182,6 +182,7 @@ builder.Services.AddScoped<CommentProvider, CommentProvider>();
 builder.Services.AddScoped<KeywordProvider, KeywordProvider>();
 
 builder.Services.AddScoped<AdminCommentService, AdminCommentService>();
+builder.Services.AddScoped<MailerSendService, MailerSendService>();
 
 
 // ========================

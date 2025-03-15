@@ -1,0 +1,48 @@
+﻿@using static ShareSmallBiz.Portal.Areas.Admin.Controllers.EmailSendController
+@model EmailRequest
+
+@{
+    ViewData["Title"] = "Send Email";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-success">
+        @ViewBag.Message
+    </div>
+}
+
+<form asp-action="Index" method="post">
+    <div class="form-group">
+        <label asp-for="FromEmail" class="control-label"></label>
+        <input asp-for="FromEmail" class="form-control" />
+        <span asp-validation-for="FromEmail" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="ToEmail" class="control-label"></label>
+        <input asp-for="ToEmail" class="form-control" />
+        <span asp-validation-for="ToEmail" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Subject" class="control-label"></label>
+        <input asp-for="Subject" class="form-control" />
+        <span asp-validation-for="Subject" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="HtmlContent" class="control-label"></label>
+        <textarea asp-for="HtmlContent" class="form-control" rows="6"></textarea>
+        <span asp-validation-for="HtmlContent" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="TextContent" class="control-label"></label>
+        <textarea asp-for="TextContent" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="TextContent" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Send Email</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

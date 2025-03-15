@@ -54,6 +54,17 @@
                         <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
                     </div>
 
+                    <!-- Captcha Section -->
+                    <div class="mb-3">
+                        <img src="@Url.Action("GenerateCaptcha", "Captcha")" alt="Captcha Image" id="captchaImage" class="img-fluid mb-2" />
+                        <button type="button" class="btn btn-link p-0" onclick="refreshCaptcha()">Refresh Captcha</button>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.CaptchaAnswer" class="form-control" autocomplete="off" aria-required="true" />
+                        <label asp-for="Input.CaptchaAnswer">What is the answer?</label>
+                        <span asp-validation-for="Input.CaptchaAnswer" class="text-danger"></span>
+                    </div>
+
                     <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
                 </form>
             </section>
@@ -88,4 +99,11 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script type="text/javascript">
+        function refreshCaptcha() {
+            var captchaImage = document.getElementById('captchaImage');
+            // Append a timestamp to force a fresh load of the captcha image.
+            captchaImage.src = '@Url.Action("GenerateCaptcha", "Captcha")' + '?' + new Date().getTime();
+        }
+    </script>
 }

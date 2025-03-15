@@ -4,11 +4,11 @@
 @inject SignInManager<ShareSmallBizUser> SignInManager
 @inject UserManager<ShareSmallBizUser> UserManager
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     @await Html.PartialAsync("Sections/Meta/_metatags")
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="/dist/css/ShareSmallBiz.min.css" rel="stylesheet" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     @await RenderSectionAsync("Styles", required: false)
@@ -16,13 +16,19 @@
     @await RenderSectionAsync("HeadScripts", required: false)
 </head>
 <body>
-    @await Html.PartialAsync("Sections/NavBar/_navbar")
-    <!-- Navbar -->
+    <!-- Navigation -->
+    @await Html.PartialAsync("Sections/_navigation")
+
     <!-- Main Container -->
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 d-none d-md-block bg-light sidebar">
+
+            <main class="col-12 order-1 order-xl-2 col-12 col-xl-8">
+                @RenderBody()
+                <hr class="m-0" />
+            </main>
+
+            <aside class="col-12 order-2 order-xl-1 col-12 col-xl-2 bg-light">
                 @if (User.Identity.IsAuthenticated)
                 {
                     @await RenderSectionAsync("SidebarLeft", required: false)
@@ -32,16 +38,9 @@
                     @await RenderSectionAsync("SidebarLeft", required: false)
                     @await Html.PartialAsync("Sections/_whyJoin")
                 }
-            </div>
+            </aside>
 
-            <!-- Main Content Area -->
-            <main class="col-md-9 col-lg-8">
-                @RenderBody()
-                <hr class="m-0" />
-            </main>
-
-            <!-- Sidebar (Right) -->
-            <aside class="col-md-3 col-lg-2 d-none d-md-block bg-light">
+            <aside class="col-12 order-3 order-xl-3 col-12 col-xl-2 bg-light">
                 @if (User.Identity.IsAuthenticated)
                 {
                     @await RenderSectionAsync("SidebarRight", required: false)
@@ -49,24 +48,23 @@
                 else
                 {
                     @await RenderSectionAsync("SidebarRight", required: false)
-
-                    <hr/>
+                    <hr />
                     <!-- Call to Action -->
                     <section class="bg-light py-5">
                         <div class="container text-center">
                             <h2>Join ShareSmallBiz Today</h2>
                             <p class="text-muted">Get started for free and start collaborating with businesses worldwide.</p>
-                            <a href="/Identity/Account/Login" class="btn btn-primary btn-lg"><i class="bi bi-arrow-right-circle"></i> Sign Up Now</a>
+                            <a href="/Identity/Account/Login" class="btn btn-primary btn-lg">
+                                <i class="bi bi-arrow-right-circle"></i> Sign Up Now
+                            </a>
                         </div>
                     </section>
                 }
             </aside>
         </div>
     </div>
-    <section>
-        <p></p>
-        <p> </p>
-    </section>
+
+    <!-- Footer -->
     @await Html.PartialAsync("Sections/Footer/_footer")
     @await Html.PartialAsync("Sections/Footer/_footer_scripts")
     @await RenderSectionAsync("Scripts", required: false)

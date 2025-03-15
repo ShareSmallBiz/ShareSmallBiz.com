@@ -2,12 +2,21 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using ShareSmallBiz.Portal.Data;
 using System;
 using System.Linq;
+using System.Text;
 using System.Text.Encodings.Web;
+using System.Threading;
+using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
+using ShareSmallBiz.Portal.Data;
 
 namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
 {
@@ -63,6 +72,11 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+            // New property for the custom captcha answer.
+            [Required]
+            [Display(Name = "Captcha Answer")]
+            public string CaptchaAnswer { get; set; }
         }
 
         public async Task OnGetAsync(string returnUrl = null)
@@ -78,6 +92,21 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
 
             if (!ModelState.IsValid)
             {
+                return Page();
+            }
+
+            // Captcha validation.
+            var sessionCaptcha = HttpContext.Session.GetInt32("CaptchaAnswer");
+            if (sessionCaptcha == null)
+            {
+                _logger.LogWarning("Captcha session expired or not found.");
+                ModelState.AddModelError("Input.CaptchaAnswer", "Captcha has expired. Please refresh and try again.");
+                return Page();
+            }
+            if (!int.TryParse(Input.CaptchaAnswer, out int userCaptcha) || userCaptcha != sessionCaptcha)
+            {
+                _logger.LogWarning("Captcha validation failed. User input: {UserCaptcha}, Expected: {SessionCaptcha}", Input.CaptchaAnswer, sessionCaptcha);
+                ModelState.AddModelError("Input.CaptchaAnswer", "Incorrect captcha answer. Please try again.");
                 return Page();
             }
 
@@ -136,7 +165,7 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
                     }
                 }
 
-                // Handle identity errors
+                // Handle identity errors.
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
@@ -145,8 +174,7 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while registering a new user.");
-
-                // Display a generic error message
+                // Display a generic error message.
                 ModelState.AddModelError(string.Empty, "An unexpected error occurred. Please try again later.");
             }
 
