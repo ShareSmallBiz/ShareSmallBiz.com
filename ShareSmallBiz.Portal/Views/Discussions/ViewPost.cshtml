@@ -9,32 +9,59 @@
     var currentUserName = User.Identity.IsAuthenticated ? User.Identity.Name : "";
 }
 
-<div class="container-fluid ">
-    <article class="card shadow-lg border-0" itemscope itemtype="http://schema.org/Article">
+<article>
+    <div class="card border-0" itemscope itemtype="http://schema.org/Article">
         <meta itemprop="headline" content="@Model.Title" />
         <meta itemprop="datePublished" content="@Model.Published.ToString("yyyy-MM-dd")" />
-        <div class="card-body">
-            <!-- Cover Image -->
-            @if (!string.IsNullOrEmpty(Model.Cover) && Model.Cover != "https://sharesmallbiz.com/")
-            {
-                <figure class="cover-container mb-3 text-center">
-                    <img src="@Model.Cover"
-                         class="img-fluid cover-image rounded shadow-sm lazyload mx-auto d-block"
-                         alt="@Model.Title"
-                         title="@Model.Cover"
-                         loading="lazy"
-                         style="max-height: 50vh; object-fit: cover;"
-                         itemprop="image" />
-                </figure>
-            }
-
-            <!-- Post Header -->
-            <header>
-                <h1 class="card-title text-center" itemprop="headline">@Model.Title</h1>
-                <p class="text-muted text-center">
+        @if (!string.IsNullOrEmpty(Model.Cover) && Model.Cover != "https://sharesmallbiz.com/")
+        {
+            <div class="card-header p-0 position-relative overflow-hidden" style="height: 50vh;">
+                <img src="@Model.Cover"
+                     class="img-fluid w-100 h-100 object-fit-cover"
+                     alt="@Model.Title"
+                     title="@Model.Cover"
+                     loading="lazy"
+                     itemprop="image" />
+                <!-- Overlay Content -->
+                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end bg-dark bg-opacity-50 p-3 text-white">
+                    <h1 class="card-title h4 text-center mb-2" itemprop="headline">@Model.Title</h1>
+                    <p class="text-center small mb-2">
+                        @if (Model?.Author?.ProfilePicture != null)
+                        {
+                            <img class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;"
+                                 src="data:image/*;base64,@(Convert.ToBase64String(Model.Author.ProfilePicture))" alt="User Profile" />
+                        }
+                        else
+                        {
+                            <i class="bi bi-person-circle"></i>
+                        }
+                        <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+                            <meta itemprop="name" content="@(Model?.Author?.UserName ?? "Unknown Author")" />
+                            <strong>
+                                @if (!string.IsNullOrEmpty(Model?.Author?.UserName))
+                                {
+                                    <a href="/profiles/@Model.Author.UserName" itemprop="url" class="text-white text-decoration-underline">
+                                        @(Model.Author.UserName)
+                                    </a>
+                                }
+                                else
+                                {
+                                    @:Unknown Author
+                                }
+                            </strong>
+                        </span>
+                    </p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card-header py-3 ">
+                <h1 class="card-title text-center mb-2" itemprop="headline">@Model.Title</h1>
+                <p class="text-center small mb-2">
                     @if (Model?.Author?.ProfilePicture != null)
                     {
-                        <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
+                        <img class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;"
                              src="data:image/*;base64,@(Convert.ToBase64String(Model.Author.ProfilePicture))" alt="User Profile" />
                     }
                     else
@@ -46,7 +73,7 @@
                         <strong>
                             @if (!string.IsNullOrEmpty(Model?.Author?.UserName))
                             {
-                                <a href="/profiles/@Model.Author.UserName" itemprop="url">
+                                <a href="/profiles/@Model.Author.UserName" itemprop="url" class="text-decoration-underline">
                                     @(Model.Author.UserName)
                                 </a>
                             }
@@ -56,22 +83,25 @@
                             }
                         </strong>
                     </span>
-                    | <i class="bi bi-eye"></i> <span itemprop="interactionCount">@(Model.PostViews) views</span>
-                    | <i class="bi bi-calendar"></i>
-                    <time datetime="@Model.Published.ToString("yyyy-MM-dd")" itemprop="datePublished">
-                        @Model.Published.ToString("MMM d, yyyy")
-                    </time>
                 </p>
-                <center>
-                    @foreach (var tag in Model.Tags)
-                    {
-                        <a class="btn btn-info" href="/discussions/tag/@tag">#@tag</a>
-                    }
-                </center>
+            </div>
+        }
 
-
-            </header>
-
+        <div class="card-body">
+            <p class="text-center small mb-0">
+                <i class="bi bi-eye"></i> <span itemprop="interactionCount">@Model.PostViews views</span>
+                &nbsp;|&nbsp;
+                <i class="bi bi-calendar"></i>
+                <time datetime="@Model.Published.ToString("yyyy-MM-dd")" itemprop="datePublished">
+                    @Model.Published.ToString("MMM d, yyyy")
+                </time>
+            </p>
+            <div class="d-flex justify-content-center flex-wrap gap-1 mt-2">
+                @foreach (var tag in Model.Tags)
+                {
+                    <a class="badge bg-info text-dark text-decoration-none" href="/discussions/tag/@tag">#@tag</a>
+                }
+            </div>
             <!-- Edit Post Link (Only for Author) -->
             @if (SignInManager.IsSignedIn(User) && Model.Author.Id == currentUserId)
             {
@@ -88,61 +118,64 @@
             <div class="post-content" itemprop="articleBody">
                 @Html.Raw(Model.Content)
             </div>
-        </div>
-    </article>
 
-    <!-- Comments Section -->
-    <section class="card shadow-sm border-0 p-3 mb-4">
-        <div class="card-header">
-            <i class="bi bi-chat-dots"></i> Comments
-        </div>
-        <div class="card-body">
-            <div id="commentsList" class="list-group">
-                @Html.Partial("_CommentsPartial", Model.Comments)
-            </div>
+            <section class="container-fluid px-0">
+                <div class="px-3 py-4 border-top">
 
-            @if (User.Identity.IsAuthenticated)
-            {
-                <div id="addCommentSection" class="mt-3">
-                    <div class="mb-3">
-                        <textarea id="newCommentText" class="form-control" rows="3" placeholder="Add a comment"></textarea>
+                    <!-- Comments Header -->
+                    <h2 class="h5 mb-4 d-flex align-items-center gap-2">
+                        <i class="bi bi-chat-dots"></i> Comments
+                    </h2>
+
+                    <!-- Comment List -->
+                    <div id="commentsList" class="list-group mb-4">
+                        @Html.Partial("_CommentsPartial", Model.Comments)
                     </div>
-                    <button id="addCommentButton" data-post-id="@Model.Id" class="btn btn-primary">
-                        <i class="bi bi-plus-lg"></i> Add Comment
-                    </button>
+
+                    <!-- Add Comment -->
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <div id="addCommentSection" class="mb-4">
+                            <div class="mb-3">
+                                <textarea id="newCommentText" class="form-control" rows="3" placeholder="Add a comment"></textarea>
+                            </div>
+                            <button id="addCommentButton" data-post-id="@Model.Id" class="btn btn-primary w-100">
+                                <i class="bi bi-plus-lg"></i> Add Comment
+                            </button>
+                        </div>
+                    }
+
+                    <!-- Guest CTA -->
+                    @if (!SignInManager.IsSignedIn(User))
+                    {
+                        <div class="alert alert-info text-center mt-4">
+                            <p class="fw-bold">Want to join the conversation?</p>
+                            <div class="d-flex flex-column gap-2">
+                                <a href="/Identity/Account/Login" class="btn btn-primary w-100">
+                                    <i class="bi bi-box-arrow-in-right"></i> Log In
+                                </a>
+                                <a href="/Identity/Account/Register" class="btn btn-success w-100">
+                                    <i class="bi bi-person-plus-fill"></i> Sign Up
+                                </a>
+                            </div>
+                            <small class="d-block mt-2 text-muted">to like and comment.</small>
+                        </div>
+                    }
+
                 </div>
-            }
+            </section>
         </div>
+    </div>
+</article>
 
-        <hr />
-
-        @if (!SignInManager.IsSignedIn(User))
-        {
-            <div class="alert alert-info text-center mt-3">
-                <p><strong>Want to join the conversation?</strong></p>
-                <p>
-                    <a href="/Identity/Account/Login" class="btn btn-primary">
-                        <i class="bi bi-box-arrow-in-right"></i> Log In
-                    </a>
-                    or
-                    <a href="/Identity/Account/Register" class="btn btn-success">
-                        <i class="bi bi-person-plus-fill"></i> Sign Up
-                    </a>
-                    to like and comment.
-                </p>
-            </div>
-        }
-    </section>
-</div>
-
-<section>
-    <div class="text-center">
+<div>
+    <div>
         <br />
         <br />
         <br />
         <hr />
     </div>
-</section>
+</div>
 
 @section Scripts {
     <script>
