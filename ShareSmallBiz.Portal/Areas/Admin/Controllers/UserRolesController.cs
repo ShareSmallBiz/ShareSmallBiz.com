@@ -1,5 +1,6 @@
 ﻿using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Services;
+using System.Data;
 
 namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
 
@@ -71,13 +72,36 @@ public class UserRolesController(
         return View(model);
     }
 
+    //[HttpGet]
+    //[Route("Admin/UserRoles")]
+    //public async Task<IActionResult> Index()
+    //{
+    //    var users = await _userManager.Users.ToListAsync();
+    //    var userModels = await Task.WhenAll(users.Select(CreateUserModelAsync));
+    //    return View(userModels.ToList());
+    //}
     [HttpGet]
-    public async Task<IActionResult> Index()
+    [Route("Admin/UserRoles")]
+    public async Task<IActionResult> Index(string emailConfirmed = "", string role = "")
     {
         var users = await _userManager.Users.ToListAsync();
-        var userModels = await Task.WhenAll(users.Select(CreateUserModelAsync));
-        return View(userModels.ToList());
+        var userModels = (await Task.WhenAll(users.Select(CreateUserModelAsync))).ToList();
+
+        if (!string.IsNullOrEmpty(emailConfirmed))
+        {
+            bool isConfirmed = bool.Parse(emailConfirmed);
+            userModels = userModels.Where(u => u.IsEmailConfirmed == isConfirmed).ToList();
+        }
+
+        if (!string.IsNullOrEmpty(role))
+        {
+            userModels = userModels.Where(u => u.Roles.Contains(role)).ToList();
+        }
+
+        ViewBag.Roles = userModels.SelectMany(u => u.Roles).Distinct().ToList();
+        return View(userModels);
     }
+
 
     [HttpPost]
     public async Task<IActionResult> LockUnlock(string userId)

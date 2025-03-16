@@ -1,9 +1,22 @@
 ﻿{
   "menuItems": [
     {
+      "text": "Home",
+      "url": "/",
+      "icon": "bi bi-house-door",
+      "role": "anonymous"
+    },
+    {
       "text": "Discussions",
       "url": "/Discussions/",
-      "icon": "bi bi-chat-dots-fill"
+      "icon": "bi bi-chat-dots-fill",
+      "role": "anonymous"
+    },
+    {
+      "text": "Chat",
+      "url": "/chat",
+      "icon": "bi bi-chat",
+      "role": "user"
     }
   ]
 }

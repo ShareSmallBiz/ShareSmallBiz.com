@@ -2,9 +2,10 @@
 
 public enum Roles
 {
-    SuperAdmin,
-    Admin,
-    Moderator,
-    Basic
+    anonymous,
+    user,
+    business,
+    admin,
+    pro
 }
 

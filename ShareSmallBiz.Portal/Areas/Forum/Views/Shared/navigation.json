@@ -1,15 +1,28 @@
 {
   "menuItems": [
     {
-      "text": "Discussions",
-      "url": "/Discussions",
-      "icon": "bi bi-chat-dots-fill"
+      "text": "Home",
+      "url": "/",
+      "icon": "bi bi-house-door",
+      "role": "anonymous"
     },
     {
-      "text": "Post Admin",
+      "text": "Discussions",
+      "url": "/Discussions/",
+      "icon": "bi bi-chat-dots-fill",
+      "role": "anonymous"
+    },
+    {
+      "text": "Discussion Admin",
       "url": "/Forum/Post/",
       "icon": "bi bi-chat-left-text-fill",
-      "role": "Admin"
+      "role": "admin"
+    },
+    {
+      "text": "Chat",
+      "url": "/chat",
+      "icon": "bi bi-chat",
+      "role": "user"
     }
   ]
 }

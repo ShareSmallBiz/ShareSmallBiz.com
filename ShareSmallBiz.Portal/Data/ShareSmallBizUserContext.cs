@@ -19,6 +19,13 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
 
     private void ConfigureRelationships(ModelBuilder builder)
     {
+        // ---- USER ROLES
+        builder.Entity<ShareSmallBizUser>()
+            .HasMany(u => u.UserRoles)
+            .WithOne()
+            .HasForeignKey(ur => ur.UserId)
+            .IsRequired();
+
         // ---- POSTS, COMMENTS, LIKES ----
         builder.Entity<PostLike>()
             .HasKey(pl => pl.Id);

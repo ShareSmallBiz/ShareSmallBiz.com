@@ -37,6 +37,8 @@ public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUs
         Posts = [];
         SocialLinks = [];
     }
+    // ---- USER ROLES ----
+    public virtual ICollection<IdentityUserRole<string>> UserRoles { get; set; } = [];
 
     // ---- BASIC USER INFO ----
     public string DisplayName { get; set; } = string.Empty;
