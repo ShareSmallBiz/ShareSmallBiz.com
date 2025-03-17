@@ -1,36 +1,77 @@
 ﻿@model UserModel
-
 @{
     ViewData["Title"] = "Edit User";
 }
-
 <h2>Edit User</h2>
-
-<form asp-action="Edit" method="post" class="container mt-4">
+<form asp-action="Edit" method="post" enctype="multipart/form-data" class="container mt-4">
     <input type="hidden" asp-for="Id" />
-
-    <div class="mb-3">
-        <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="UserName" class="form-label"></label>
-        <input asp-for="UserName" class="form-control" />
-        <span asp-validation-for="UserName" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="FirstName" class="form-label"></label>
-        <input asp-for="FirstName" class="form-control" />
-        <span asp-validation-for="FirstName" class="text-danger"></span>
-    </div>
-
-    <div class="mb-3">
-        <label asp-for="LastName" class="form-label"></label>
-        <input asp-for="LastName" class="form-control" />
-        <span asp-validation-for="LastName" class="text-danger"></span>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="UserName" class="form-label"></label>
+                <input asp-for="UserName" class="form-control" />
+                <span asp-validation-for="UserName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="FirstName" class="form-label"></label>
+                <input asp-for="FirstName" class="form-control" />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="LastName" class="form-label"></label>
+                <input asp-for="LastName" class="form-control" />
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="DisplayName" class="form-label"></label>
+                <input asp-for="DisplayName" class="form-control" />
+                <span asp-validation-for="DisplayName" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="WebsiteUrl" class="form-label"></label>
+                <input asp-for="WebsiteUrl" class="form-control" />
+                <span asp-validation-for="WebsiteUrl" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Bio" class="form-label"></label>
+                <textarea asp-for="Bio" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Bio" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label class="form-label">Current Profile Picture</label>
+                <div class="text-center mb-3">
+                    @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
+                    {
+                        <img src="@Model.ProfilePictureUrl" alt="Profile Picture" class="img-thumbnail" style="max-height: 200px;" />
+                    }
+                    else if (Model.ProfilePicture != null && Model.ProfilePicture.Length > 0)
+                    {
+                        <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.ProfilePicture)" alt="Profile Picture" class="img-thumbnail" style="max-height: 200px;" />
+                    }
+                    else
+                    {
+                        <img src="/img/default-profile.png" alt="Default Profile" class="img-thumbnail" style="max-height: 200px;" />
+                    }
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ProfilePicture" class="form-label">Upload New Profile Picture</label>
+                    <input type="file" name="ProfileImageFile" class="form-control" accept="image/*" />
+                    <span class="form-text text-muted">Supported formats: JPG, PNG, GIF (Max 2MB)</span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ProfilePictureUrl" class="form-label">Or Profile Picture URL</label>
+                    <input asp-for="ProfilePictureUrl" class="form-control" />
+                    <span asp-validation-for="ProfilePictureUrl" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="d-flex justify-content-between">
@@ -42,7 +83,6 @@
         </a>
     </div>
 </form>
-
 <div class="mt-4 d-flex justify-content-between">
     @if (Model.IsLockedOut)
     {

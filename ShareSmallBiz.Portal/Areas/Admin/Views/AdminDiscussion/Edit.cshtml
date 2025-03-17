@@ -1,0 +1,270 @@
+﻿@using ShareSmallBiz.Portal.Areas.Admin.Controllers
+@model AdminDiscussionModel
+
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Create Post" : "Edit Post";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="/dist/trumbowyg/ui/trumbowyg.min.css">
+    <style>
+        /* Ensure enough space at the bottom to avoid hidden fields */
+        .form-container {
+            padding-bottom: 200px; /* Adjust as needed */
+        }
+
+        .cover-preview {
+            max-width: 200px; /* Reduced size */
+            height: auto;
+            display: block;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        /* Highlight Lookup Button */
+        #browseImages {
+            font-size: 1.1rem; /* Make it slightly larger */
+            font-weight: bold;
+            padding: 10px 20px;
+        }
+    </style>
+}
+
+<div class="container mt-4 form-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="bi bi-pencil-square"></i> @ViewData["Title"]</h2>
+        <a asp-area="Forum" asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Posts
+        </a>
+    </div>
+
+    <!-- Save Button at the Top -->
+    <div class="text-end mb-3">
+        <button type="submit" form="postForm" class="btn btn-success">
+            <i class="bi bi-save"></i> Save Post
+        </button>
+    </div>
+
+    <form id="postForm" asp-action="@(Model.Id == 0 ? "Create" : "Edit")" method="post" enctype="multipart/form-data">
+        <input type="hidden" asp-for="Id" />
+        <!-- Add this after the Published date field and before Tags selection -->
+        <div class="mb-3">
+            <label asp-for="AuthorId" class="form-label">Author</label>
+            <select asp-for="AuthorId" class="form-control">
+                @foreach (var user in Model.Users)
+                {
+                    <option value="@user.Id">@user.UserName</option>
+                }
+            </select>
+            <span asp-validation-for="AuthorId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label">Title</label>
+            <input asp-for="Title" class="form-control" placeholder="Enter post title" required />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label">Description</label>
+            <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter a brief description" required></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Content" class="form-label">Content</label>
+            <textarea asp-for="Content" class="form-control" id="contentEditor" rows="6" placeholder="Enter full content" required></textarea>
+            <span asp-validation-for="Content" class="text-danger"></span>
+        </div>
+
+        <!-- Image Upload & Lookup -->
+        <div class="mb-3">
+            <label asp-for="Cover" class="form-label">Cover Image</label>
+            <div class="input-group">
+                <input asp-for="Cover" id="coverUrl" class="form-control" placeholder="Enter cover image URL" />
+                <button type="button" class="btn btn-outline-secondary" id="browseImages">
+                    <i class="bi bi-search"></i> Lookup
+                </button>
+            </div>
+            <img id="coverPreview" class="cover-preview" src="@Model.Cover" alt="Cover Image Preview" style="display: @(string.IsNullOrEmpty(Model.Cover) ? "none" : "block");" />
+        </div>
+
+        <div class="mb-3 form-check">
+            <input asp-for="IsPublic" class="form-check-input" />
+            <label asp-for="IsPublic" class="form-check-label">Public Post</label>
+        </div>
+        <div class="mb-3 form-check">
+            <input asp-for="IsFeatured" class="form-check-input" />
+            <label asp-for="IsFeatured" class="form-check-label">Featured Post</label>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Published" class="form-label">Publish Date</label>
+            <input asp-for="Published" type="date" class="form-control" required />
+        </div>
+
+        <!-- Tag Selection Section -->
+        <div class="mb-3">
+            <label asp-for="Tags" class="form-label">Tags</label>
+            <select asp-for="Tags" class="form-control" multiple size="5">
+                @foreach (var keyword in Model.Keywords)
+                {
+                    if (Model.Tags.Contains(keyword))
+                    {
+                        <option value="@keyword" selected>@keyword</option>
+                    }
+                    else
+                    {
+                        <option value="@keyword" >@keyword</option>
+                    }
+                }
+            </select>
+            <small class="form-text text-muted">
+                Hold down the Ctrl (Windows) or Command (Mac) key to select multiple tags.
+            </small>
+            <span asp-validation-for="Tags" class="text-danger"></span>
+        </div>
+
+        <!-- Save Button at the Bottom -->
+        <div class="text-end">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-save"></i> Save Post
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Unsplash Image Picker Modal -->
+<div class="modal fade" id="unsplashModal" tabindex="-1" aria-labelledby="unsplashModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Select an Unsplash Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="unsplashImages" class="row g-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section>
+    <div class="row">
+        <div class="col-md-12">
+            <br />
+            <hr />
+            <br />
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="/dist/trumbowyg/trumbowyg.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Initialize Trumbowyg with Restrictions
+            $('#contentEditor').trumbowyg({
+                btns: [
+                    ['bold', 'italic', 'underline', 'strikethrough'],
+                    ['formatting'],
+                    ['link'],
+                    ['unorderedList', 'orderedList'],
+                    ['removeformat'],
+                    ['fullscreen', 'viewHTML']
+                ],
+                autogrow: true,
+                removeformatPasted: true,
+                tagsToRemove: ['script', 'style'], // Keep scripts removed
+                semantic: true,
+                allowedTags: [
+                    'p', 'br', 'ul', 'ol', 'li', 'a', 'strong', 'em', 'u', 'strike',
+                    'iframe' // Allowing iframe for video embeds
+                ],
+                allowedAttributes: [
+                    'href', 'title', 'target',
+                    'src', 'width', 'height', 'allow', 'frameborder', 'allowfullscreen'
+                ]
+            });
+
+            // Ensure pasted content is sanitized
+            $('#contentEditor').on('tbwpaste', function () {
+                setTimeout(() => {
+                    let sanitizedContent = $('#contentEditor').trumbowyg('html')
+                        .replace(/<script[^>]*>.*?<\/script>/gi, '')
+                        .replace(/<style[^>]*>.*?<\/style>/gi, '')
+                        .replace(/<img[^>]*>/gi, '');
+                    $('#contentEditor').trumbowyg('html', sanitizedContent);
+                }, 10);
+            });
+
+            $('#coverUpload').change(function () {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        $('#coverPreview').attr('src', e.target.result).show();
+                        $('#coverUrl').val(e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Handle Unsplash Image Search & Modal
+            $('#browseImages').click(function () {
+                let query = prompt("Enter a search term for an image (e.g., nature, city):");
+                if (!query) return;
+                $.getJSON(`/api/unsplash/search?query=${query}`, function (data) {
+                    let imagesContainer = $('#unsplashImages');
+                    imagesContainer.empty();
+                    if (data.results && data.results.length > 0) {
+                        data.results.forEach(image => {
+                            let imageCard = `
+                                <div class="col-md-3">
+                                    <div class="card shadow-sm">
+                                        <img src="${image.urls.small}" class="card-img-top select-unsplash" data-url="${image.urls.regular}" data-attribution="${image.user.name}" data-profile="${image.user.links.html}">
+                                        <div class="card-body text-center">
+                                            <small>By <a href="${image.user.links.html}" target="_blank">${image.user.name}</a></small>
+                                        </div>
+                                    </div>
+                                </div>`;
+                            imagesContainer.append(imageCard);
+                        });
+                        $('#unsplashModal').modal('show');
+                    } else {
+                        alert("No images found.");
+                    }
+                }).fail(function () {
+                    alert("Error fetching images from Unsplash.");
+                });
+            });
+
+            // Handle Image Selection from Modal
+            $(document).on('click', '.select-unsplash', function () {
+                let imageUrl = $(this).data('url');
+                let photographer = $(this).data('attribution');
+                let profileLink = $(this).data('profile');
+                $('#coverUrl').val(imageUrl);
+                $('#coverPreview').attr('src', imageUrl).show();
+                $('#unsplashModal').modal('hide');
+                // Append attribution to content
+                let attributionText = `<p style="font-size: 12px; text-align: right;">
+                    <em>Photo by <a href="${profileLink}" target="_blank">${photographer}</a> on <a href="https://unsplash.com" target="_blank">Unsplash</a></em>
+                </p>`;
+                let currentContent = $('#contentEditor').trumbowyg('html');
+                $('#contentEditor').trumbowyg('html', currentContent + attributionText);
+            });
+
+            // Auto-preview when pasting an image URL
+            $('#coverUrl').on('input', function () {
+                const imageUrl = $(this).val();
+                if (imageUrl) {
+                    $('#coverPreview').attr('src', imageUrl).show();
+                } else {
+                    $('#coverPreview').hide();
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,55 @@
+﻿@{
+    ViewData["Title"] = "Business User Created";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h3>Business User Created Successfully</h3>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <strong>Important!</strong> Please save this information securely. The password will not be shown again.
+            </div>
+
+            <div class="mb-4">
+                <h5>User Details:</h5>
+                <dl class="row">
+                    <dt class="col-sm-3">Email:</dt>
+                    <dd class="col-sm-9">@ViewBag.Email</dd>
+
+                    <dt class="col-sm-3">Generated Password:</dt>
+                    <dd class="col-sm-9">
+                        <code>@ViewBag.Password</code>
+                        <button class="btn btn-sm btn-outline-secondary ms-2"
+                                onclick="copyToClipboard('@ViewBag.Password')">
+                            Copy
+                        </button>
+                    </dd>
+                </dl>
+            </div>
+
+            <div class="mb-3">
+                <p>The user has been assigned the <strong>Business</strong> role and their email is already confirmed.</p>
+                <p>They can use these credentials to log in immediately.</p>
+            </div>
+
+            <div>
+                <a asp-action="Index" class="btn btn-primary">Back to User List</a>
+                <a asp-action="CreateBusinessUser" class="btn btn-outline-primary">Create Another Business User</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('Password copied to clipboard!');
+            }, function() {
+                alert('Failed to copy password.');
+            });
+        }
+    </script>
+}

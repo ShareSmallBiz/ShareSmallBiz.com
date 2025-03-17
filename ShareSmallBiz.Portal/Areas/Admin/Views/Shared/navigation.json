@@ -5,6 +5,14 @@
       "url": "/admin/UserRoles"
     },
     {
+      "text": "Create Business User",
+      "url": "/admin/UserRoles/CreateBusinessUser"
+    },
+    {
+      "text": "Discussion Admin",
+      "url": "/admin/AdminDiscussion"
+    },
+    {
       "text": "Roles",
       "url": "/admin/RoleManager"
     },

@@ -1,4 +1,5 @@
-﻿using ShareSmallBiz.Portal.Data;
+﻿using Microsoft.AspNetCore.Identity;
+using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 using System.Data;
 
@@ -65,6 +66,16 @@ public class UserRolesController(
         user.DisplayName = model.UserName;
         user.Slug = user.UserName;
 
+        // Handle profile picture upload
+        if (Request.Form.Files.Count > 0)
+        {
+            IFormFile file = Request.Form.Files.FirstOrDefault();
+            using (var dataStream = new MemoryStream())
+            {
+                await file.CopyToAsync(dataStream);
+                user.ProfilePicture = dataStream.ToArray();
+            }
+        }
         var result = await _userManager.UpdateAsync(user);
         if (result.Succeeded)
             return RedirectToAction("Index");
@@ -169,4 +180,144 @@ public class UserRolesController(
 
         return RedirectToAction("Index");
     }
+
+
+
+    [HttpGet]
+    public IActionResult CreateBusinessUser()
+    {
+        // Return view for creating a business user
+        return View(new CreateBusinessUserModel());
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateBusinessUser(CreateBusinessUserModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        // Create the user
+        var user = new ShareSmallBizUser
+        {
+            UserName = model.Email,
+            Email = model.Email,
+            FirstName = model.FirstName,
+            LastName = model.LastName,
+            DisplayName = $"{model.FirstName} {model.LastName}",
+            Slug = model.Email.ToLower().Replace("@", "-at-"),
+            EmailConfirmed = true, // Auto-confirm email to bypass verification
+            Bio = model.Bio,
+            WebsiteUrl = model.WebsiteUrl
+        };
+
+        // Handle profile picture upload if provided
+        if (model.ProfilePicture != null && model.ProfilePicture.Length > 0)
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                await model.ProfilePicture.CopyToAsync(memoryStream);
+                // Check if the image is not too large (e.g., 2MB limit)
+                if (memoryStream.Length < 2097152) // 2MB
+                {
+                    user.ProfilePicture = memoryStream.ToArray();
+                }
+                else
+                {
+                    ModelState.AddModelError("ProfilePicture", "The profile picture must be less than 2MB.");
+                    return View(model);
+                }
+            }
+        }
+
+        // Create user with generated password
+        var password = GenerateSecurePassword();
+        var result = await _userManager.CreateAsync(user, password);
+
+        if (result.Succeeded)
+        {
+            // Add user to Business role
+            await _userManager.AddToRoleAsync(user, "Business");
+
+            // Save temporary password to show to admin
+            TempData["NewUserPassword"] = password;
+            TempData["NewUserEmail"] = user.Email;
+
+            return RedirectToAction("BusinessUserCreated");
+        }
+
+        // If we got this far, something failed
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Description);
+        }
+
+        return View(model);
+    }
+
+    [HttpGet]
+    public IActionResult BusinessUserCreated()
+    {
+        // Display the created user information and password
+        ViewBag.Password = TempData["NewUserPassword"];
+        ViewBag.Email = TempData["NewUserEmail"];
+        return View();
+    }
+
+    // Helper method to generate a secure random password
+    private string GenerateSecurePassword()
+    {
+        // Generate a secure random password (16 characters)
+        const string allowedChars = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789!@$?_-";
+        var random = new Random();
+        var chars = new char[16];
+
+        for (int i = 0; i < 16; i++)
+        {
+            chars[i] = allowedChars[random.Next(0, allowedChars.Length)];
+        }
+
+        return new string(chars);
+    }
+
+
+
+
+
+
+
+
+
+
+}
+public class CreateBusinessUserModel
+{
+    [Required]
+    [EmailAddress]
+    [Display(Name = "Email")]
+    public string Email { get; set; }
+
+    [Display(Name = "First Name")]
+    public string? FirstName { get; set; } = string.Empty;
+
+    [Required]
+    [Display(Name = "Last Name")]
+    public string LastName { get; set; } = string.Empty;
+
+    // Add any additional business-specific fields here
+    [Display(Name = "Company Name")]
+    public string CompanyName { get; set; } = string.Empty;
+
+    [Display(Name = "Business Phone")]
+    public string? BusinessPhone { get; set; } = string.Empty;
+
+    [Display(Name = "Biography")]
+    [DataType(DataType.MultilineText)]
+    public string? Bio { get; set; } = string.Empty;
+
+    [Display(Name = "Website URL")]
+    [Url]
+    public string WebsiteUrl { get; set; }
+
+    [Display(Name = "Profile Picture")]
+    public IFormFile ProfilePicture { get; set; }
 }

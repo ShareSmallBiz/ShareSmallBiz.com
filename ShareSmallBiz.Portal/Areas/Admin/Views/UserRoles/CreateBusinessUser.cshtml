@@ -1,0 +1,117 @@
+﻿@using ShareSmallBiz.Portal.Areas.Admin.Controllers
+@model CreateBusinessUserModel
+@{
+    ViewData["Title"] = "Create Business User";
+}
+
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header">
+            <h3>Create Business User</h3>
+            <p class="text-muted">This will create a new user and automatically assign them the Business role.</p>
+        </div>
+        <div class="card-body">
+            <form asp-action="CreateBusinessUser" method="post" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4 class="mb-3">Basic Information</h4>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="control-label"></label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="FirstName" class="control-label"></label>
+                            <input asp-for="FirstName" class="form-control" />
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="LastName" class="control-label"></label>
+                            <input asp-for="LastName" class="form-control" />
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="ProfilePicture" class="control-label"></label>
+                            <input asp-for="ProfilePicture" type="file" class="form-control" accept="image/*" />
+                            <small class="form-text text-muted">Maximum file size: 2MB. Recommended dimensions: 250x250 pixels.</small>
+                            <span asp-validation-for="ProfilePicture" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h4 class="mb-3">Business Information</h4>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="CompanyName" class="control-label"></label>
+                            <input asp-for="CompanyName" class="form-control" />
+                            <span asp-validation-for="CompanyName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="BusinessPhone" class="control-label"></label>
+                            <input asp-for="BusinessPhone" class="form-control" />
+                            <span asp-validation-for="BusinessPhone" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="WebsiteUrl" class="control-label"></label>
+                            <input asp-for="WebsiteUrl" class="form-control" placeholder="https://" />
+                            <span asp-validation-for="WebsiteUrl" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Bio" class="control-label"></label>
+                    <textarea asp-for="Bio" class="form-control" rows="4"></textarea>
+                    <span asp-validation-for="Bio" class="text-danger"></span>
+                    <small class="form-text text-muted">Brief description about the business or the user that will be displayed on their profile.</small>
+                </div>
+
+                <div class="form-group mt-4">
+                    <input type="submit" value="Create Business User" class="btn btn-primary" />
+                    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+
+    <script>
+        // Preview image before upload
+        $(document).ready(function() {
+            $("#ProfilePicture").change(function() {
+                if (this.files && this.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        if ($('#imagePreview').length === 0) {
+                            $('<div id="imagePreviewContainer" class="mt-2 mb-3">' +
+                              '<img id="imagePreview" src="' + e.target.result + '" class="img-thumbnail" style="max-height: 150px;" />' +
+                              '<button type="button" id="removeImage" class="btn btn-sm btn-outline-danger mt-1">Remove</button>' +
+                              '</div>').insertAfter("#ProfilePicture");
+                        } else {
+                            $('#imagePreview').attr('src', e.target.result);
+                            $('#imagePreviewContainer').show();
+                        }
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+
+            // Remove image preview
+            $(document).on('click', '#removeImage', function() {
+                $('#imagePreviewContainer').hide();
+                $('#ProfilePicture').val('');
+            });
+        });
+    </script>
+}

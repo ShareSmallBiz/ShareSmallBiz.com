@@ -407,6 +407,8 @@ public class DiscussionProvider(
         if (existingPost == null)
             return false;
 
+        existingPost.AuthorId = discussionModel.Author.Id;
+        existingPost.CreatedID = discussionModel.CreatedID;
         existingPost.Title = discussionModel.Title;
         existingPost.Content = discussionModel.Content;
         existingPost.Description = discussionModel.Description;
@@ -420,15 +422,18 @@ public class DiscussionProvider(
         existingPost.ModifiedDate = DateTime.UtcNow;
         existingPost.ModifiedID = user.Id;
 
-        // Update discussion categories
-        existingPost.PostCategories.Clear();
-        foreach (var categoryName in discussionModel.Tags)
+        if (discussionModel.Tags.Count > 0)
         {
-            var category = await context.Keywords
-                .FirstOrDefaultAsync(k => k.Name == categoryName, ct).ConfigureAwait(false);
-            if (category != null)
+            // Update discussion categories
+            existingPost.PostCategories.Clear();
+            foreach (var categoryName in discussionModel.Tags)
             {
-                existingPost.PostCategories.Add(category);
+                var category = await context.Keywords
+                    .FirstOrDefaultAsync(k => k.Name == categoryName, ct).ConfigureAwait(false);
+                if (category != null)
+                {
+                    existingPost.PostCategories.Add(category);
+                }
             }
         }
         context.Posts.Update(existingPost);

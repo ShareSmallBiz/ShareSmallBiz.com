@@ -13,10 +13,16 @@
       "role": "anonymous"
     },
     {
-      "text": "Discussion Admin",
+      "text": "Discussion Edit",
       "url": "/Forum/Post/",
       "icon": "bi bi-chat-left-text-fill",
-      "role": "admin"
+      "role": "user"
+    },
+    {
+      "text": "Discussion Admin",
+      "url": "/admin/AdminDiscussion",
+      "icon": "bi bi-chat-left-text-fill",
+      "role": "user"
     },
     {
       "text": "Chat",
