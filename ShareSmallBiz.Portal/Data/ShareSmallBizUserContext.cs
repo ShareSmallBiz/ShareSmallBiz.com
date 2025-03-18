@@ -72,6 +72,23 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
             .HasForeignKey(p => p.TargetId)
             .IsRequired(false);
 
+        // ---- MEDIA ----
+        builder.Entity<Media>()
+            .HasOne(m => m.User)
+            .WithMany(u => u.Media)
+            .HasForeignKey(m => m.UserId);
+
+        builder.Entity<Media>()
+            .HasOne(m => m.Post)
+            .WithMany(p => p.Media)
+            .HasForeignKey(m => m.PostId)
+            .IsRequired(false);
+
+        builder.Entity<Media>()
+            .HasOne(m => m.Comment)
+            .WithMany(c => c.Media)
+            .HasForeignKey(m => m.CommentId)
+            .IsRequired(false);
     }
     private void UpdateDateTrackingFields()
     {
@@ -126,4 +143,5 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
     public virtual DbSet<Post> Posts { get; set; }
     public virtual DbSet<SocialLink> SocialLinks { get; set; }
     public virtual DbSet<UserFollow> UserFollows { get; set; }
+    public virtual DbSet<Media> Media { get; set; }
 }

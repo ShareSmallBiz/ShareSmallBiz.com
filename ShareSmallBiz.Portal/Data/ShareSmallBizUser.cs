@@ -72,6 +72,7 @@ public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUs
     public string? WebsiteUrl { get; set; }
     public DateTime LastModified { get; set; } = DateTime.Now;
     public ICollection<Post> ReceivedPosts { get; set; } = [];
+    public virtual ICollection<Media> Media { get; set; } = [];
 
     public Task<bool> IsConfirmedAsync(UserManager<ShareSmallBizUser> manager, ShareSmallBizUser user)
     {

@@ -65,6 +65,9 @@ public class UserRolesController(
         user.UserName = model.UserName;
         user.DisplayName = model.UserName;
         user.Slug = user.UserName;
+        user.Bio = model.Bio;
+        user.WebsiteUrl = model.WebsiteUrl;
+
 
         // Handle profile picture upload
         if (Request.Form.Files.Count > 0)
@@ -83,14 +86,6 @@ public class UserRolesController(
         return View(model);
     }
 
-    //[HttpGet]
-    //[Route("Admin/UserRoles")]
-    //public async Task<IActionResult> Index()
-    //{
-    //    var users = await _userManager.Users.ToListAsync();
-    //    var userModels = await Task.WhenAll(users.Select(CreateUserModelAsync));
-    //    return View(userModels.ToList());
-    //}
     [HttpGet]
     [Route("Admin/UserRoles")]
     public async Task<IActionResult> Index(string emailConfirmed = "", string role = "")

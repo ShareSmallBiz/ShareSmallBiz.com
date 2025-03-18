@@ -26,6 +26,7 @@ public class AdminDiscussionController(
     RoleManager<IdentityRole> _roleManager,
     ILogger<AdminDiscussionController> logger,
     KeywordProvider keywordService,
+    UserProvider userService,
     DiscussionProvider postService) : AdminBaseController(_context, userManager, _roleManager)
 {
 
@@ -196,21 +197,8 @@ public class AdminDiscussionController(
     /// </summary>
     private async Task<List<UserModel>> GetAllUsersAsync()
     {
-        var users = userManager.Users.ToList();
-        var userModels = new List<UserModel>();
-
-        foreach (var user in users)
-        {
-            // Create a simplified UserModel for dropdown purposes
-            var userModel = new UserModel
-            {
-                Id = user.Id,
-                UserName = user.UserName ?? user.Email
-            };
-            userModels.Add(userModel);
-        }
-
-        return userModels;
+        var users = await userService.GetAllPublicUsersAsync().ConfigureAwait(true);
+        return users;
     }
 
 

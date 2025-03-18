@@ -15,4 +15,5 @@ public class PostComment : BaseEntity
     public int? ParentPostId { get; set; }
     public Post? ParentPost { get; set; }
     public virtual ICollection<PostCommentLike> Likes { get; set; } = [];
+    public virtual ICollection<Media> Media { get; set; } = [];
 }

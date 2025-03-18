@@ -32,4 +32,6 @@ public class Post : BaseEntity
     [StringLength(160)]
     public string Title { get; set; }
     public virtual ICollection<PostComment> Comments { get; set; } = [];
+    public virtual ICollection<Media> Media { get; set; } = [];
+
 }

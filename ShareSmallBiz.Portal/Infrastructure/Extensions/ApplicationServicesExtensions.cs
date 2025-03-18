@@ -1,5 +1,6 @@
 ﻿using HttpClientUtility.StringConverter;
 using ShareSmallBiz.Portal.Infrastructure.Services;
+using ShareSmallBiz.Portal.Services;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Extensions
 {
@@ -8,7 +9,6 @@ namespace ShareSmallBiz.Portal.Infrastructure.Extensions
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             services.AddSingleton<ILogger<Program>, Logger<Program>>();
-            services.AddSingleton<StorageProvider, StorageProvider>();
             services.AddSingleton<IStringConverter, NewtonsoftJsonStringConverter>();
             services.AddSingleton(new ApplicationStatus(Assembly.GetExecutingAssembly()));
 
@@ -19,7 +19,7 @@ namespace ShareSmallBiz.Portal.Infrastructure.Extensions
             services.AddScoped<KeywordProvider, KeywordProvider>();
             services.AddScoped<AdminCommentService, AdminCommentService>();
             services.AddScoped<MailerSendService, MailerSendService>();
-
+            services.AddScoped<StorageProviderService, StorageProviderService>();
             return services;
         }
     }

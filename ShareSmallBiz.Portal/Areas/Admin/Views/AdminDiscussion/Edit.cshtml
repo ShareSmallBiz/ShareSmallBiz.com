@@ -104,27 +104,43 @@
         </div>
 
         <!-- Tag Selection Section -->
+        <!-- Replace the existing tag selection section with this -->
         <div class="mb-3">
-            <label asp-for="Tags" class="form-label">Tags</label>
-            <select asp-for="Tags" class="form-control" multiple size="5">
-                @foreach (var keyword in Model.Keywords)
-                {
-                    if (Model.Tags.Contains(keyword))
-                    {
-                        <option value="@keyword" selected>@keyword</option>
-                    }
-                    else
-                    {
-                        <option value="@keyword" >@keyword</option>
-                    }
-                }
-            </select>
-            <small class="form-text text-muted">
-                Hold down the Ctrl (Windows) or Command (Mac) key to select multiple tags.
-            </small>
-            <span asp-validation-for="Tags" class="text-danger"></span>
-        </div>
+            <label class="form-label">Tags</label>
+            <div class="mb-2">
+                <input type="text" id="tagSearch" class="form-control" placeholder="Search for tags...">
+            </div>
 
+            <!-- Available tags -->
+            <div class="mb-3">
+                <label class="form-label">Available Tags</label>
+                <div id="availableTags" class="d-flex flex-wrap gap-2 p-2 border rounded">
+                    @foreach (var keyword in Model.Keywords.Where(k => !Model.Tags.Contains(k)))
+                    {
+                        <span class="badge bg-secondary tag-item" data-tag="@keyword">
+                            @keyword <i class="bi bi-plus-circle ms-1" role="button"></i>
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <!-- Selected tags -->
+            <div class="mb-3">
+                <label class="form-label">Selected Tags</label>
+                <div id="selectedTags" class="d-flex flex-wrap gap-2 p-2 border rounded">
+                    @foreach (var tag in Model.Tags)
+                    {
+                        <span class="badge bg-primary tag-item" data-tag="@tag">
+                            @tag <i class="bi bi-x-circle ms-1" role="button"></i>
+                            <input type="hidden" name="Tags" value="@tag">
+                        </span>
+                    }
+                </div>
+                <div id="noTagsMessage" class="text-muted small mt-2" style="display: @(Model.Tags.Any() ? "none" : "block")">
+                    No tags selected. Click on available tags to add them.
+                </div>
+            </div>
+        </div>
         <!-- Save Button at the Bottom -->
         <div class="text-end">
             <button type="submit" class="btn btn-success">
@@ -265,6 +281,51 @@
                     $('#coverPreview').hide();
                 }
             });
-        });
+
+            // Tag search functionality
+            $("#tagSearch").on("input", function() {
+                const searchTerm = $(this).val().toLowerCase();
+                $("#availableTags .tag-item").each(function() {
+                    const tagText = $(this).data("tag").toLowerCase();
+                    if (tagText.includes(searchTerm)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            });
+            // Add tag functionality
+            $("#availableTags").on("click", ".tag-item", function() {
+                const tag = $(this).data("tag");
+                $(this).remove();
+                const selectedTag = $(`<span class="badge bg-primary tag-item" data-tag="${tag}">${tag} <i class="bi bi-x-circle ms-1" role="button"></i><input type="hidden" name="Tags" value="${tag}"></span>`);
+                $("#selectedTags").append(selectedTag);
+                updateTagsMessage();
+            });
+
+          // Remove tag functionality
+          $("#selectedTags").on("click", ".tag-item", function() {
+            const tag = $(this).data("tag");
+
+            // Move tag from selected to available
+            $(this).remove();
+
+            const availableTag = $(`<span class="badge bg-secondary tag-item" data-tag="${tag}">
+                ${tag} <i class="bi bi-plus-circle ms-1" role="button"></i>
+            </span>`);
+
+            $("#availableTags").append(availableTag);
+            updateTagsMessage();
+          });
+
+          // Helper function to update the "no tags" message visibility
+          function updateTagsMessage() {
+            if ($("#selectedTags .tag-item").length > 0) {
+                $("#noTagsMessage").hide();
+            } else {
+                $("#noTagsMessage").show();
+            }
+          }
+     });
     </script>
 }
