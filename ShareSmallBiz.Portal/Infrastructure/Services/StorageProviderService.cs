@@ -1,4 +1,5 @@
-﻿using ShareSmallBiz.Portal.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using ShareSmallBiz.Portal.Data;
 
 namespace ShareSmallBiz.Portal.Services;
 
@@ -60,7 +61,7 @@ public class StorageProviderService
         // Upload file based on provider
         switch (provider)
         {
-            case StorageProviderNames.Local:
+            case StorageProviderNames.LocalStorage:
                 media.Url = await UploadToLocalStorageAsync(file, fileName);
                 break;
             default:
@@ -74,39 +75,101 @@ public class StorageProviderService
         return media;
     }
 
-    public async Task<Media> CreateExternalLinkAsync(string url, string fileName, MediaType mediaType, string userId, string attribution = null, string description = null)
+    public async Task<Media> CreateExternalLinkAsync(
+        string externalUrl,
+        string fileName,
+        MediaType mediaType,
+        string userId,
+        string attribution = "",
+        string description = "")
     {
-        if (string.IsNullOrEmpty(url))
+        // Check if this is a YouTube URL and process accordingly
+        if (IsYouTubeUrl(externalUrl))
         {
-            throw new ArgumentException("URL is required", nameof(url));
+            string videoId = ExtractYouTubeVideoId(externalUrl);
+            if (string.IsNullOrEmpty(videoId))
+            {
+                throw new ArgumentException("Invalid YouTube URL format", nameof(externalUrl));
+            }
+
+            // Create a standardized YouTube embed URL
+            string embedUrl = $"https://www.youtube.com/embed/{videoId}";
+
+            // Create media record with YouTube as provider
+            var media = new Media
+            {
+                FileName = fileName,
+                ContentType = "video/youtube",
+                StorageProvider = StorageProviderNames.YouTube,
+                MediaType = MediaType.Video,
+                Url = embedUrl,
+                UserId = userId,
+                CreatedDate = DateTime.UtcNow,
+                ModifiedDate = DateTime.UtcNow,
+                Attribution = attribution,
+                Description = description,
+                StorageMetadata = externalUrl, // Store the original URL for reference
+                FileSize = 0 // No actual file size for embedded content
+            };
+
+            _dbContext.Media.Add(media);
+            await _dbContext.SaveChangesAsync();
+            return media;
         }
-
-        var media = new Media
+        else
         {
-            FileName = fileName,
-            MediaType = mediaType,
-            StorageProvider = StorageProviderNames.External,
-            Url = url,
-            ContentType = GetContentTypeFromMediaType(mediaType),
-            Description = description,
-            Attribution = attribution,
-            StorageMetadata = string.Empty,
-            UserId = userId,
-            CreatedDate = DateTime.UtcNow,
-            ModifiedDate = DateTime.UtcNow
-        };
+            // Handle other external links as before
+            var media = new Media
+            {
+                FileName = fileName,
+                ContentType = DetermineContentType(externalUrl, mediaType),
+                StorageProvider = StorageProviderNames.External,
+                MediaType = mediaType,
+                Url = externalUrl,
+                UserId = userId,
+                CreatedDate = DateTime.UtcNow,
+                ModifiedDate = DateTime.UtcNow,
+                Attribution = attribution,
+                Description = description,
+                FileSize = 0 // No actual file size for external links
+            };
 
-        _dbContext.Media.Add(media);
-        await _dbContext.SaveChangesAsync();
+            _dbContext.Media.Add(media);
+            await _dbContext.SaveChangesAsync();
+            return media;
+        }
+    }
 
-        return media;
+    private string DetermineContentType(string externalUrl, MediaType mediaType)
+    {
+        if (string.IsNullOrEmpty(externalUrl))
+            throw new ArgumentException("External URL cannot be null or empty", nameof(externalUrl));
+
+        if (mediaType == MediaType.Image)
+            return "image/jpeg"; // Default for images
+        if (mediaType == MediaType.Video)
+        {
+            if (IsYouTubeUrl(externalUrl))
+            {
+                return "YouTube";
+            }
+            return "video/mp4"; // Default for videos
+        }
+        if (mediaType == MediaType.Audio)
+            return "audio/mpeg"; // Default for audio
+
+        if (mediaType == MediaType.Document)
+            return "application/pdf"; // Default for documents
+
+        // For other types, return a generic content type
+        return "application/octet-stream";
     }
 
     public async Task<Stream> GetFileStreamAsync(Media media)
     {
         switch (media.StorageProvider)
         {
-            case StorageProviderNames.Local:
+            case StorageProviderNames.LocalStorage:
                 return await GetLocalFileStreamAsync(media.Url);
             case StorageProviderNames.External:
                 throw new InvalidOperationException("Cannot get file stream for external links");
@@ -119,7 +182,7 @@ public class StorageProviderService
     {
         switch (media.StorageProvider)
         {
-            case StorageProviderNames.Local:
+            case StorageProviderNames.LocalStorage:
                 await DeleteLocalFileAsync(media.Url);
                 break;
             case StorageProviderNames.External:
@@ -158,18 +221,74 @@ public class StorageProviderService
     {
         switch (media.StorageProvider)
         {
-            case StorageProviderNames.Local:
+            case StorageProviderNames.LocalStorage:
                 return $"{_configuration["AppUrl"]}/files/{Path.GetFileName(media.Url)}";
+            case StorageProviderNames.YouTube:
+                // YouTube embed URLs are already public
+                return media.Url;
             case StorageProviderNames.External:
                 return media.Url;
             case StorageProviderNames.AzureBlob:
                 return media.Url;
-            case StorageProviderNames.AwsS3:
+            case StorageProviderNames.S3:
                 return media.Url;
             default:
                 throw new ArgumentException($"Unsupported storage provider: {media.StorageProvider}");
         }
     }
+
+    public bool IsYouTubeUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url))
+            return false;
+
+        // Check various YouTube URL formats
+        return url.Contains("youtube.com/watch") ||
+               url.Contains("youtu.be/") ||
+               url.Contains("youtube.com/embed/") ||
+               url.Contains("youtube.com/v/");
+    }
+
+    public static string ExtractYouTubeVideoId(string url)
+    {
+        try
+        {
+            // Handle youtu.be short links
+            if (url.Contains("youtu.be/"))
+            {
+                var uri = new Uri(url);
+                return uri.AbsolutePath.TrimStart('/');
+            }
+
+            // Handle standard youtube.com URLs
+            var videoIdParam = "v=";
+            int startIndex = url.IndexOf(videoIdParam);
+
+            if (startIndex >= 0)
+            {
+                startIndex += videoIdParam.Length;
+                int endIndex = url.IndexOf('&', startIndex);
+                return endIndex >= 0
+                    ? url.Substring(startIndex, endIndex - startIndex)
+                    : url.Substring(startIndex);
+            }
+
+            // Handle embed URLs
+            if (url.Contains("/embed/") || url.Contains("/v/"))
+            {
+                var segments = new Uri(url).Segments;
+                return segments[segments.Length - 1];
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+
 
     #region Private Helper Methods
 

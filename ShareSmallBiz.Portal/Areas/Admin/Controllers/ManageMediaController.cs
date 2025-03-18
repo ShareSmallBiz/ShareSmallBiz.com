@@ -3,6 +3,7 @@ using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 using ShareSmallBiz.Portal.Services;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
 
@@ -14,8 +15,6 @@ public class ManageMediaController(
     StorageProviderService _storageProviderService
     ) : AdminBaseController(_context, userManager, _roleManager)
 {
-
-
     // GET: ManageMedia
     public async Task<IActionResult> Index(string searchString, int? mediaTypeFilter, int? storageProviderFilter)
     {
@@ -101,6 +100,13 @@ public class ManageMediaController(
         // Get public URL
         var publicUrl = await _storageProviderService.GetPublicUrlAsync(media);
         ViewBag.PublicUrl = publicUrl;
+
+        // Set YouTube embed URL if applicable
+        if (media.StorageProvider == StorageProviderNames.YouTube)
+        {
+            ViewBag.YouTubeEmbedUrl = GetYouTubeEmbedUrl(media.Url);
+        }
+
         var vm = new ManageMediaViewModel(media);
 
         return View(vm);
@@ -143,9 +149,36 @@ public class ManageMediaController(
             {
                 Media media;
 
-                if (viewModel.IsExternalLink)
+                if (IsValidYouTubeUrl(viewModel.ExternalUrl))
                 {
-                    // Create external link
+                    viewModel.IsExternalLink = true;
+                    viewModel.IsYouTube = true;
+                    viewModel.YouTubeUrl = viewModel.ExternalUrl;
+                }
+
+
+                if (viewModel.IsYouTube)
+                {
+                    // Handle YouTube video
+                    if (string.IsNullOrEmpty(viewModel.YouTubeUrl))
+                    {
+                        ModelState.AddModelError("YouTubeUrl", "Please enter a YouTube URL.");
+                        PrepareCreateViewModel(viewModel);
+                        return View(viewModel);
+                    }
+
+                    media = await _storageProviderService.CreateExternalLinkAsync(
+                        viewModel.YouTubeUrl,
+                        viewModel.FileName,
+                        MediaType.Video, // Force video type for YouTube
+                        userId,
+                        viewModel.Attribution,
+                        viewModel.Description
+                    );
+                }
+                else if (viewModel.IsExternalLink)
+                {
+                    // Create regular external link
                     media = await _storageProviderService.CreateExternalLinkAsync(
                         viewModel.ExternalUrl,
                         viewModel.FileName,
@@ -157,7 +190,7 @@ public class ManageMediaController(
                 }
                 else
                 {
-                    // Upload file
+                    // Upload file (unchanged)
                     if (viewModel.File == null || viewModel.File.Length == 0)
                     {
                         ModelState.AddModelError("File", "Please select a file to upload.");
@@ -187,9 +220,9 @@ public class ManageMediaController(
                 return View(viewModel);
             }
         }
-        return RedirectToAction("Index");
+        PrepareCreateViewModel(viewModel);
+        return View(viewModel);
     }
-
     // GET: ManageMedia/Edit/5
     public async Task<IActionResult> Edit(int? id)
     {
@@ -224,7 +257,9 @@ public class ManageMediaController(
                     Text = mt.ToString()
                 }).ToList(),
             ContentType = media.ContentType,
-            FileSize = media.FileSize
+            FileSize = media.FileSize,
+            IsExternalLink = media.StorageProvider == StorageProviderNames.External || media.StorageProvider == StorageProviderNames.YouTube,
+            ExternalUrl = media.Url
         };
 
         return View(viewModel);
@@ -260,6 +295,29 @@ public class ManageMediaController(
                 media.MediaType = (MediaType)viewModel.MediaType;
                 media.ModifiedDate = DateTime.UtcNow;
 
+                // Update URL if external or YouTube
+                if (viewModel.IsExternalLink && !string.IsNullOrEmpty(viewModel.ExternalUrl))
+                {
+                    // If changing to YouTube or updating YouTube URL
+                    if ((StorageProviderNames)viewModel.StorageProvider == StorageProviderNames.YouTube)
+                    {
+                        if (!IsValidYouTubeUrl(viewModel.ExternalUrl))
+                        {
+                            ModelState.AddModelError("ExternalUrl", "Please enter a valid YouTube URL.");
+                            PrepareEditViewModel(viewModel);
+                            return View(viewModel);
+                        }
+
+                        media.Url = viewModel.ExternalUrl;
+                        media.StorageProvider = StorageProviderNames.YouTube;
+                        media.MediaType = MediaType.Video;
+                    }
+                    else if ((StorageProviderNames)viewModel.StorageProvider == StorageProviderNames.External)
+                    {
+                        media.Url = viewModel.ExternalUrl;
+                    }
+                }
+
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Media updated successfully.";
                 return RedirectToAction(nameof(Details), new { id = media.Id });
@@ -277,15 +335,7 @@ public class ManageMediaController(
             }
         }
 
-        // Repopulate dropdown lists
-        viewModel.MediaTypes = Enum.GetValues(typeof(MediaType))
-            .Cast<MediaType>()
-            .Select(mt => new SelectListItem
-            {
-                Value = ((int)mt).ToString(),
-                Text = mt.ToString()
-            }).ToList();
-
+        PrepareEditViewModel(viewModel);
         return View(viewModel);
     }
 
@@ -354,8 +404,9 @@ public class ManageMediaController(
             return NotFound();
         }
 
-        // External links cannot be downloaded directly
-        if (media.StorageProvider == StorageProviderNames.External)
+        // External links and YouTube videos cannot be downloaded directly
+        if (media.StorageProvider == StorageProviderNames.External ||
+            media.StorageProvider == StorageProviderNames.YouTube)
         {
             return Redirect(media.Url);
         }
@@ -397,6 +448,48 @@ public class ManageMediaController(
                 Selected = viewModel.StorageProvider == (int)sp
             }).ToList();
     }
+
+    private void PrepareEditViewModel(ManageMediaViewModel viewModel)
+    {
+        PrepareCreateViewModel(viewModel);
+    }
+
+    private bool IsValidYouTubeUrl(string? url)
+    {
+        if (string.IsNullOrEmpty(url))
+        {
+            return false;
+        }
+
+        // Match standard YouTube URLs
+        // Handles formats like:
+        // - https://www.youtube.com/watch?v=VIDEO_ID
+        // - https://youtu.be/VIDEO_ID
+        // - https://youtube.com/watch?v=VIDEO_ID
+        // - https://www.youtube.com/embed/VIDEO_ID
+        var regex = new Regex(@"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})");
+
+        return regex.IsMatch(url);
+    }
+
+    private string GetYouTubeEmbedUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url))
+        {
+            return string.Empty;
+        }
+
+        var regex = new Regex(@"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})");
+        var match = regex.Match(url);
+
+        if (match.Success && match.Groups.Count > 1)
+        {
+            var videoId = match.Groups[1].Value;
+            return $"https://www.youtube.com/embed/{videoId}";
+        }
+
+        return string.Empty;
+    }
 }
 
 
@@ -424,11 +517,18 @@ public class ManageMediaViewModel
         Description = media.Description;
         Attribution = media.Attribution;
         IsExternalLink = media.StorageProvider == StorageProviderNames.External;
-        ExternalUrl = media.Url;
-        ContentType = media.ContentType;
-        FileSize = media.FileSize;
+        IsYouTube = media.StorageProvider == StorageProviderNames.YouTube;
+        ExternalUrl = media.StorageProvider == StorageProviderNames.External ? media.Url : string.Empty;
+        YouTubeUrl = media.StorageProvider == StorageProviderNames.YouTube ? media.Url : string.Empty;
+        ContentType = media.ContentType; FileSize = media.FileSize;
         Url = media.Url;
     }
+    [Display(Name = "Is YouTube Video")]
+    public bool IsYouTube { get; set; }
+
+    [Display(Name = "YouTube URL")]
+    [Url(ErrorMessage = "Please enter a valid YouTube URL")]
+    public string? YouTubeUrl { get; set; }
 
     [Required(ErrorMessage = "File name is required")]
     [StringLength(255, ErrorMessage = "File name cannot exceed 255 characters")]
@@ -457,7 +557,7 @@ public class ManageMediaViewModel
     public bool IsExternalLink { get; set; }
 
     [Display(Name = "File")]
-    public IFormFile File { get; set; }
+    public IFormFile? File { get; set; }
 
     [Display(Name = "External URL")]
     [Url(ErrorMessage = "Please enter a valid URL")]
@@ -467,4 +567,3 @@ public class ManageMediaViewModel
     public string? Url { get; set; } = string.Empty;
     public int Id { get; set; }
 }
-

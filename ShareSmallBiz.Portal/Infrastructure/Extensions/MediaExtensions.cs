@@ -46,4 +46,5 @@ public static class MediaExtensions
             _ => $"<a href=\"{mediaUrl}\" {tagAttributes}>View {media.FileName}</a>"
         };
     }
+
 }

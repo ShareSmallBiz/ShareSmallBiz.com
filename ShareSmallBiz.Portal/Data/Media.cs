@@ -16,10 +16,10 @@ public enum MediaType
 
 public enum StorageProviderNames
 {
-    Local = 0,      // Stored on your server
+    LocalStorage = 0,      // Stored on your server
     External = 1,   // Linked from external source (like Unsplash)
     AzureBlob =2 ,  // Stored in Azure Blob Storage
-    AwsS3 = 3,      // Stored in AWS S3
+    S3 = 3,      // Stored in AWS S3
     YouTube = 4     // Stored on YouTube
 
 }

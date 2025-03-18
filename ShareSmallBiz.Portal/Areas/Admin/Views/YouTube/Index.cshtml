@@ -1,0 +1,81 @@
+﻿@model List<YouTubeVideo>
+@{
+    ViewData["Title"] = "My YouTube Channel";
+}
+
+<div class="container mt-4">
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <h1 class="display-5">My YouTube Videos</h1>
+            <p class="text-muted">Latest videos from my channel</p>
+        </div>
+        <div class="col-auto">
+            <a href="https://www.youtube.com/channel/YOUR_CHANNEL_ID" target="_blank" class="btn btn-danger">
+                <i class="bi bi-youtube"></i> Visit Channel
+            </a>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No videos found for this channel.
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            @foreach (var video in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm video-card">
+                        <div class="position-relative">
+                            <a asp-action="VideoDetails" asp-route-videoId="@video.VideoId" class="text-decoration-none">
+                                <img src="@video.ThumbnailUrl" class="card-img-top" alt="@video.Title">
+                                <div class="position-absolute top-50 start-50 translate-middle play-button">
+                                    <i class="bi bi-play-circle-fill text-white fs-1 opacity-75"></i>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <a asp-action="VideoDetails" asp-route-videoId="@video.VideoId" class="text-decoration-none text-dark">
+                                <h5 class="card-title">@video.Title</h5>
+                            </a>
+                            <p class="card-text text-truncate">@video.Description</p>
+                        </div>
+                        <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar3"></i> @video.PublishedAt.ToString("MMM dd, yyyy")
+                            </small>
+                            <div>
+                                <a asp-action="VideoDetails" asp-route-videoId="@video.VideoId" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-play-fill"></i> Watch
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .video-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+        }
+
+    .play-button {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .video-card:hover .play-button {
+        opacity: 1 !important;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+</style>
