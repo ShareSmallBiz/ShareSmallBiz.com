@@ -1,63 +1,82 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
+using Polly;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Services;
-
+using System.Runtime.InteropServices;
+using System.Security.AccessControl;
 namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
 
+[Route("admin/[controller]")]
 public class YouTubeController(
     ShareSmallBizUserContext _context,
     ShareSmallBizUserManager _userManager,
     IYouTubeService _youTubeService,
+    IMemoryCache _memoryCache,
+    ILogger<YouTubeController> _logger,
     RoleManager<IdentityRole> _roleManager) : AdminBaseController(_context, _userManager, _roleManager)
 {
-    public async Task<IActionResult> Index(string channelId = "UCWy4-89rNbDI_HGUCB8pkBA", int maxResults = 20)
+    private const string DefaultChannelId = "UCWy4-89rNbDI_HGUCB8pkBA";
+    private const string CacheKeyPrefix = "VideoDetailsViewModel_";
+    private const int DefaultCacheExpirationMinutes = 30;
+    private string CurrentChannelId = DefaultChannelId;
+
+    private async Task<VideoDetailsViewModel> GetVideoDetailsViewModel(string channelId = DefaultChannelId, int maxResults = 20)
     {
-        var videos = await _youTubeService.GetChannelVideosAsync(channelId, maxResults);
-        return View(videos);
+        CurrentChannelId = channelId ??= DefaultChannelId;
+
+        var cacheKey = $"{CacheKeyPrefix}{channelId}_{maxResults}";
+
+        if (!_memoryCache.TryGetValue(cacheKey, out VideoDetailsViewModel returnModel))
+        {
+            returnModel = new VideoDetailsViewModel
+            {
+                CurrentChannel = await _youTubeService.GetChannelDetailsAsync(CurrentChannelId),
+                RelatedVideos = await _youTubeService.GetChannelVideosAsync(CurrentChannelId, maxResults)
+            };
+
+            var cacheOptions = new MemoryCacheEntryOptions()
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(DefaultCacheExpirationMinutes));
+
+            _memoryCache.Set(cacheKey, returnModel, cacheOptions);
+        }
+        return returnModel;
     }
 
-    public async Task<IActionResult> ChannelVideos(string channelId = "UCWy4-89rNbDI_HGUCB8pkBA", int maxResults = 20)
+    public async Task<IActionResult> Index(string channelId = DefaultChannelId, int maxResults = 20)
     {
-        var videos = await _youTubeService.GetChannelVideosAsync(channelId, maxResults);
-        return View("Index",videos);
+        return View("Index", await GetVideoDetailsViewModel(channelId, maxResults));
     }
-    public async Task<IActionResult> VideoDetails(string videoId, string channelId = "UCWy4-89rNbDI_HGUCB8pkBA")
+    [HttpGet]
+    [Route("channel/{channelId}")]
+    public async Task<IActionResult> ChannelVideos(string channelId = DefaultChannelId, int maxResults = 20)
+    {
+        return View("Index", await GetVideoDetailsViewModel(channelId, maxResults));
+    }
+
+    [HttpGet]
+    [Route("channel/{channelId}/{videoId}")]
+    public async Task<IActionResult> VideoDetails(string channelId, string videoId)
     {
         if (string.IsNullOrEmpty(videoId))
         {
             return RedirectToAction("ChannelVideos", new { channelId });
         }
-
-        // Get all videos to find the current one and related videos
-        var allVideos = await _youTubeService.GetChannelVideosAsync(channelId, 20);
-
-        // Find the current video
-        var currentVideo = allVideos.Find(v => v.VideoId == videoId);
-
-        if (currentVideo == null)
+        var channel = await GetVideoDetailsViewModel(channelId, 20);
+        channel.CurrentVideo = channel.RelatedVideos.Find(v => v.VideoId == videoId);
+        if (channel.CurrentVideo == null)
         {
-            return NotFound();
+            _logger.LogError($"Video with ID {videoId} not found in channel {channelId}");
+            return RedirectToAction("ChannelVideos", new { channelId });
         }
-
-        // Create view model with current video and related videos
-        var viewModel = new VideoDetailsViewModel
-        {
-            CurrentVideo = currentVideo,
-            RelatedVideos = allVideos.FindAll(v => v.VideoId != videoId).Take(5).ToList()
-        };
-
-        return View(viewModel);
+        return View(channel);
     }
 }
 
-
-
-
-
-
-
 public class VideoDetailsViewModel
 {
+    public YouTubeChannel CurrentChannel { get; set; }
     public YouTubeVideo CurrentVideo { get; set; }
-    public List<YouTubeVideo> RelatedVideos { get; set; } = new List<YouTubeVideo>();
+    public List<YouTubeVideo> RelatedVideos { get; set; } = [];
 }

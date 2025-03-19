@@ -61,7 +61,7 @@
         <div class="col-lg-8">
             <!-- Back Button -->
             <div class="mb-3">
-                <a asp-action="ChannelVideos" class="btn btn-outline-secondary">
+                <a href="/admin/youtube/channel/@Model.CurrentChannel.ChannelId" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i> Back to Videos
                 </a>
             </div>
@@ -100,10 +100,6 @@
                                target="_blank" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-facebook"></i>
                             </a>
-                            <a href="https://twitter.com/intent/tweet?url=@Model.CurrentVideo.VideoUrl&text=@Model.CurrentVideo.Title"
-                               target="_blank" class="btn btn-sm btn-outline-info">
-                                <i class="bi bi-twitter"></i>
-                            </a>
                             <a href="mailto:?subject=@Model.CurrentVideo.Title&body=Check out this video: @Model.CurrentVideo.VideoUrl"
                                class="btn btn-sm btn-outline-secondary">
                                 <i class="bi bi-envelope"></i>
@@ -120,7 +116,7 @@
             @foreach (var video in Model.RelatedVideos)
             {
                 <div class="card mb-3 related-video shadow-sm">
-                    <a asp-action="VideoDetails" asp-route-videoId="@video.VideoId" class="text-decoration-none text-dark">
+                    <a href="/admin/youtube/channel/@Model.CurrentChannel.ChannelId/@video.VideoId" class="text-decoration-none text-dark">
                         <div class="row g-0">
                             <div class="col-4">
                                 <div class="video-thumbnail">
