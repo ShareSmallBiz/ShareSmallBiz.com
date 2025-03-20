@@ -15,8 +15,8 @@
     {
       "text": "Chat",
       "url": "/chat",
-      "icon": "bi bi-chat",
-      "role": "user"
+      "icon": "bi bi-robot",
+      "role": "anonymous"
     }
   ]
 }

@@ -3,93 +3,175 @@
     var user = User.Identity;
 }
 
-<div class="container mt-4">
-    <h1 class="text-center mb-4">
-        <i class="bi bi-chat-dots-fill"></i> Discussions
-    </h1>
+<div class="container-fluid px-lg-4">
+    <div class="row g-0 g-md-3">
+        <!-- Sidebar for larger screens -->
+        <div class="col-lg-3 d-none d-lg-block">
+            <div class="sticky-top pt-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h5 class="card-title d-flex align-items-center mb-3">
+                            <i class="bi bi-filter-circle-fill text-primary me-2"></i> Filters
+                        </h5>
+                        <div class="d-grid gap-2">
+                            @if (user != null && user.IsAuthenticated)
+                            {
+                                <a href="/Forum/Post/create" class="btn btn-primary mb-4">
+                                    <i class="bi bi-plus-circle-fill me-2"></i> New Discussion
+                                </a>
+                            }
+                            <a href="#mostpopular" class="btn btn-outline-primary text-start" onclick="loadPostsByHash('#mostpopular');">
+                                <i class="bi bi-trophy-fill me-2"></i> Most Popular
+                            </a>
+                            <a href="#mostcomments" class="btn btn-outline-warning text-start" onclick="loadPostsByHash('#mostcomments');">
+                                <i class="bi bi-chat-left-dots-fill me-2"></i> Most Comments
+                            </a>
+                            <a href="#recent" class="btn btn-outline-success text-start" onclick="loadPostsByHash('#recent');">
+                                <i class="bi bi-clock-fill me-2"></i> Recent
+                            </a>
+                            @if (user != null && user.IsAuthenticated)
+                            {
+                                <a href="#mine" class="btn btn-outline-info text-start" onclick="loadPostsByHash('#mine');">
+                                    <i class="bi bi-person-lines-fill me-2"></i> My Discussions
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <!-- Main Content -->
+        <div class="col-12 col-lg-9">
+            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 mt-3 mt-lg-0">
+                <h3 class="mb-0">
+                    <i class="bi bi-chat-dots-fill text-primary me-2"></i>
+                    <span id="currentFilterName">Discussions</span>
+                </h3>
+
+                <!-- New Post button for small screens -->
+                @if (user != null && user.IsAuthenticated)
+                {
+                    <a href="/Forum/Post/create" class="btn btn-primary d-lg-none">
+                        <i class="bi bi-plus-circle-fill me-1"></i> New
+                    </a>
+                }
+            </div>
+
+            <!-- Filter Pills for small/medium screens -->
+            <div class="d-flex d-lg-none mb-3 overflow-auto py-2" style="scrollbar-width: none;">
+                <div class="nav nav-pills flex-nowrap">
+                    <a href="#mostpopular" class="nav-link rounded-pill me-2 btn-sm" onclick="loadPostsByHash('#mostpopular');">
+                        <i class="bi bi-trophy-fill"></i><span class="ms-1 d-none d-md-inline">Popular</span>
+                    </a>
+                    <a href="#mostcomments" class="nav-link rounded-pill me-2 btn-sm" onclick="loadPostsByHash('#mostcomments');">
+                        <i class="bi bi-chat-left-dots-fill"></i><span class="ms-1 d-none d-md-inline">Comments</span>
+                    </a>
+                    <a href="#recent" class="nav-link rounded-pill me-2 btn-sm" onclick="loadPostsByHash('#recent');">
+                        <i class="bi bi-clock-fill"></i><span class="ms-1 d-none d-md-inline">Recent</span>
+                    </a>
+                    @if (user != null && user.IsAuthenticated)
+                    {
+                        <a href="#mine" class="nav-link rounded-pill me-2 btn-sm" onclick="loadPostsByHash('#mine');">
+                            <i class="bi bi-person-lines-fill"></i><span class="ms-1 d-none d-md-inline">Mine</span>
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <!-- Content loader spinner -->
+            <div id="loadingSpinner" class="text-center my-5 d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Posts Container -->
+            <div id="postsContainer"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Static Links for Search Engine Indexing -->
+<div class="d-none">
+    <a href="/Discussions/popular/10" id="link-mostpopular">Most Popular Discussions</a>
+    <a href="/Discussions/commented/10" id="link-mostcomments">Most Commented Discussions</a>
+    <a href="/Discussions/recent/10" id="link-recent">Recent Discussions</a>
     @if (user != null && user.IsAuthenticated)
     {
-        <div class="text-center mb-4">
-            <a href="/Forum/Post/create" class="btn btn-primary btn-lg">
-                <i class="bi bi-chat-dots me-2"></i> Create Discussion
-            </a>
-        </div>
+        <a href="/Discussions/my/10" id="link-mine">My Discussions</a>
     }
-
-    <!-- Navigation Bar with On-Page Links -->
-    <nav class="text-center mb-4">
-        <a href="#mostpopular" class="btn btn-outline-primary me-2" onclick="loadPostsByHash('#mostpopular');">
-            <i class="bi bi-trophy-fill me-2"></i> Most Popular
-        </a>
-        <a href="#mostcomments" class="btn btn-outline-warning me-2" onclick="loadPostsByHash('#mostcomments');">
-            <i class="bi bi-chat-left-dots-fill me-2"></i> Most Comments
-        </a>
-        <a href="#recent" class="btn btn-outline-success me-2" onclick="loadPostsByHash('#recent');">
-            <i class="bi bi-clock-fill me-2"></i> Recent
-        </a>
-        @if (user != null && user.IsAuthenticated)
-        {
-            <a href="#mine" class="btn btn-outline-info" onclick="loadPostsByHash('#mine');">
-                <i class="bi bi-person-lines-fill me-2"></i> Mine
-            </a>
-        }
-    </nav>
-
-    <!-- Posts Container -->
-    <div id="postsContainer" class="list-group"></div>
-
-    <!-- Hidden Static Links for Search Engine Indexing -->
-    <div style="display: none;">
-        <a href="/Discussions/popular/10" id="link-mostpopular">Most Popular Discussions</a>
-        <a href="/Discussions/commented/10" id="link-mostcomments">Most Commented Discussions</a>
-        <a href="/Discussions/recent/10" id="link-recent">Recent Discussions</a>
-        @if (user != null && user.IsAuthenticated)
-        {
-            <a href="/Discussions/my/10" id="link-mine">My Discussions</a>
-        }
-    </div>
 </div>
 
 @section Scripts {
     <script>
         function loadPostsByHash(hash) {
-            var endpoint = "";
+            // Update active states in navigation
+            $('.nav-link').removeClass('active');
+            $('.btn-outline-primary, .btn-outline-warning, .btn-outline-success, .btn-outline-info').removeClass('active');
+
+            let endpoint = "";
+            let filterName = "Discussions";
+
             switch(hash) {
                 case "#mostpopular":
                     endpoint = '/Discussions/popular/10';
+                    filterName = "Most Popular";
+                    $('a[href="#mostpopular"]').addClass('active');
                     break;
                 case "#mostcomments":
                     endpoint = '/Discussions/commented/10';
+                    filterName = "Most Commented";
+                    $('a[href="#mostcomments"]').addClass('active');
                     break;
                 case "#recent":
                     endpoint = '/Discussions/recent/10';
+                    filterName = "Recent Discussions";
+                    $('a[href="#recent"]').addClass('active');
                     break;
                 case "#mine":
                     endpoint = '/Discussions/my/10';
+                    filterName = "My Discussions";
+                    $('a[href="#mine"]').addClass('active');
                     break;
                 default:
                     endpoint = '/Discussions/recent/10';
+                    filterName = "Recent Discussions";
+                    $('a[href="#recent"]').addClass('active');
             }
+
+            // Update page heading
+            $('#currentFilterName').text(filterName);
+
+            // Show loading spinner
+            $('#loadingSpinner').removeClass('d-none');
+            $('#postsContainer').addClass('opacity-25');
+
+            // Load posts
             loadPosts(endpoint);
         }
 
         function loadPosts(endpoint) {
             $.get(endpoint, function (data) {
-                $("#postsContainer").html(data);
+                $("#postsContainer").html(data).removeClass('opacity-25');
+                $('#loadingSpinner').addClass('d-none');
+            }).fail(function() {
+                $("#postsContainer").html('<div class="alert alert-danger">Failed to load discussions. Please try again later.</div>').removeClass('opacity-25');
+                $('#loadingSpinner').addClass('d-none');
             });
         }
 
         $(document).ready(function () {
-            // On page load, check the hash. Default to #recent if none of the recognized ones exist.
+            // On page load, check the hash. Default to #recent if none exists
             var currentHash = window.location.hash;
             if (currentHash !== "#mostpopular" && currentHash !== "#mostcomments" && currentHash !== "#recent" && currentHash !== "#mine") {
                 currentHash = "#recent";
                 window.location.hash = currentHash;
             }
+
             loadPostsByHash(currentHash);
 
-            // Listen for hash change events to reload the posts accordingly.
+            // Listen for hash change events
             $(window).on('hashchange', function () {
                 loadPostsByHash(window.location.hash);
             });
