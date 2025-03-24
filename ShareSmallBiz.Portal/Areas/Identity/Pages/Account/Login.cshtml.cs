@@ -115,19 +115,29 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
                 return Page();
             }
 
-            _logger.LogInformation("User {UserName} found, attempting password sign-in.", user.UserName);
+            _logger.LogWarning("User {UserName} found, attempting password sign-in.", user.UserName);
 
             var result = await _signInManager.PasswordSignInAsync(user.UserName, Input.Password, Input.RememberMe, lockoutOnFailure: false);
 
             if (result.Succeeded)
             {
-                _logger.LogInformation("User {UserName} successfully signed in.", user.UserName);
+                _logger.LogWarning("User {UserName} successfully signed in.", user.UserName);
 
                 // ✅ Explicitly set the authentication scheme
                 var claimsPrincipal = await _signInManager.CreateUserPrincipalAsync(user);
                 await HttpContext.SignInAsync(IdentityConstants.ApplicationScheme, claimsPrincipal);
 
-                _logger.LogInformation("🔹 Forced Sign-In: User.Identity.IsAuthenticated = {IsAuthenticated}", User.Identity?.IsAuthenticated);
+                _logger.LogWarning("🔹 Forced Sign-In: User.Identity.IsAuthenticated = {IsAuthenticated}", User.Identity?.IsAuthenticated);
+
+
+                // Check if the user has not set a profile picture.
+                // Replace "ProfilePicture" with the actual property name from your user model.
+                if (user.ProfilePicture is null)
+                {
+                    _logger.LogWarning("User {UserName} does not have a profile picture. Redirecting to profile management.", user.UserName);
+                    return Redirect("/Identity/Account/Manage");
+                }
+
 
                 return LocalRedirect(returnUrl);
             }

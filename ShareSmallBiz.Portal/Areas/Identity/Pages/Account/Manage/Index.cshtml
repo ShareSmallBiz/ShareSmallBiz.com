@@ -5,9 +5,15 @@
     ViewData["ActivePage"] = ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage.ManageNavPages.Index;
 }
 
+@if (Model.Input.ProfilePicture == null)
+{
+    <div class="alert alert-info mt-2" role="alert">
+        It looks like you haven't set a profile picture yet. Please upload one.
+    </div>
+}
+
 <div class="container my-4">
     <h4 class="text-center mb-3"><i class="bi bi-person-circle me-2"></i>@ViewData["Title"]</h4>
-
     <partial name="_StatusMessage" model="Model.StatusMessage" />
     <partial name="_StatusMessage" model="Model.UserNameChangeLimitMessage" />
 
@@ -34,7 +40,6 @@
                     <input asp-for="Input.LastName" class="form-control" required />
                     <span asp-validation-for="Input.LastName" class="text-danger"></span>
                 </div>
-
 
                 <div class="mb-3">
                     <label asp-for="Input.PhoneNumber" class="form-label"></label>
@@ -73,6 +78,12 @@
                                  src="https://via.placeholder.com/200?text=Profile">
                         }
                     </div>
+                    @if (Model.Input.ProfilePicture == null)
+                    {
+                        <div class="alert alert-info mt-2" role="alert">
+                            It looks like you haven't set a profile picture yet. Please upload one.
+                        </div>
+                    }
                 </div>
 
                 <div class="input-group">

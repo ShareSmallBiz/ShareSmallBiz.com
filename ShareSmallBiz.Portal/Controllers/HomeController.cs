@@ -26,11 +26,15 @@ public class HomeController(DiscussionProvider postProvider, ILogger<HomeControl
         return View();
     }
 
-    [HttpGet("error")]
-    public IActionResult GetError()
+    [HttpGet("error/{*slug}")]
+    public IActionResult GetError(string? slug)
     {
-        throw new Exception("This is a test exception.");
+        var attemptedPath = HttpContext.Request.Path.Value;
+        var queryString = HttpContext.Request.QueryString.Value;
+        logger.LogError("Catch All: Attempted path: {AttemptedPath}{queryString}", attemptedPath,queryString);
+        return RedirectToAction("Index", "Home");
     }
+
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()

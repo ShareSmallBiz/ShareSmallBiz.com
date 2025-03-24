@@ -135,6 +135,15 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}"
 );
+
+app.MapFallbackToController("GetError", "Home");
+app.MapControllerRoute(
+    name: "catchAll",
+    pattern: "{*slug}",
+    defaults: new { controller = "Home", action = "GetError" }
+);
+
+
 app.MapSitemap(); 
 
 app.Logger.LogWarning("🔹 Application started successfully.");
