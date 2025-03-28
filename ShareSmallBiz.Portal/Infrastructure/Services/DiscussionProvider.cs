@@ -391,54 +391,93 @@ public class DiscussionProvider(
     /// <inheritdoc/>
     public async Task<bool> UpdatePostAsync(DiscussionModel discussionModel, ClaimsPrincipal userPrincipal, CancellationToken ct = default)
     {
-        var user = await userManager.GetUserAsync(userPrincipal).ConfigureAwait(false);
-        if (user == null)
+        try
         {
-            logger.LogWarning("No logged-in user found. Aborting discussion update.");
-            return false;
-        }
-        logger.LogInformation("Updating discussion with ID: {PostId}", discussionModel.Id);
 
-        var existingPost = await context.Posts.
-            Where(p => p.Id == discussionModel.Id)
-            .Include(discussionModel => discussionModel.PostCategories)
-            .FirstOrDefaultAsync(ct).ConfigureAwait(false);
-
-        if (existingPost == null)
-            return false;
-
-        existingPost.AuthorId = discussionModel.Author.Id;
-        existingPost.CreatedID = discussionModel.CreatedID;
-        existingPost.Title = discussionModel.Title;
-        existingPost.Content = discussionModel.Content;
-        existingPost.Description = discussionModel.Description;
-        existingPost.Cover = discussionModel.Cover;
-        existingPost.IsFeatured = discussionModel.IsFeatured;
-        existingPost.IsPublic = discussionModel.IsPublic;
-        existingPost.PostType = discussionModel.PostType;
-        existingPost.Published = discussionModel.Published;
-        existingPost.Selected = discussionModel.Selected;
-        existingPost.Slug = GenerateSlug(discussionModel.Title);
-        existingPost.ModifiedDate = DateTime.UtcNow;
-        existingPost.ModifiedID = user.Id;
-
-        if (discussionModel.Tags.Count > 0)
-        {
-            // Update discussion categories
-            existingPost.PostCategories.Clear();
-            foreach (var categoryName in discussionModel.Tags)
+            var user = await userManager.GetUserAsync(userPrincipal).ConfigureAwait(false);
+            if (user == null)
             {
-                var category = await context.Keywords
-                    .FirstOrDefaultAsync(k => k.Name == categoryName, ct).ConfigureAwait(false);
-                if (category != null)
+                logger.LogWarning("No logged-in user found. Aborting discussion update.");
+                return false;
+            }
+            logger.LogInformation("Updating discussion with ID: {PostId}", discussionModel.Id);
+
+            var existingPost = await context.Posts.
+                Where(p => p.Id == discussionModel.Id)
+                .Include(discussionModel => discussionModel.PostCategories)
+                .FirstOrDefaultAsync(ct).ConfigureAwait(false);
+
+            if (existingPost == null)
+                return false;
+
+            if (string.IsNullOrEmpty(discussionModel?.Author?.Id))
+            {
+                discussionModel.Author = new UserModel(user);
+                existingPost.AuthorId = discussionModel.Author.Id;
+            }
+
+            if (discussionModel.Author != null && string.IsNullOrEmpty(discussionModel.Author.Id))
+            {
+                discussionModel.Author.Id = user.Id;
+            }
+            else
+            {
+                existingPost.AuthorId = discussionModel.Author?.Id ?? user.Id;
+            }
+            if (discussionModel.CreatedID == null || string.IsNullOrEmpty(discussionModel.CreatedID))
+            {
+                discussionModel.CreatedID = user.Id;
+            }
+            else
+            {
+                existingPost.CreatedID = discussionModel.CreatedID;
+            }
+            existingPost.ModifiedID = user.Id;
+
+
+            existingPost.Title = discussionModel.Title;
+            existingPost.Content = discussionModel.Content;
+            existingPost.Description = discussionModel.Description;
+            existingPost.Cover = discussionModel.Cover;
+            existingPost.IsFeatured = discussionModel.IsFeatured;
+            existingPost.IsPublic = discussionModel.IsPublic;
+            existingPost.PostType = discussionModel.PostType;
+            existingPost.Published = discussionModel.Published;
+            existingPost.Selected = discussionModel.Selected;
+            existingPost.Slug = GenerateSlug(discussionModel.Title);
+            existingPost.ModifiedDate = DateTime.UtcNow;
+
+            existingPost.PostCategories.Clear();
+
+            if (discussionModel.Tags.Count > 0)
+            {
+                foreach (var categoryName in discussionModel.Tags)
                 {
-                    existingPost.PostCategories.Add(category);
+                    var category = await context.Keywords
+                        .FirstOrDefaultAsync(k => k.Name == categoryName, ct).ConfigureAwait(false);
+                    if (category != null)
+                    {
+                        existingPost.PostCategories.Add(category);
+                    }
                 }
             }
+            context.Posts.Update(existingPost);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
+            return true;
         }
-        context.Posts.Update(existingPost);
-        await context.SaveChangesAsync(ct).ConfigureAwait(false);
-        return true;
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating discussion with ID: {PostId}.", discussionModel.Id);
+
+            // find inner exception if any
+            if (ex.InnerException != null)
+            {
+                logger.LogError(ex.InnerException, "Inner exception: {Message}", ex.InnerException.Message);
+            }
+
+
+        }
+        return false;
     }
     /// <summary>
     /// Allows a logged-in user to delete a comment on a discussion.

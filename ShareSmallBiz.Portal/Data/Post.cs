@@ -18,8 +18,6 @@ public class Post : BaseEntity
     public string Description { get; set; }
     public bool IsFeatured { get; set; }
     public bool IsPublic { get; set; }
-    public virtual ICollection<PostLike> Likes { get; set; } = [];
-    public virtual ICollection<Keyword> PostCategories { get; set; } = [];
     public PostType PostType { get; set; } = PostType.Post;
     public int PostViews { get; set; }
     public DateTime Published { get; set; }
@@ -31,7 +29,8 @@ public class Post : BaseEntity
     [Required]
     [StringLength(160)]
     public string Title { get; set; }
-    public virtual ICollection<PostComment> Comments { get; set; } = [];
-    public virtual ICollection<Media> Media { get; set; } = [];
-
+    public virtual ICollection<PostLike>? Likes { get; set; }
+    public virtual ICollection<Keyword>? PostCategories { get; set; }
+    public virtual ICollection<PostComment>? Comments { get; set; }
+    public virtual ICollection<Media>? Media { get; set; }
 }

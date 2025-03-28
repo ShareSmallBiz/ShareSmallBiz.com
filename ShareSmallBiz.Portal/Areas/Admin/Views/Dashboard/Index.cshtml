@@ -1,0 +1,344 @@
+﻿@model DashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+    </div>
+
+    <!-- Stats Overview Row -->
+    <div class="row">
+        <!-- User Statistics Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Users
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.UserStats.TotalUsers</div>
+                            <div class="small text-muted mt-2">
+                                <span class="mr-2">Verified: @Model.UserStats.VerifiedUsers</span>
+                                <span>Business: @Model.UserStats.BusinessUsers</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <a asp-action="UserStatistics" class="text-primary">View Details <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discussion Statistics Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Discussions
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.DiscussionStats.TotalDiscussions</div>
+                            <div class="small text-muted mt-2">
+                                <span class="mr-2">Public: @Model.DiscussionStats.PublicDiscussions</span>
+                                <span>Featured: @Model.DiscussionStats.FeaturedDiscussions</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <a asp-action="DiscussionStatistics" class="text-success">View Details <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comments Statistics Card -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Comments
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.CommentStats.TotalComments</div>
+                            <div class="small text-muted mt-2">
+                                <span>Most commented: @(Model.CommentStats.MostCommentedDiscussions.FirstOrDefault().Key ?? "None")</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comment-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <a asp-action="CommentStatistics" class="text-info">View Details <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <!-- User Registrations Chart -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">User Registrations</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="userRegistrationsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discussions Chart -->
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-success">Discussions Activity</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="discussionsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Row -->
+    <div class="row">
+        <!-- Recent Users -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Users</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model.RecentUsers)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                @if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+                                                {
+                                                    <img src="@user.ProfilePictureUrl" class="rounded-circle mr-2" width="32" height="32" alt="@user.DisplayName">
+                                                }
+                                                else
+                                                {
+                                                    <div class="rounded-circle bg-light mr-2 d-flex align-items-center justify-content-center" style="width:32px;height:32px">
+                                                        <i class="fas fa-user text-secondary"></i>
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <a asp-controller="UserRoles" asp-action="Edit" asp-route-userId="@user.Id">@user.DisplayName</a>
+                                                    <div class="small text-muted">@user.Email</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (user.IsEmailConfirmed)
+                                            {
+                                                <span class="badge badge-success">Verified</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-warning">Pending</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <a asp-controller="UserRoles" asp-action="Index" class="text-primary">View All Users <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Discussions -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">Recent Discussions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var discussion in Model.RecentDiscussions)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-controller="AdminDiscussion" asp-action="Edit" asp-route-id="@discussion.Id">@discussion.Title</a>
+                                            <div class="small text-muted">@discussion.Published.ToString("MMM dd, yyyy")</div>
+                                        </td>
+                                        <td>@discussion.Author.DisplayName</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <a asp-controller="AdminDiscussion" asp-action="Index" class="text-success">View All Discussions <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Comments -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">Recent Comments</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Comment</th>
+                                    <th>Author</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var comment in Model.RecentComments)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="text-truncate" style="max-width: 200px;">@comment.Content</div>
+                                            <div class="small text-muted">@comment.CreatedDate.ToString("MMM dd, yyyy")</div>
+                                        </td>
+                                        <td>@comment.Author?.DisplayName</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <a asp-controller="AdminComment" asp-action="Index" class="text-info">View All Comments <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // User Registrations Chart
+            var userCtx = document.getElementById('userRegistrationsChart').getContext('2d');
+            var userMonths = @Json.Serialize(Model.UserStats.RecentRegistrations.Keys);
+            var userCounts = @Json.Serialize(Model.UserStats.RecentRegistrations.Values);
+
+            new Chart(userCtx, {
+                type: 'line',
+                data: {
+                    labels: userMonths,
+                    datasets: [{
+                        label: 'New Users',
+                        data: userCounts,
+                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                        borderColor: 'rgba(78, 115, 223, 1)',
+                        pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Discussions Chart
+            var discussionCtx = document.getElementById('discussionsChart').getContext('2d');
+            var discussionMonths = @Json.Serialize(Model.DiscussionStats.MonthlyDiscussions.Keys);
+            var discussionCounts = @Json.Serialize(Model.DiscussionStats.MonthlyDiscussions.Values);
+            var commentCounts = @Json.Serialize(Model.CommentStats.MonthlyComments.Values);
+
+            new Chart(discussionCtx, {
+                type: 'bar',
+                data: {
+                    labels: discussionMonths,
+                    datasets: [
+                        {
+                            label: 'Discussions',
+                            data: discussionCounts,
+                            backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                            borderColor: 'rgba(40, 167, 69, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Comments',
+                            data: commentCounts,
+                            backgroundColor: 'rgba(23, 162, 184, 0.7)',
+                            borderColor: 'rgba(23, 162, 184, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

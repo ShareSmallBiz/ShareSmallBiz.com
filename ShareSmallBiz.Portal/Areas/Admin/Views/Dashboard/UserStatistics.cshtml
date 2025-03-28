@@ -1,0 +1,216 @@
+﻿@using ShareSmallBiz.Portal.Areas.Admin.Controllers
+@model UserStatsViewModel
+@{
+    ViewData["Title"] = "User Statistics";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">User Statistics</h1>
+        <a asp-action="Index" class="btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- User Statistics Cards -->
+    <div class="row">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Users
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalUsers</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Verified Users
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.VerifiedUsers</div>
+                            <div class="small text-muted mt-2">
+                                @(Math.Round((double)Model.VerifiedUsers / Model.TotalUsers * 100, 1))% of total
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Business Users
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.BusinessUsers</div>
+                            <div class="small text-muted mt-2">
+                                @(Math.Round((double)Model.BusinessUsers / Model.TotalUsers * 100, 1))% of total
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-briefcase fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Registration Chart -->
+    <div class="row">
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">User Registrations (6 Months)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="userRegistrationsChart" style="height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Verification Stats -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">User Verification Rate</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4">
+                        <canvas id="userVerificationChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-success"></i> Verified
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-danger"></i> Unverified
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">User Management</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <a href="@Url.Action("Index", "UserRoles")" class="btn btn-primary btn-block">
+                                <i class="fas fa-users mr-2"></i> Manage Users
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <a href="@Url.Action("CreateBusinessUser", "UserRoles")" class="btn btn-success btn-block">
+                                <i class="fas fa-user-plus mr-2"></i> Create Business User
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <a href="@Url.Action("Index", "RoleManager")" class="btn btn-info btn-block">
+                                <i class="fas fa-user-tag mr-2"></i> Manage Roles
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // User Registrations Chart
+            var userCtx = document.getElementById('userRegistrationsChart').getContext('2d');
+            var userMonths = @Json.Serialize(Model.RecentRegistrations.Keys);
+            var userCounts = @Json.Serialize(Model.RecentRegistrations.Values);
+
+            new Chart(userCtx, {
+                type: 'line',
+                data: {
+                    labels: userMonths,
+                    datasets: [{
+                        label: 'New Users',
+                        data: userCounts,
+                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                        borderColor: 'rgba(78, 115, 223, 1)',
+                        pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // User Verification Pie Chart
+            var verificationCtx = document.getElementById('userVerificationChart').getContext('2d');
+            var verified = @Model.VerifiedUsers;
+            var unverified = @(Model.TotalUsers - Model.VerifiedUsers);
+
+            new Chart(verificationCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Verified', 'Unverified'],
+                    datasets: [{
+                        data: [verified, unverified],
+                        backgroundColor: ['rgba(40, 167, 69, 0.8)', 'rgba(220, 53, 69, 0.8)'],
+                        borderColor: ['rgba(40, 167, 69, 1)', 'rgba(220, 53, 69, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%'
+                }
+            });
+        });
+    </script>
+}

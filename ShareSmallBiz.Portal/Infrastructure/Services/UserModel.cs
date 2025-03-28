@@ -110,7 +110,8 @@ public class UserModel
                 ModifiedID = post.ModifiedID,
                 CreatedDate = post.CreatedDate,
                 ModifiedDate = post.ModifiedDate,
-                Comments = [.. post.Comments.Select(comment => new PostCommentModel(comment))],
+                Comments = post.Comments?.Select(comment => new PostCommentModel(comment)).ToList() ?? new List<PostCommentModel>(),
+                Tags = post.PostCategories?.Select(x => x.Name).ToList() ?? new List<string>(),
                 Author = new UserModel()
                 {
                     Id = post.Author.Id,

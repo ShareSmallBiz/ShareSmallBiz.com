@@ -1,0 +1,227 @@
+﻿@model DiscussionStatsViewModel
+@{
+    ViewData["Title"] = "Discussion Statistics";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Discussion Statistics</h1>
+        <a asp-action="Index" class="btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Discussion Statistics Cards -->
+    <div class="row">
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Discussions
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalDiscussions</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Public Discussions
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.PublicDiscussions</div>
+                            <div class="small text-muted mt-2">
+                                @(Math.Round((double)Model.PublicDiscussions / Model.TotalDiscussions * 100, 1))% of total
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-globe fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Featured Discussions
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.FeaturedDiscussions</div>
+                            <div class="small text-muted mt-2">
+                                @(Math.Round((double)Model.FeaturedDiscussions / Model.TotalDiscussions * 100, 1))% of total
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-star fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Monthly Discussions Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-success">Monthly Discussions (6 Months)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="monthlyDiscussionsChart" style="height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popular Discussions Chart -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">Most Popular Discussions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4">
+                        <canvas id="popularDiscussionsChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        @{
+                            var colorClasses = new[] { "primary", "success", "info", "warning", "danger" };
+                            var i = 0;
+                        }
+                        @foreach (var discussion in Model.PopularDiscussions.Take(5))
+                        {
+                            <span class="mr-2">
+                                <i class="fas fa-circle text-@colorClasses[i % colorClasses.Length]"></i> @discussion.Key.Substring(0, Math.Min(15, discussion.Key.Length))@(discussion.Key.Length > 15 ? "..." : "")
+                            </span>
+                            i++;
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discussion Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">Discussion Management</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <a href="@Url.Action("Index", "AdminDiscussion")" class="btn btn-success btn-block">
+                                <i class="fas fa-list mr-2"></i> Manage Discussions
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <a href="@Url.Action("Create", "AdminDiscussion")" class="btn btn-primary btn-block">
+                                <i class="fas fa-plus mr-2"></i> Create Discussion
+                            </a>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <a href="@Url.Action("Index", "Keyword")" class="btn btn-info btn-block">
+                                <i class="fas fa-tags mr-2"></i> Manage Keywords
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Monthly Discussions Chart
+            var discussionCtx = document.getElementById('monthlyDiscussionsChart').getContext('2d');
+            var discussionMonths = @Json.Serialize(Model.MonthlyDiscussions.Keys);
+            var discussionCounts = @Json.Serialize(Model.MonthlyDiscussions.Values);
+
+            new Chart(discussionCtx, {
+                type: 'bar',
+                data: {
+                    labels: discussionMonths,
+                    datasets: [{
+                        label: 'New Discussions',
+                        data: discussionCounts,
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Popular Discussions Chart
+            var popularCtx = document.getElementById('popularDiscussionsChart').getContext('2d');
+            var popularTitles = @Json.Serialize(Model.PopularDiscussions.Keys.Take(5));
+            var popularCounts = @Json.Serialize(Model.PopularDiscussions.Values.Take(5));
+
+            new Chart(popularCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: popularTitles,
+                    datasets: [{
+                        data: popularCounts,
+                        backgroundColor: [
+                            'rgba(78, 115, 223, 0.8)',
+                            'rgba(40, 167, 69, 0.8)',
+                            'rgba(23, 162, 184, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(220, 53, 69, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(78, 115, 223, 1)',
+                            'rgba(40, 167, 69, 1)',
+                            'rgba(23, 162, 184, 1)',
+                            'rgba(255, 193, 7, 1)',
+                            'rgba(220, 53, 69, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%'
+                }
+            });
+        });
+    </script>
+}

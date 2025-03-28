@@ -1,0 +1,255 @@
+﻿@model CommentStatsViewModel
+@{
+    ViewData["Title"] = "Comment Statistics";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Comment Statistics</h1>
+        <a asp-action="Index" class="btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Comment Statistics Card -->
+    <div class="row">
+        <div class="col-xl-6 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Comments
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.TotalComments</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comment-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Comments per Discussion (Average)
+                            </div>
+                            @{
+                                var discussionCount = Math.Max(1, (Model.MostCommentedDiscussions?.Count ?? 1));
+                                var avgComments = Model.TotalComments / (double)discussionCount;
+                            }
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@avgComments.ToString("F1")</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calculator fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Monthly Comments Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-info">Monthly Comments (6 Months)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="monthlyCommentsChart" style="height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Most Commented Discussions Chart -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">Most Commented Discussions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4">
+                        <canvas id="mostCommentedChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        @{
+                            var colorClasses = new[] { "primary", "success", "info", "warning", "danger" };
+                            var i = 0;
+                        }
+                        @foreach (var discussion in Model.MostCommentedDiscussions.Take(5))
+                        {
+                            <span class="mr-2">
+                                <i class="fas fa-circle text-@colorClasses[i % colorClasses.Length]"></i> @discussion.Key.Substring(0, Math.Min(15, discussion.Key.Length))@(discussion.Key.Length > 15 ? "..." : "")
+                            </span>
+                            i++;
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Discussions with Comments Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">Most Commented Discussions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="mostCommentedTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Discussion Title</th>
+                                    <th>Comments</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var discussion in Model.MostCommentedDiscussions)
+                                {
+                                    <tr>
+                                        <td>@discussion.Key</td>
+                                        <td>@discussion.Value</td>
+                                        <td>
+                                            <a href="@Url.Action("Index", "AdminComment")" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i> View Comments
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comment Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">Comment Management</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <a href="@Url.Action("Index", "AdminComment")" class="btn btn-info btn-block">
+                                <i class="fas fa-comment-alt mr-2"></i> Manage Comments
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <a href="@Url.Action("Create", "AdminComment")" class="btn btn-primary btn-block">
+                                <i class="fas fa-plus mr-2"></i> Create Comment
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net@1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net-bs4@1.11.5/js/dataTables.bootstrap4.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Monthly Comments Chart
+            var commentCtx = document.getElementById('monthlyCommentsChart').getContext('2d');
+            var commentMonths = @Json.Serialize(Model.MonthlyComments.Keys);
+            var commentCounts = @Json.Serialize(Model.MonthlyComments.Values);
+
+            new Chart(commentCtx, {
+                type: 'line',
+                data: {
+                    labels: commentMonths,
+                    datasets: [{
+                        label: 'Comments',
+                        data: commentCounts,
+                        backgroundColor: 'rgba(23, 162, 184, 0.05)',
+                        borderColor: 'rgba(23, 162, 184, 1)',
+                        pointBackgroundColor: 'rgba(23, 162, 184, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(23, 162, 184, 1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Most Commented Discussions Chart
+            var mostCommentedCtx = document.getElementById('mostCommentedChart').getContext('2d');
+            var mostCommentedTitles = @Json.Serialize(Model.MostCommentedDiscussions.Keys.Take(5));
+            var mostCommentedCounts = @Json.Serialize(Model.MostCommentedDiscussions.Values.Take(5));
+
+            new Chart(mostCommentedCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: mostCommentedTitles,
+                    datasets: [{
+                        data: mostCommentedCounts,
+                        backgroundColor: [
+                            'rgba(78, 115, 223, 0.8)',
+                            'rgba(40, 167, 69, 0.8)',
+                            'rgba(23, 162, 184, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(220, 53, 69, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(78, 115, 223, 1)',
+                            'rgba(40, 167, 69, 1)',
+                            'rgba(23, 162, 184, 1)',
+                            'rgba(255, 193, 7, 1)',
+                            'rgba(220, 53, 69, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%'
+                }
+            });
+
+            // Initialize DataTable for Most Commented Discussions
+            $('#mostCommentedTable').DataTable({
+                order: [[1, 'desc']], // Sort by comment count descending
+                pageLength: 5,
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]]
+            });
+        });
+    </script>
+}

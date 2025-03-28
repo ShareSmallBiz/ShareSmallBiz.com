@@ -1,6 +1,10 @@
 {
   "menuItems": [
     {
+      "text": "Dashboard",
+      "url": "/admin/Dashboard"
+    },
+    {
       "text": "Users",
       "url": "/admin/UserRoles"
     },

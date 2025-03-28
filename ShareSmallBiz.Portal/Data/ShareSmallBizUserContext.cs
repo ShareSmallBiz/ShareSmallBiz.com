@@ -26,6 +26,11 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
             .HasForeignKey(ur => ur.UserId)
             .IsRequired();
 
+        builder.Entity<Keyword>()
+            .HasMany(k => k.Posts)
+            .WithMany(p => p.PostCategories)
+            .UsingEntity(j => j.ToTable("PostKeywords"));  // Many-to-many relationship between Keywords and Posts
+
         // ---- POSTS, COMMENTS, LIKES ----
         builder.Entity<PostLike>()
             .HasKey(pl => pl.Id);

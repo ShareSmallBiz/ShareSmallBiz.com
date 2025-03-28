@@ -38,11 +38,11 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
         CreatedDate = post.CreatedDate;
         ModifiedDate = post.ModifiedDate;
         CreatedID = post.AuthorId;
-        Comments = [.. post.Comments.Select(comment => new PostCommentModel(comment))];
+        Comments = post.Comments?.Select(comment => new PostCommentModel(comment)).ToList() ?? new List<PostCommentModel>();
         Author = new UserModel(post.Author);
         Target = post.Target is null ? null : new UserModel(post.Target);
         TargetId = post.TargetId;
-        Tags = [.. post.PostCategories.Select(x => x.Name)];
+        Tags = post.PostCategories?.Select(x => x.Name).ToList() ?? new List<string>();
     }
 
     public bool Equals(DiscussionModel other)
