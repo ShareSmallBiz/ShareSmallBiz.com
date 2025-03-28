@@ -1,6 +1,657 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
-<h1>A Cool Dashboard would be nice here . . .</h1>
+﻿<section class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-journal-text me-2"></i> Admin User Management Guide
+                    </h1>
+                </div>
+                <div class="card-body">
+                    <p class="lead">
+                        This guide provides instructions for managing users, roles, and business accounts in the ShareSmallBiz Admin area.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">
+                        <i class="bi bi-list-check me-2"></i> Quick Navigation
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="list-group">
+                                <a href="#dashboard" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-speedometer2 me-2"></i> Dashboard Overview
+                                </a>
+                                <a href="#user-management" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-people me-2"></i> User Management
+                                </a>
+                                <a href="#user-roles" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-person-badge me-2"></i> User Roles
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="list-group">
+                                <a href="#business-users" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-briefcase me-2"></i> Business Users
+                                </a>
+                                <a href="#user-profiles" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-person-circle me-2"></i> User Profiles
+                                </a>
+                                <a href="#account-security" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-shield-lock me-2"></i> Account Security
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="list-group">
+                                <a href="#best-practices" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-check2-circle me-2"></i> Best Practices
+                                </a>
+                                <a href="#troubleshooting" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-wrench me-2"></i> Troubleshooting
+                                </a>
+                                <a href="#faq" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-question-circle me-2"></i> FAQ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Overview -->
+    <div class="row mb-4" id="dashboard">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="bi bi-speedometer2 me-2"></i> Dashboard Overview
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p>The Admin Dashboard provides a comprehensive view of your platform's usage and user statistics.</p>
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i> The dashboard is your central hub for all administrative activities.
+                    </div>
+
+                    <h3 class="h5 mt-3"><i class="bi bi-graph-up me-2"></i> Key Metrics</h3>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h4 class="h6">User Statistics</h4>
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-check-lg text-success me-2"></i> Total user count</li>
+                                        <li><i class="bi bi-check-lg text-success me-2"></i> Verified vs. unverified users</li>
+                                        <li><i class="bi bi-check-lg text-success me-2"></i> Business users count</li>
+                                        <li><i class="bi bi-check-lg text-success me-2"></i> Recent registrations</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h4 class="h6">Discussion Statistics</h4>
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-check-lg text-success me-2"></i> Total discussions</li>
+                                        <li><i class="bi bi-check-lg text-success me-2"></i> Public vs. private</li>
+                                        <li><i class="bi bi-check-lg text-success me-2"></i> Featured discussions</li>
+                                        <li><i class="bi bi-check-lg text-success me-2"></i> Monthly discussion trends</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h4 class="h6">Comment Statistics</h4>
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-check-lg text-success me-2"></i> Total comments</li>
+                                        <li><i class="bi bi-check-lg text-success me-2"></i> Most commented discussions</li>
+                                        <li><i class="bi bi-check-lg text-success me-2"></i> Recent comments</li>
+                                        <li><i class="bi bi-check-lg text-success me-2"></i> Comment trends</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Management -->
+    <div class="row mb-4" id="user-management">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="bi bi-people me-2"></i> User Management
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p>The User Management section allows you to view, edit, and manage all users on the platform.</p>
+
+                    <h3 class="h5 mt-3"><i class="bi bi-person-lines-fill me-2"></i> User Listing</h3>
+                    <p>The user list provides a comprehensive view of all users with filtering options:</p>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">Filter Options</div>
+                                <div class="card-body">
+                                    <ul>
+                                        <li><strong>Email Status:</strong> Filter by verified or unverified users</li>
+                                        <li><strong>Role:</strong> Filter users by their assigned role</li>
+                                        <li><strong>Search:</strong> Find users by name, email, or username</li>
+                                    </ul>
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-lightbulb me-2"></i> By default, the user list shows only verified users.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">Actions Available</div>
+                                <div class="card-body">
+                                    <ul>
+                                        <li><strong>Edit:</strong> Modify user details and profile</li>
+                                        <li><strong>Manage Roles:</strong> Assign or remove user roles</li>
+                                        <li><strong>Lock/Unlock:</strong> Temporarily disable user access</li>
+                                        <li><strong>Delete:</strong> Permanently remove a user account</li>
+                                    </ul>
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-triangle me-2"></i> User deletion is permanent and cannot be undone.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="h5 mt-4"><i class="bi bi-person-plus me-2"></i> Editing User Profiles</h3>
+                    <p>When editing a user, you can modify the following information:</p>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Field</th>
+                                    <th>Description</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Email</td>
+                                    <td>User's email address (login)</td>
+                                    <td>Must be unique in the system</td>
+                                </tr>
+                                <tr>
+                                    <td>Username</td>
+                                    <td>User's display name on the platform</td>
+                                    <td>Public-facing identifier</td>
+                                </tr>
+                                <tr>
+                                    <td>First/Last Name</td>
+                                    <td>User's personal information</td>
+                                    <td>Optional for standard users</td>
+                                </tr>
+                                <tr>
+                                    <td>Display Name</td>
+                                    <td>Name shown to other users</td>
+                                    <td>Defaults to username</td>
+                                </tr>
+                                <tr>
+                                    <td>Profile Picture</td>
+                                    <td>User's avatar image</td>
+                                    <td>Multiple options available</td>
+                                </tr>
+                                <tr>
+                                    <td>Website URL</td>
+                                    <td>User's external website</td>
+                                    <td>Relevant for business users</td>
+                                </tr>
+                                <tr>
+                                    <td>Biography</td>
+                                    <td>User's description</td>
+                                    <td>Appears on public profile</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Roles -->
+    <div class="row mb-4" id="user-roles">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="bi bi-person-badge me-2"></i> User Roles
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p>Roles define the permissions and access levels of users on the platform.</p>
+
+                    <div class="alert alert-primary">
+                        <i class="bi bi-info-circle me-2"></i> Users can have multiple roles simultaneously.
+                    </div>
+
+                    <h3 class="h5 mt-3"><i class="bi bi-shield-lock me-2"></i> Available Roles</h3>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Role</th>
+                                    <th>Description</th>
+                                    <th>Access Level</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-danger">Admin</span></td>
+                                    <td>Full access to all system functions, including user management, content moderation, and system settings.</td>
+                                    <td>Full Access</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">Business</span></td>
+                                    <td>Access to business-specific features, including profile visibility, specialized content access, and verified business status.</td>
+                                    <td>Medium Access</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-primary">User</span></td>
+                                    <td>Standard user privileges including posting discussions, commenting, and interacting with content.</td>
+                                    <td>Basic Access</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-info">Pro</span></td>
+                                    <td>Premium user access with additional features like enhanced analytics, priority support, and premium content.</td>
+                                    <td>Enhanced Access</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 class="h5 mt-4"><i class="bi bi-pencil-square me-2"></i> Managing User Roles</h3>
+                    <p>To manage a user's roles:</p>
+
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <ol>
+                                <li>Navigate to the User Management page</li>
+                                <li>Find the user and click the <i class="bi bi-person-badge text-info"></i> icon</li>
+                                <li>Check or uncheck roles as needed</li>
+                                <li>Click "Save Changes" to apply the new role configuration</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i> Removing all roles from a user may limit their ability to use the platform.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Business User Creation -->
+    <div class="row mb-4" id="business-users">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="bi bi-briefcase me-2"></i> Business User Creation
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p>Business users have special privileges on the platform and require additional information.</p>
+
+                    <div class="alert alert-success">
+                        <i class="bi bi-lightbulb me-2"></i> Business users are automatically verified and assigned the "Business" role.
+                    </div>
+
+                    <h3 class="h5 mt-3"><i class="bi bi-plus-circle me-2"></i> Creating a Business User</h3>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">Required Information</div>
+                                <div class="card-body">
+                                    <ul>
+                                        <li><strong>Email Address:</strong> Used as login username</li>
+                                        <li><strong>Last Name:</strong> Required for business users</li>
+                                        <li><strong>First Name:</strong> Optional but recommended</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">Business Information</div>
+                                <div class="card-body">
+                                    <ul>
+                                        <li><strong>Company Name:</strong> Business identifier</li>
+                                        <li><strong>Business Phone:</strong> Contact information</li>
+                                        <li><strong>Website URL:</strong> Business website</li>
+                                        <li><strong>Biography:</strong> Business description</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="h5 mt-3"><i class="bi bi-image me-2"></i> Profile Picture</h3>
+                    <p>You can add a profile picture for business users in one of two ways:</p>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">Upload Image</div>
+                                <div class="card-body">
+                                    <p><i class="bi bi-upload me-2"></i> Upload an image file from your computer.</p>
+                                    <ul class="small">
+                                        <li>Maximum size: 2MB</li>
+                                        <li>Will be resized to 250x250px</li>
+                                        <li>Supported formats: JPG, PNG, GIF</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">Use Image URL</div>
+                                <div class="card-body">
+                                    <p><i class="bi bi-link-45deg me-2"></i> Provide a URL to an existing image online.</p>
+                                    <ul class="small">
+                                        <li>Must be a direct image URL</li>
+                                        <li>Should be a square image if possible</li>
+                                        <li>Will not be resized automatically</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="h5 mt-3"><i class="bi bi-key me-2"></i> Password Generation</h3>
+                    <p>When creating a business user, a secure random password is automatically generated.</p>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Important:</strong> The password is shown only once on the creation confirmation page. Make sure to securely share it with the business user.
+                    </div>
+
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <h4 class="h6"><i class="bi bi-list-check me-2"></i> Business User Creation Steps:</h4>
+                            <ol>
+                                <li>Go to <strong>User Management</strong> and click <strong>New Business User</strong></li>
+                                <li>Fill in the required account information</li>
+                                <li>Add business-specific details</li>
+                                <li>Upload a profile picture if available</li>
+                                <li>Click <strong>Create Business User</strong></li>
+                                <li>Save the generated password from the confirmation page</li>
+                                <li>Share login credentials with the business user securely</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profiles -->
+    <div class="row mb-4" id="user-profiles">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="bi bi-person-circle me-2"></i> User Profiles
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p>User profiles display public information and enable customization of appearance.</p>
+
+                    <h3 class="h5 mt-3"><i class="bi bi-card-list me-2"></i> Profile Elements</h3>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Element</th>
+                                    <th>Description</th>
+                                    <th>Visibility</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Display Name</td>
+                                    <td>Public name shown throughout the platform</td>
+                                    <td>Public</td>
+                                </tr>
+                                <tr>
+                                    <td>Profile Picture</td>
+                                    <td>Visual representation of the user</td>
+                                    <td>Public</td>
+                                </tr>
+                                <tr>
+                                    <td>Biography</td>
+                                    <td>User or business description</td>
+                                    <td>Public</td>
+                                </tr>
+                                <tr>
+                                    <td>Website URL</td>
+                                    <td>Link to external website</td>
+                                    <td>Public</td>
+                                </tr>
+                                <tr>
+                                    <td>Discussions</td>
+                                    <td>Content created by the user</td>
+                                    <td>Public (if marked public)</td>
+                                </tr>
+                                <tr>
+                                    <td>Email Address</td>
+                                    <td>Contact information</td>
+                                    <td>Private (admin only)</td>
+                                </tr>
+                                <tr>
+                                    <td>Account Status</td>
+                                    <td>Whether account is verified/locked</td>
+                                    <td>Private (admin only)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 class="h5 mt-4"><i class="bi bi-image me-2"></i> Profile Picture Management</h3>
+                    <p>When editing a user, you have several profile picture options:</p>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="bi bi-check-circle text-success fs-1"></i>
+                                    <h5 class="mt-2">Keep Current</h5>
+                                    <p class="small">Maintain existing picture</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="bi bi-upload text-primary fs-1"></i>
+                                    <h5 class="mt-2">Upload New</h5>
+                                    <p class="small">Upload from computer</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="bi bi-link-45deg text-info fs-1"></i>
+                                    <h5 class="mt-2">Use URL</h5>
+                                    <p class="small">Link to external image</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <i class="bi bi-x-circle text-danger fs-1"></i>
+                                    <h5 class="mt-2">Remove</h5>
+                                    <p class="small">Delete current picture</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Security -->
+    <div class="row mb-4" id="account-security">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="bi bi-shield-lock me-2"></i> Account Security
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p>Administrators have several tools to manage account security and access.</p>
+
+                    <h3 class="h5 mt-3"><i class="bi bi-lock me-2"></i> Account Locking</h3>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">When to Lock an Account</div>
+                                <div class="card-body">
+                                    <ul>
+                                        <li>Suspicious activity detected</li>
+                                        <li>Multiple failed login attempts</li>
+                                        <li>Violation of platform terms</li>
+                                        <li>At user's request (temporary suspension)</li>
+                                        <li>During security investigations</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">Unlocking Accounts</div>
+                                <div class="card-body">
+                                    <p>To unlock a previously locked account:</p>
+                                    <ol>
+                                        <li>Go to the user's profile in User Management</li>
+                                        <li>Click the "Unlock Account" button</li>
+                                        <li>Confirm the action when prompted</li>
+                                    </ol>
+                                    <p class="small">The user will be able to log in immediately after unlocking.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="h5 mt-3"><i class="bi bi-person-x me-2"></i> Account Deletion</h3>
+                    <p>Account deletion is a permanent action that cannot be undone. When a user account is deleted:</p>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body">
+                                    <h5><i class="bi bi-exclamation-octagon me-2"></i> What Gets Deleted</h5>
+                                    <ul>
+                                        <li>User profile and personal information</li>
+                                        <li>Login credentials and access</li>
+                                        <li>Role assignments and permissions</li>
+                                        <li>Direct associations with the user account</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-warning">
+                                <div class="card-body">
+                                    <h5><i class="bi bi-exclamation-triangle me-2"></i> What Remains</h5>
+                                    <ul>
+                                        <li>Public discussions created by the user</li>
+                                        <li>Comments posted by the user</li>
+                                        <li>Content interactions (likes, etc.)</li>
+                                        <li>Anonymized activity logs</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-danger">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="bi bi-exclamation-triangle-fill display-6"></i>
+                            </div>
+                            <div>
+                                <h4>Important Warning</h4>
+                                <p class="mb-0">Always confirm with stakeholders before deleting business user accounts. Consider locking accounts instead of deleting them if there's any chance the account might be needed in the future.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Best Practices -->
+    <div class="row mb-4" id="best-practices">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">
+                        <i class="bi bi-check2-circle me-2"></i> Best Practices
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p>Follow these recommendations for effective user management:</p>
+
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <i class="bi bi-shield-check me-2"></i> Security
+                                </div>
+                                <div class="card-body">
+                                    <ul>
+                                        <li>Never share business user passwords over email</li>
+                                        <li>Use secure channels for credential sharing</li>
+                                        <li>Encourage users to change default passwords</li>
+                                        <li>Regularly review active admin accounts</li>
+                                        <li>Lock accounts before deletion to assess impact</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

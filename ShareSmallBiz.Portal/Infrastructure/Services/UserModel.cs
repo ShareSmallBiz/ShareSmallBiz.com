@@ -53,6 +53,15 @@ public class UserModel
     public IEnumerable<string> Roles { get; set; } = [];
     public bool IsLockedOut { get; set; }
     public bool IsEmailConfirmed { get; set; }
+    public DateTime LastModified { get; set; } = DateTime.Now;
+    [Display(Name = "Profile Picture")]
+    public IFormFile? ProfilePictureFile { get; set; }
+
+    [Display(Name = "Profile Picture Option")]
+    public string ProfilePictureOption { get; set; } = "keep"; // keep, upload, url, remove
+
+    public bool HasProfilePicture { get; set; }
+    public string? ProfilePicturePreview { get; set; }
     public UserModel() { }
     public UserModel(string id, string username, int postCount, int likeCount)
     {
@@ -78,6 +87,14 @@ public class UserModel
         ProfilePicture = author.ProfilePicture;
         PostCount = author.Posts?.Count ?? 0;
         LikeCount = author.LikedPosts?.Count ?? 0;
+        IsLockedOut = author.LockoutEnabled && (author.LockoutEnd == null || author.LockoutEnd > DateTime.Now);
+        IsEmailConfirmed = author.EmailConfirmed;
+        LastModified = author.LastModified != default ? author.LastModified : DateTime.Now;
+
+        if(string.IsNullOrEmpty(DisplayName))
+        {
+            DisplayName = UserName; // Fallback to username if display name is not set
+        }
 
         if (author.Posts != null)
         {
@@ -131,3 +148,12 @@ public class UserModel
     }
 
 }
+public class CreateBusinessUserModel : UserModel
+{
+    public string CompanyName { get; set; } = string.Empty;
+
+    [Display(Name = "Business Phone")]
+    public string? BusinessPhone { get; set; } = string.Empty;
+
+}
+

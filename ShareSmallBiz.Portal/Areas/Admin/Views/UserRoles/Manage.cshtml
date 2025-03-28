@@ -1,33 +1,173 @@
 ﻿@using ShareSmallBiz.Portal.Infrastructure.Models.ViewModels
 @model List<ManageUserRolesVM>
+@{
+    ViewData["Title"] = "Manage User Roles";
+}
 
-<form method="post" class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h2 class="h5 mb-0">Manage User Roles</h2>
-            <span class="text-muted">@ViewBag.UserName</span>
-        </div>
-        <div class="card-body">
-            @for (int i = 0; i < Model.Count; i++)
-            {
-                <div class="form-check form-switch my-2">
-                    <input type="hidden" asp-for="@Model[i].RoleId" />
-                    <input type="hidden" asp-for="@Model[i].RoleName" />
-                    <input asp-for="@Model[i].Selected" class="form-check-input" />
-                    <label class="form-check-label" asp-for="@Model[i].Selected">
-                        @Model[i].RoleName
-                    </label>
-                </div>
-            }
-            <div asp-validation-summary="All" class="text-danger"></div>
-        </div>
-        <div class="card-footer d-flex justify-content-between">
-            <button type="submit" class="btn btn-primary d-flex align-items-center">
-                <i class="bi bi-check-lg me-2"></i> Update
-            </button>
-            <a asp-action="Index" class="btn btn-secondary d-flex align-items-center">
-                <i class="bi bi-arrow-left me-2"></i> Cancel
+<div class="container-fluid py-4">
+    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Manage User Roles</h1>
+        <div>
+            <a asp-action="Edit" asp-route-userId="@ViewBag.userId" class="btn btn-secondary shadow-sm me-2">
+                <i class="fas fa-arrow-left fa-sm me-1"></i> Back to User
+            </a>
+            <a asp-action="Index" class="btn btn-primary shadow-sm">
+                <i class="fas fa-users fa-sm me-1"></i> All Users
             </a>
         </div>
     </div>
-</form>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-user-tag me-2"></i> Roles for @ViewBag.UserName
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-action="Manage">
+                        <input type="hidden" name="userId" value="@ViewBag.userId" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-3">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i> Assign roles to this user by selecting the checkboxes below.
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            @{
+                                var rolesInColumns = 3; // Number of columns to split roles into
+                                var rolesPerColumn = (int)Math.Ceiling(Model.Count / (double)rolesInColumns);
+                                var roleGroups = Model.Select((role, index) => new { role, index })
+                                .GroupBy(x => x.index / rolesPerColumn)
+                                .Select(g => g.Select(x => x.role));
+                            }
+
+                            @foreach (var group in roleGroups)
+                            {
+                                <div class="col-md-4">
+                                    @foreach (var role in group)
+                                    {
+                                        <div class="form-check mb-2">
+                                            <input type="hidden" name="@($"[{Model.IndexOf(role)}].RoleId")" value="@role.RoleId" />
+                                            <input type="hidden" name="@($"[{Model.IndexOf(role)}].RoleName")" value="@role.RoleName" />
+                                            <input class="form-check-input" type="checkbox" name="@($"[{Model.IndexOf(role)}].Selected")"
+                                                   value="true" id="role-@role.RoleId" @(role.Selected ? "checked" : "") />
+                                            <label class="form-check-label" for="role-@role.RoleId">
+                                                @role.RoleName
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="button" id="selectAllBtn" class="btn btn-outline-primary">
+                                <i class="fas fa-check-square me-1"></i> Select All
+                            </button>
+                            <button type="button" id="deselectAllBtn" class="btn btn-outline-secondary">
+                                <i class="fas fa-square me-1"></i> Deselect All
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle me-2"></i> Role Descriptions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Role</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-primary">Admin</span></td>
+                                    <td>Full access to all system functions, including user management, content moderation, and system settings.</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">Business</span></td>
+                                    <td>Access to business-specific features, including profile visibility, specialized content access, and verified business status.</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-info">User</span></td>
+                                    <td>Standard user privileges including posting discussions, commenting, and interacting with content.</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-warning">Pro</span></td>
+                                    <td>Premium user access with additional features like enhanced analytics, priority support, and premium content.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script>
+        $(document).ready(function() {
+            // Select All button functionality
+            $('#selectAllBtn').click(function() {
+                $('.form-check-input[type="checkbox"]').prop('checked', true);
+            });
+
+            // Deselect All button functionality
+            $('#deselectAllBtn').click(function() {
+                $('.form-check-input[type="checkbox"]').prop('checked', false);
+            });
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $(".alert").alert('close');
+            }, 5000);
+
+            // Add a confirmation when trying to remove all roles
+            $('form').submit(function(e) {
+                const checkedRoles = $('.form-check-input[type="checkbox"]:checked').length;
+
+                if (checkedRoles === 0) {
+                    if (!confirm('Warning: You are about to remove all roles from this user. This may limit their access to the system. Do you want to continue?')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        });
+    </script>
+}

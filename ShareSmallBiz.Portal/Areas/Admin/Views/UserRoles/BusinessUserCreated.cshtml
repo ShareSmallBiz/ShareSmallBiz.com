@@ -2,41 +2,107 @@
     ViewData["Title"] = "Business User Created";
 }
 
-<div class="container-fluid">
-    <div class="card">
-        <div class="card-header bg-success text-white">
-            <h3>Business User Created Successfully</h3>
+<div class="container-fluid py-4">
+    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Business User Created</h1>
+        <div>
+            <a asp-action="Index" class="btn btn-primary shadow-sm me-2">
+                <i class="fas fa-users fa-sm me-1"></i> Back to Users
+            </a>
+            <a asp-action="CreateBusinessUser" class="btn btn-success shadow-sm">
+                <i class="fas fa-user-plus fa-sm me-1"></i> Create Another
+            </a>
         </div>
-        <div class="card-body">
-            <div class="alert alert-warning">
-                <strong>Important!</strong> Please save this information securely. The password will not be shown again.
-            </div>
+    </div>
 
-            <div class="mb-4">
-                <h5>User Details:</h5>
-                <dl class="row">
-                    <dt class="col-sm-3">Email:</dt>
-                    <dd class="col-sm-9">@ViewBag.Email</dd>
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Success Card -->
+            <div class="card shadow border-left-success mb-4">
+                <div class="card-header py-3 bg-success text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-check-circle me-2"></i> User Successfully Created
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center mb-3"
+                             style="width: 80px; height: 80px;">
+                            <i class="fas fa-user-check fa-3x"></i>
+                        </div>
+                        <h4 class="mb-0">Business User Created Successfully!</h4>
+                        <p class="text-muted">The user has been registered and assigned the "Business" role.</p>
+                    </div>
 
-                    <dt class="col-sm-3">Generated Password:</dt>
-                    <dd class="col-sm-9">
-                        <code>@ViewBag.Password</code>
-                        <button class="btn btn-sm btn-outline-secondary ms-2"
-                                onclick="copyToClipboard('@ViewBag.Password')">
-                            Copy
-                        </button>
-                    </dd>
-                </dl>
-            </div>
+                    <div class="alert alert-warning">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                            <div>
+                                <strong>Important!</strong> Please save this information securely.
+                                The password will not be shown again. Share it with the business user using a secure method.
+                            </div>
+                        </div>
+                    </div>
 
-            <div class="mb-3">
-                <p>The user has been assigned the <strong>Business</strong> role and their email is already confirmed.</p>
-                <p>They can use these credentials to log in immediately.</p>
-            </div>
+                    <div class="card mb-4">
+                        <div class="card-header py-3 bg-light">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-key me-2"></i> Login Credentials
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-sm-4 text-sm-end">
+                                    <strong>Email:</strong>
+                                </div>
+                                <div class="col-sm-8">
+                                    <span class="text-primary">@ViewBag.Email</span>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2"
+                                            onclick="copyToClipboard('@ViewBag.Email')" title="Copy to clipboard">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4 text-sm-end">
+                                    <strong>Generated Password:</strong>
+                                </div>
+                                <div class="col-sm-8">
+                                    <code class="bg-light px-2 py-1 rounded">@ViewBag.Password</code>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2"
+                                            onclick="copyToClipboard('@ViewBag.Password')" title="Copy to clipboard">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-            <div>
-                <a asp-action="Index" class="btn btn-primary">Back to User List</a>
-                <a asp-action="CreateBusinessUser" class="btn btn-outline-primary">Create Another Business User</a>
+                    <div class="card mb-3">
+                        <div class="card-header py-3 bg-light">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-info-circle me-2"></i> Next Steps
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ol class="mb-0">
+                                <li class="mb-2">Share the login credentials with the user securely.</li>
+                                <li class="mb-2">Advise the user to change their password after first login.</li>
+                                <li class="mb-2">Encourage them to complete their profile details.</li>
+                                <li>Remind them that their account is already verified and ready to use.</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a asp-action="Index" class="btn btn-primary me-2">
+                            <i class="fas fa-users me-1"></i> View All Users
+                        </a>
+                        <a asp-action="CreateBusinessUser" class="btn btn-success">
+                            <i class="fas fa-user-plus me-1"></i> Create Another User
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -45,11 +111,40 @@
 @section Scripts {
     <script>
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(function() {
-                alert('Password copied to clipboard!');
-            }, function() {
-                alert('Failed to copy password.');
-            });
+            // Create temporary input
+            const tempInput = document.createElement('input');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+
+            // Select and copy
+            tempInput.select();
+            document.execCommand('copy');
+
+            // Remove temporary input
+            document.body.removeChild(tempInput);
+
+            // Show feedback
+            const successToast = document.createElement('div');
+            successToast.className = 'position-fixed bottom-0 end-0 p-3';
+            successToast.style.zIndex = '5';
+            successToast.innerHTML = `
+                <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header bg-success text-white">
+                        <strong class="me-auto"><i class="fas fa-check-circle"></i> Success</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        Copied to clipboard!
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(successToast);
+
+            // Remove toast after 3 seconds
+            setTimeout(() => {
+                successToast.remove();
+            }, 3000);
         }
     </script>
 }

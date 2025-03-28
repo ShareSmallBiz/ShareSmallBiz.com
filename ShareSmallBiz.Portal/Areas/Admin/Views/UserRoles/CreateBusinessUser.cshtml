@@ -1,82 +1,141 @@
-﻿@using ShareSmallBiz.Portal.Areas.Admin.Controllers
-@model CreateBusinessUserModel
+﻿@model CreateBusinessUserModel
 @{
     ViewData["Title"] = "Create Business User";
 }
 
-<div class="container-fluid">
-    <div class="card">
-        <div class="card-header">
-            <h3>Create Business User</h3>
-            <p class="text-muted">This will create a new user and automatically assign them the Business role.</p>
+<div class="container-fluid py-4">
+    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Create Business User</h1>
+        <div>
+            <a asp-action="Index" class="btn btn-secondary shadow-sm">
+                <i class="fas fa-arrow-left fa-sm me-1"></i> Back to Users
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-user-plus me-2"></i> New Business User
+            </h6>
+            <span class="badge bg-info">Auto-verified</span>
         </div>
         <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> Business users have special privileges on the platform. They receive automatic email verification and are assigned the "Business" role.
+            </div>
+
             <form asp-action="CreateBusinessUser" method="post" enctype="multipart/form-data">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
                 <div class="row">
-                    <div class="col-md-6">
-                        <h4 class="mb-3">Basic Information</h4>
+                    <div class="col-lg-8">
+                        <!-- Basic Information Section -->
+                        <h5 class="border-bottom pb-2 mb-3">Account Information</h5>
 
-                        <div class="form-group mb-3">
-                            <label asp-for="Email" class="control-label"></label>
-                            <input asp-for="Email" class="form-control" />
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <input asp-for="Email" class="form-control" required />
                             <span asp-validation-for="Email" class="text-danger"></span>
+                            <div class="form-text">This will be used as the login username.</div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label asp-for="FirstName" class="control-label"></label>
-                            <input asp-for="FirstName" class="form-control" />
-                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstName" class="form-label">First Name</label>
+                                <input asp-for="FirstName" class="form-control" />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input asp-for="LastName" class="form-control" required />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label asp-for="LastName" class="control-label"></label>
-                            <input asp-for="LastName" class="form-control" />
-                            <span asp-validation-for="LastName" class="text-danger"></span>
-                        </div>
+                        <!-- Business Information Section -->
+                        <h5 class="border-bottom pb-2 mb-3 mt-4">Business Information</h5>
 
-                        <div class="form-group mb-3">
-                            <label asp-for="ProfilePicture" class="control-label"></label>
-                            <input asp-for="ProfilePicture" type="file" class="form-control" accept="image/*" />
-                            <small class="form-text text-muted">Maximum file size: 2MB. Recommended dimensions: 250x250 pixels.</small>
-                            <span asp-validation-for="ProfilePicture" class="text-danger"></span>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <h4 class="mb-3">Business Information</h4>
-
-                        <div class="form-group mb-3">
-                            <label asp-for="CompanyName" class="control-label"></label>
+                        <div class="mb-3">
+                            <label asp-for="CompanyName" class="form-label">Company Name</label>
                             <input asp-for="CompanyName" class="form-control" />
                             <span asp-validation-for="CompanyName" class="text-danger"></span>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label asp-for="BusinessPhone" class="control-label"></label>
-                            <input asp-for="BusinessPhone" class="form-control" />
-                            <span asp-validation-for="BusinessPhone" class="text-danger"></span>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="BusinessPhone" class="form-label">Business Phone</label>
+                                <input asp-for="BusinessPhone" class="form-control" />
+                                <span asp-validation-for="BusinessPhone" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="WebsiteUrl" class="form-label">Website URL</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">https://</span>
+                                    <input asp-for="WebsiteUrl" class="form-control" placeholder="example.com" />
+                                </div>
+                                <span asp-validation-for="WebsiteUrl" class="text-danger"></span>
+                            </div>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label asp-for="WebsiteUrl" class="control-label"></label>
-                            <input asp-for="WebsiteUrl" class="form-control" placeholder="https://" />
-                            <span asp-validation-for="WebsiteUrl" class="text-danger"></span>
+                        <div class="mb-3">
+                            <label asp-for="Bio" class="form-label">Biography / Description</label>
+                            <textarea asp-for="Bio" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="Bio" class="text-danger"></span>
+                            <div class="form-text">A brief description of the business that will appear on their profile.</div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <!-- Profile Picture Section -->
+                        <div class="card mb-4">
+                            <div class="card-header py-3">
+                                <h6 class="m-0 font-weight-bold text-primary">Profile Picture</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center mb-3">
+                                    <div class="rounded-circle bg-light border d-inline-flex align-items-center justify-content-center mb-3"
+                                         style="width: 150px; height: 150px;" id="imagePreviewContainer">
+                                        <i class="fas fa-user fa-4x text-secondary" id="userIcon"></i>
+                                        <img id="imagePreview" class="rounded-circle" style="display: none; width: 100%; height: 100%; object-fit: cover;" />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="ProfilePictureFile" class="form-label">Upload Profile Picture</label>
+                                    <input asp-for="ProfilePictureFile" type="file" class="form-control" accept="image/*" />
+                                    <div class="form-text">Maximum size: 2MB. Image will be resized to 250x250px.</div>
+                                    <span asp-validation-for="ProfilePictureFile" class="text-danger"></span>
+                                </div>
+
+                                <button type="button" id="removeImageBtn" class="btn btn-sm btn-outline-secondary d-none">
+                                    <i class="fas fa-times me-1"></i> Remove Image
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Account Security Notice -->
+                        <div class="card mb-4">
+                            <div class="card-header py-3 bg-warning-subtle">
+                                <h6 class="m-0 font-weight-bold text-warning">
+                                    <i class="fas fa-shield-alt me-2"></i> Account Security
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <p>A secure random password will be generated for this user.</p>
+                                <p>You will see this password only once after user creation. Make sure to save it or share it securely with the business user.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="form-group mb-3">
-                    <label asp-for="Bio" class="control-label"></label>
-                    <textarea asp-for="Bio" class="form-control" rows="4"></textarea>
-                    <span asp-validation-for="Bio" class="text-danger"></span>
-                    <small class="form-text text-muted">Brief description about the business or the user that will be displayed on their profile.</small>
-                </div>
-
-                <div class="form-group mt-4">
-                    <input type="submit" value="Create Business User" class="btn btn-primary" />
-                    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                <div class="d-flex justify-content-between mt-4 border-top pt-3">
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-user-plus me-1"></i> Create Business User
+                    </button>
                 </div>
             </form>
         </div>
@@ -84,33 +143,38 @@
 </div>
 
 @section Scripts {
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    <partial name="_ValidationScriptsPartial" />
 
     <script>
-        // Preview image before upload
-        $(document).ready(function() {
-            $("#ProfilePicture").change(function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle image preview
+            const profilePictureInput = document.getElementById('ProfilePictureFile');
+            const imagePreview = document.getElementById('imagePreview');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            const userIcon = document.getElementById('userIcon');
+            const removeImageBtn = document.getElementById('removeImageBtn');
+
+            profilePictureInput.addEventListener('change', function() {
                 if (this.files && this.files[0]) {
-                    var reader = new FileReader();
+                    const reader = new FileReader();
+
                     reader.onload = function(e) {
-                        if ($('#imagePreview').length === 0) {
-                            $('<div id="imagePreviewContainer" class="mt-2 mb-3">' +
-                              '<img id="imagePreview" src="' + e.target.result + '" class="img-thumbnail" style="max-height: 150px;" />' +
-                              '<button type="button" id="removeImage" class="btn btn-sm btn-outline-danger mt-1">Remove</button>' +
-                              '</div>').insertAfter("#ProfilePicture");
-                        } else {
-                            $('#imagePreview').attr('src', e.target.result);
-                            $('#imagePreviewContainer').show();
-                        }
-                    }
+                        imagePreview.setAttribute('src', e.target.result);
+                        imagePreview.style.display = 'block';
+                        userIcon.style.display = 'none';
+                        removeImageBtn.classList.remove('d-none');
+                    };
+
                     reader.readAsDataURL(this.files[0]);
                 }
             });
 
-            // Remove image preview
-            $(document).on('click', '#removeImage', function() {
-                $('#imagePreviewContainer').hide();
-                $('#ProfilePicture').val('');
+            // Handle remove image button
+            removeImageBtn.addEventListener('click', function() {
+                profilePictureInput.value = '';
+                imagePreview.style.display = 'none';
+                userIcon.style.display = 'block';
+                removeImageBtn.classList.add('d-none');
             });
         });
     </script>
