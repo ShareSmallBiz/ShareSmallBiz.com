@@ -1,4 +1,5 @@
-﻿@model List<DiscussionModel>
+﻿@using ShareSmallBiz.Portal.Infrastructure.Models
+@model List<DiscussionModel>
 @{
     var user = User.Identity;
     var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;

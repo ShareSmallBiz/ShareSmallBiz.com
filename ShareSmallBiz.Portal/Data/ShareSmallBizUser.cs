@@ -49,7 +49,7 @@ public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUs
     public string? Bio { get; set; } = string.Empty;
 
     public byte[]? ProfilePicture { get; set; }
-    public string ProfilePictureUrl { get; set; } = string.Empty;
+    public string? ProfilePictureUrl { get; set; }
 
     // ---- SEO & PUBLIC PROFILE ----
     public string? Slug { get; set; } = string.Empty;

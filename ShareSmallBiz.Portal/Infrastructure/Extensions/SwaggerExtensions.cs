@@ -1,4 +1,6 @@
 ﻿using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Reflection;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Extensions
 {
@@ -20,6 +22,15 @@ namespace ShareSmallBiz.Portal.Infrastructure.Extensions
                         Email = "support@sharesmallbiz.com",
                         Url = new Uri("https://sharesmallbiz.com/")
                     }
+                });
+
+                // Only include routes that start with /api/
+                options.DocInclusionPredicate((docName, apiDesc) =>
+                {
+                    if (apiDesc.RelativePath == null)
+                        return false;
+
+                    return apiDesc.RelativePath.StartsWith("api/", StringComparison.OrdinalIgnoreCase);
                 });
 
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";

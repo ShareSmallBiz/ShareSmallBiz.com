@@ -5,7 +5,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
 using global::ShareSmallBiz.Portal.Areas.Forum.Controllers;
 using global::ShareSmallBiz.Portal.Infrastructure.Services;
 using ShareSmallBiz.Portal.Data;
-using ShareSmallBiz.Portal.Infrastructure.Services;
+using ShareSmallBiz.Portal.Infrastructure.Models;
 using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;

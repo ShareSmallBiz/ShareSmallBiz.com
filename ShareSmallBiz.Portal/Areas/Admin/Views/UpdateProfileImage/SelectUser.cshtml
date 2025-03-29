@@ -1,0 +1,207 @@
+﻿@model ProfileImageUpdateModel
+@{
+    ViewData["Title"] = "Update Profile Image";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Update Profile Image</h1>
+        <div>
+            <a asp-action="Index" class="btn btn-secondary shadow-sm me-2">
+                <i class="fas fa-users fa-sm me-1"></i> Select Another User
+            </a>
+            <a asp-area="Admin" asp-controller="UserRoles" asp-action="Index" class="btn btn-primary shadow-sm">
+                <i class="fas fa-arrow-left fa-sm me-1"></i> Back to Users
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle me-2"></i> @TempData["InfoMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Update Profile Image for @Model.DisplayName</h6>
+                </div>
+                <div class="card-body">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            <h6>Current Profile Image</h6>
+                            @if (Model.HasProfilePicture)
+                            {
+                                <img src="@Model.ProfilePicturePreview" alt="Current Profile" class="img-thumbnail rounded-circle"
+                                     style="width: 150px; height: 150px; object-fit: cover;" />
+                                <div class="mt-2 small text-muted">
+                                    <strong>Type:</strong> @(Model.CurrentProfileImageType == "stored" ? "Stored Image" : "URL")
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto"
+                                     style="width: 150px; height: 150px; font-size: 48px;">
+                                    @(Model.DisplayName?.Substring(0, 1))
+                                </div>
+                                <div class="mt-2 small text-muted">
+                                    <strong>No profile image</strong>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="col-md-8">
+                            <h6>User Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th style="width: 150px;">Name:</th>
+                                    <td>@Model.DisplayName</td>
+                                </tr>
+                                <tr>
+                                    <th>Username:</th>
+                                    <td>@Model.UserName</td>
+                                </tr>
+                                <tr>
+                                    <th>Email:</th>
+                                    <td>@Model.Email</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <form asp-action="UpdateImage" method="post" enctype="multipart/form-data">
+                        <input type="hidden" asp-for="UserId" />
+                        <input type="hidden" asp-for="UserName" />
+                        <input type="hidden" asp-for="DisplayName" />
+                        <input type="hidden" asp-for="Email" />
+                        <input type="hidden" asp-for="HasProfilePicture" />
+                        <input type="hidden" asp-for="CurrentProfileImageType" />
+                        <input type="hidden" asp-for="ProfilePicturePreview" />
+
+                        <h5 class="mb-3">Profile Image Options</h5>
+
+                        <div class="mb-3">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="ProfilePictureOption" id="keepCurrentOption"
+                                       value="keep" checked="checked" />
+                                <label class="form-check-label" for="keepCurrentOption">
+                                    Keep current @(Model.HasProfilePicture ? "image" : "default image")
+                                </label>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="ProfilePictureOption" id="uploadOption"
+                                       value="upload" />
+                                <label class="form-check-label" for="uploadOption">
+                                    Upload new image
+                                </label>
+                            </div>
+                            <div class="ms-4 mb-3 collapse" id="uploadSection">
+                                <input asp-for="ProfilePictureFile" type="file" class="form-control" accept="image/*" />
+                                <div class="form-text">Maximum size: 2MB. Image will be optimized to 250x250px.</div>
+                                <div id="uploadPreview" class="mt-2 d-none text-center">
+                                    <img id="previewImage" src="#" alt="Upload Preview" class="img-thumbnail rounded-circle"
+                                         style="width: 100px; height: 100px; object-fit: cover;" />
+                                </div>
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="ProfilePictureOption" id="urlOption"
+                                       value="url" />
+                                <label class="form-check-label" for="urlOption">
+                                    Use image URL
+                                </label>
+                            </div>
+                            <div class="ms-4 mb-3 collapse" id="urlSection">
+                                <input asp-for="ProfilePictureUrl" class="form-control" placeholder="https://example.com/image.jpg" />
+                                <div class="form-text">Enter a direct URL to an image file.</div>
+                                <div id="urlPreview" class="mt-2 d-none text-center">
+                                    <img id="urlPreviewImage" src="#" alt="URL Preview" class="img-thumbnail rounded-circle"
+                                         style="width: 100px; height: 100px; object-fit: cover;" />
+                                </div>
+                            </div>
+
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="ProfilePictureOption" id="removeOption"
+                                       value="remove" />
+                                <label class="form-check-label" for="removeOption">
+                                    Remove profile image (use default)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i> Update Profile Image
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary ms-2">
+                                <i class="fas fa-times me-1"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle profile picture option selection
+            $('input[name="ProfilePictureOption"]').change(function() {
+                const selectedOption = $(this).val();
+
+                // Hide all collapsible sections
+                $("#uploadSection, #urlSection").collapse('hide');
+
+                // Show the relevant section based on selection
+                if (selectedOption === "upload") {
+                    $("#uploadSection").collapse('show');
+                } else if (selectedOption === "url") {
+                    $("#urlSection").collapse('show');
+                }
+            });
+
+            // Handle file selection preview
+            $("#ProfilePictureFile").change(function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+
+                    reader.onload = function(e) {
+                        $("#previewImage").attr('src', e.target.result);
+                        $("#uploadPreview").removeClass('d-none');
+                    }
+
+                    reader.readAsDataURL(this.files[0]);
+                } else {
+                    $("#uploadPreview").addClass('d-none');
+                }
+            });
+
+            // Handle URL input preview
+            $("#ProfilePictureUrl").on('input', function() {
+                const url = $(this).val();
+                if (url) {
+                    $("#urlPreviewImage").attr('src', url);
+                    $("#urlPreview").removeClass('d-none');
+                } else {
+                    $("#urlPreview").addClass('d-none');
+                }
+            });
+
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $(".alert").alert('close');
+            }, 5000);
+        });
+    </script>
+}

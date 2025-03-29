@@ -1,0 +1,107 @@
+﻿@{
+    ViewData["Title"] = "Upload Profile Image";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Fix Profile Image</h1>
+        <a asp-action="Index" class="btn btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm me-1"></i> Back to User Selection
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Upload Profile Image for @ViewBag.DisplayName</h6>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-4 text-center">
+                    <h6>Current Profile Image</h6>
+                    @if (ViewBag.HasProfilePicture)
+                    {
+                        <img src="@ViewBag.ProfilePicturePreview" alt="Current Profile" class="img-thumbnail rounded-circle"
+                             style="width: 150px; height: 150px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto"
+                             style="width: 150px; height: 150px; font-size: 48px;">
+                            @(ViewBag.DisplayName?.Substring(0, 1))
+                        </div>
+                        <div class="mt-2 small text-muted">
+                            <strong>No profile image</strong>
+                        </div>
+                    }
+                </div>
+
+                <div class="col-md-8">
+                    <form asp-action="ProcessUpload" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="userId" value="@ViewBag.UserId" />
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i> This is a simplified image updater that bypasses the normal update path.
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="imageFile" class="form-label">Select Profile Image</label>
+                            <input type="file" class="form-control" id="imageFile" name="imageFile" accept="image/*" required>
+                            <div class="form-text">Select a JPG, PNG, or GIF image (max 10MB)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div id="imagePreview" class="text-center d-none">
+                                <label class="form-label">Image Preview:</label>
+                                <div class="mb-2">
+                                    <img id="preview" src="#" alt="Image Preview" class="img-thumbnail rounded-circle"
+                                         style="width: 150px; height: 150px; object-fit: cover;">
+                                </div>
+                                <div class="small text-muted">
+                                    The image will be resized to 250px and optimized for storage.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-upload me-1"></i> Upload and Save
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary ms-2">
+                                <i class="fas fa-times me-1"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Display image preview when file is selected
+        document.getElementById('imageFile').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) {
+                document.getElementById('imagePreview').classList.add('d-none');
+                return;
+            }
+
+            // Show image preview
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview').src = e.target.result;
+                document.getElementById('imagePreview').classList.remove('d-none');
+            }
+            reader.readAsDataURL(file);
+        });
+    </script>
+}

@@ -44,6 +44,7 @@ public class YouTubeController(
         return returnModel;
     }
 
+    [HttpGet]
     public async Task<IActionResult> Index(string channelId = DefaultChannelId, int maxResults = 20)
     {
         return View("Index", await GetVideoDetailsViewModel(channelId, maxResults));

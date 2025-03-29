@@ -1,6 +1,6 @@
 ﻿using ShareSmallBiz.Portal.Data;
 
-namespace ShareSmallBiz.Portal.Infrastructure.Services;
+namespace ShareSmallBiz.Portal.Infrastructure.Models;
 
 public class PostCommentModel : BaseModel
 {

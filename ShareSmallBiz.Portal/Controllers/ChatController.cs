@@ -18,6 +18,7 @@ public class ChatController : Controller
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.userProvider = userProvider ?? throw new ArgumentNullException(nameof(userProvider));
     }
+    [HttpGet("")]
     public async Task<IActionResult> Index()
     {
         // Get the UserModel for the current user

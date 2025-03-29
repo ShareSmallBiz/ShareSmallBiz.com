@@ -1,4 +1,4 @@
-﻿namespace ShareSmallBiz.Portal.Infrastructure.Services
+﻿namespace ShareSmallBiz.Portal.Infrastructure.Models
 {
     public abstract class BaseModel
     {

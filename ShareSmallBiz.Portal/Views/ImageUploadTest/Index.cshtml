@@ -1,0 +1,110 @@
+﻿@{
+    ViewData["Title"] = "Image Upload Test";
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Image Upload Test</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Purpose:</strong> This page tests the basic image upload functionality with extensive logging
+                        to diagnose upload issues.
+                    </div>
+
+                    <form asp-action="UploadImage" method="post" enctype="multipart/form-data" id="uploadForm">
+                        <div class="mb-3">
+                            <label for="imageFile" class="form-label">Select Image File</label>
+                            <input type="file" class="form-control" id="imageFile" name="imageFile" accept="image/*" required>
+                            <div class="form-text">Select a JPG, PNG, or GIF image (max 10MB)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div id="imagePreview" class="mt-3 text-center d-none">
+                                <p><strong>Preview:</strong></p>
+                                <img id="preview" src="#" alt="Image Preview" class="img-fluid img-thumbnail" style="max-height: 300px;">
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Upload Image</button>
+                        </div>
+                    </form>
+
+                    <div class="mt-4">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Browser Upload Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="uploadInfo">
+                                    <p>No upload in progress</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Display image preview when file is selected
+        document.getElementById('imageFile').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) {
+                document.getElementById('imagePreview').classList.add('d-none');
+                return;
+            }
+
+            // Display file information
+            var uploadInfo = document.getElementById('uploadInfo');
+            uploadInfo.innerHTML = `
+                <table class="table table-sm">
+                    <tr>
+                        <th>File Name:</th>
+                        <td>${file.name}</td>
+                    </tr>
+                    <tr>
+                        <th>File Size:</th>
+                        <td>${(file.size / 1024).toFixed(2)} KB</td>
+                    </tr>
+                    <tr>
+                        <th>File Type:</th>
+                        <td>${file.type}</td>
+                    </tr>
+                    <tr>
+                        <th>Last Modified:</th>
+                        <td>${new Date(file.lastModified).toLocaleString()}</td>
+                    </tr>
+                </table>
+            `;
+
+            // Show image preview
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview').src = e.target.result;
+                document.getElementById('imagePreview').classList.remove('d-none');
+            }
+            reader.readAsDataURL(file);
+        });
+
+        // Track form submission
+        document.getElementById('uploadForm').addEventListener('submit', function() {
+            var uploadInfo = document.getElementById('uploadInfo');
+            uploadInfo.innerHTML = `
+                <div class="alert alert-info">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <div>Upload in progress...</div>
+                    </div>
+                </div>
+            `;
+        });
+    </script>
+}

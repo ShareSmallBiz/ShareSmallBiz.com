@@ -1,6 +1,6 @@
 ﻿using ShareSmallBiz.Portal.Data;
 
-namespace ShareSmallBiz.Portal.Infrastructure.Services;
+namespace ShareSmallBiz.Portal.Infrastructure.Models;
 
 public  class DiscussionListModel : List<DiscussionModel>
 {
@@ -39,6 +39,7 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
         ModifiedDate = post.ModifiedDate;
         CreatedID = post.AuthorId;
         Comments = post.Comments?.Select(comment => new PostCommentModel(comment)).ToList() ?? new List<PostCommentModel>();
+        Likes = post.Likes?.Select(like => new PostLikeModel(like)).ToList() ?? new List<PostLikeModel>();
         Author = new UserModel(post.Author);
         Target = post.Target is null ? null : new UserModel(post.Target);
         TargetId = post.TargetId;
@@ -64,6 +65,7 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
 
     public UserModel Author { get; set; } = new();
     public List<PostCommentModel> Comments { get; set; } = [];
+    public List<PostLikeModel> Likes { get; set; } = [];
     public string Content { get; set; } = string.Empty;
     public string Cover { get; set; } = "https://sharesmallbiz.com/";
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;

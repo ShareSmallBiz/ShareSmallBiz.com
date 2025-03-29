@@ -1,0 +1,73 @@
+﻿@{
+    ViewData["Title"] = "Update Profile Image";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Update Profile Image</h1>
+        <div>
+            <a asp-area="Admin" asp-controller="UserRoles" asp-action="Index" class="btn btn-secondary shadow-sm">
+                <i class="fas fa-arrow-left fa-sm me-1"></i> Back to Users
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Select User</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-lg-6 mx-auto">
+                    <form asp-action="SelectUser" method="get">
+                        <div class="mb-3">
+                            <label for="userId" class="form-label">Select User to Update Profile Image</label>
+                            <select id="userId" name="userId" class="form-select" required>
+                                <option value="">-- Select a User --</option>
+                                @foreach (var user in ViewBag.Users)
+                                {
+                                    <option value="@user.Value">@user.Text</option>
+                                }
+                            </select>
+                            <div class="form-text">
+                                Choose a user from the list to view and update their profile image.
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> Select User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Auto-hide alerts after 5 seconds
+            setTimeout(function() {
+                $(".alert").alert('close');
+            }, 5000);
+
+            // Enhanced select with search
+            $('#userId').select2({
+                theme: 'bootstrap4',
+                placeholder: 'Select a user',
+                allowClear: true
+            });
+        });
+    </script>
+}
