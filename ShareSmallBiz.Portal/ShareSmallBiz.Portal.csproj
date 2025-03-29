@@ -48,7 +48,6 @@
 		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0" />
 		<PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
 		<PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="8.0.0" />
 		<PackageReference Include="System.Drawing.Common" Version="9.0.3" />
 		<PackageReference Include="System.Formats.Asn1" Version="9.0.3" />
@@ -56,5 +55,11 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\HttpClientUtility\HttpClientUtility.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Areas\Media\Data\" />
+	  <Folder Include="Areas\Media\Models\" />
+	  <Folder Include="Areas\Media\Views\Media\" />
+	  <Folder Include="Areas\Media\Views\Shared\" />
 	</ItemGroup>
 </Project>

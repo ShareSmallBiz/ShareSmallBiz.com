@@ -1,0 +1,133 @@
+﻿@model LibraryMediaViewModel
+@{
+    ViewData["Title"] = "Edit Media";
+}
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Media Library</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit Media</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-pencil-square me-2"></i>
+                Edit Media
+            </h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="StorageProvider" />
+                <input type="hidden" asp-for="Url" />
+
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            @if ((MediaType)Model.MediaType == MediaType.Image)
+                            {
+                                <img src="/Media/Thumbnail/@Model.Id" class="img-fluid rounded mb-2" alt="@Model.FileName" />
+                            }
+                            else
+                            {
+                                <i class="bi @GetMediaTypeIcon((MediaType)Model.MediaType) display-1 text-primary mb-2"></i>
+                            }
+                            <p class="badge bg-secondary d-block">@((StorageProviderNames)Model.StorageProvider)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label asp-for="FileName" class="form-label"></label>
+                            <input asp-for="FileName" class="form-control" />
+                            <span asp-validation-for="FileName" class="text-danger"></span>
+                        </div>
+
+                        @if (Model.IsExternalLink)
+                        {
+                            <div class="mb-3">
+                                <label asp-for="ExternalUrl" class="form-label">URL</label>
+                                <input asp-for="ExternalUrl" class="form-control" value="@Model.Url" />
+                                <span asp-validation-for="ExternalUrl" class="text-danger"></span>
+                            </div>
+
+                            @if (Model.IsYouTube)
+                            {
+                                <input type="hidden" asp-for="IsYouTube" value="true" />
+                                <input type="hidden" asp-for="MediaType" value="1" /> <!-- Keep as Video type -->
+                                <div class="mb-3">
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        This is a YouTube video. The media type is locked to Video.
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="mb-3">
+                                    <label asp-for="MediaType" class="form-label"></label>
+                                    <select asp-for="MediaType" asp-items="Model.MediaTypes" class="form-select"></select>
+                                    <span asp-validation-for="MediaType" class="text-danger"></span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="mb-3">
+                                <label asp-for="MediaType" class="form-label"></label>
+                                <select asp-for="MediaType" asp-items="Model.MediaTypes" class="form-select"></select>
+                                <span asp-validation-for="MediaType" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    To replace this file, please delete it and upload a new one.
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Attribution" class="form-label"></label>
+                    <input asp-for="Attribution" class="form-control" />
+                    <div class="form-text">Credit the original creator if using external content</div>
+                    <span asp-validation-for="Attribution" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@functions {
+    public string GetMediaTypeIcon(MediaType mediaType)
+    {
+        return mediaType switch
+        {
+            MediaType.Image => "bi-file-image",
+            MediaType.Video => "bi-film",
+            MediaType.Audio => "bi-file-earmark-music",
+            MediaType.Document => "bi-file-earmark-text",
+            _ => "bi-file-earmark"
+        };
+    }
+}

@@ -4,9 +4,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Formats.Jpeg;
 
 namespace ShareSmallBiz.Portal.Controllers
 {
@@ -68,11 +65,7 @@ namespace ShareSmallBiz.Portal.Controllers
 
                 // Process image with ImageSharp
                 _logger.LogInformation("Starting ImageSharp processing");
-                byte[] originalImageBytes = memoryStream.ToArray();
-                byte[] processedImageBytes = await OptimizeImageWithImageSharp(originalImageBytes);
-
-                _logger.LogInformation("Image processing complete. Original size: {OriginalSize} bytes, Processed size: {ProcessedSize} bytes",
-                    originalImageBytes.Length, processedImageBytes.Length);
+                byte[] processedImageBytes = memoryStream.ToArray();
 
                 // Convert to base64 for display
                 var base64Data = Convert.ToBase64String(processedImageBytes);
@@ -102,66 +95,5 @@ namespace ShareSmallBiz.Portal.Controllers
             return View();
         }
 
-        /// <summary>
-        /// Optimizes an image using ImageSharp - resizes and compresses
-        /// </summary>
-        private async Task<byte[]> OptimizeImageWithImageSharp(byte[] originalImage)
-        {
-            _logger.LogInformation("Beginning ImageSharp optimization of {Size} byte image", originalImage.Length);
-
-            try
-            {
-                using var inputStream = new MemoryStream(originalImage);
-                using var outputStream = new MemoryStream();
-
-                _logger.LogDebug("Loading image with ImageSharp");
-                using var image = await Image.LoadAsync(inputStream);
-
-                _logger.LogInformation("Original image dimensions: {Width}x{Height}", image.Width, image.Height);
-
-                // Calculate new dimensions while preserving aspect ratio
-                const int maxSize = 250; // Maximum dimension (width or height)
-                int width, height;
-
-                if (image.Width > image.Height)
-                {
-                    width = maxSize;
-                    height = (int)(image.Height * ((float)maxSize / image.Width));
-                }
-                else
-                {
-                    height = maxSize;
-                    width = (int)(image.Width * ((float)maxSize / image.Height));
-                }
-
-                _logger.LogInformation("Calculated new dimensions: {Width}x{Height}", width, height);
-
-                // Resize the image
-                _logger.LogDebug("Resizing image");
-                image.Mutate(x => x.Resize(new ResizeOptions
-                {
-                    Size = new Size(width, height),
-                    Mode = ResizeMode.Max
-                }));
-
-                _logger.LogDebug("Saving image as JPEG with 80% quality");
-                // Save as JPEG with quality setting
-                await image.SaveAsJpegAsync(outputStream, new JpegEncoder
-                {
-                    Quality = 80
-                });
-
-                var result = outputStream.ToArray();
-                _logger.LogInformation("Image optimization complete. Result size: {Size} bytes", result.Length);
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in ImageSharp processing");
-                // Return original if processing fails
-                return originalImage;
-            }
-        }
     }
 }

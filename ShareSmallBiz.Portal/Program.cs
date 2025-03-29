@@ -1,11 +1,10 @@
-﻿using ShareSmallBiz.Portal.Infrastructure.Extensions;
+﻿using ShareSmallBiz.Portal.Areas.Media;
+using ShareSmallBiz.Portal.Infrastructure.Extensions;
 using ShareSmallBiz.Portal.Infrastructure.Logging;
 using ShareSmallBiz.Portal.Infrastructure.Middleware;
-using ShareSmallBiz.Portal.Infrastructure.Services;
-using System.Configuration;
 using System.Text.Json;
 
-
+// Rest of the code remains unchanged
 var builder = WebApplication.CreateBuilder(args);
 
 // ========================
@@ -74,6 +73,13 @@ builder.Services.AddSingleton(new JsonSerializerOptions
 });
 builder.Services.AddHttpContextAccessor();
 
+// ========================
+// Media Area Services
+// ========================
+builder.Services.AddMediaServices(builder.Configuration);
+
+
+
 var app = builder.Build();
 app.UseGlobalExceptionHandling();
 
@@ -127,14 +133,22 @@ app.Use(async (context, next) =>
 // Route Configuration
 // ========================
 app.MapRazorPages();
+app.MapMediaEndpoints();
+app.MapControllerRoute(
+    name: "media",
+    pattern: "Media/{id?}",
+    defaults: new { controller = "Media", action = "Index" });
+
 app.MapControllerRoute(
     name: "areaRoute",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}"
 );
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}"
 );
+
 
 app.MapFallbackToController("GetError", "Home");
 app.MapControllerRoute(

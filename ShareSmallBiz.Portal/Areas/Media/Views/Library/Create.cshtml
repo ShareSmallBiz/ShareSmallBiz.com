@@ -1,0 +1,173 @@
+﻿@model LibraryMediaViewModel
+@{
+    ViewData["Title"] = "Add Media";
+}
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Media Library</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Add Media</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-plus-circle me-2"></i>
+                Add New Media
+            </h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <!-- Media Type Toggle -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-center">
+                        <div class="btn-group" role="group" aria-label="Media source selection">
+                            <input type="radio" class="btn-check" name="mediaSourceOption" id="uploadOption" value="upload" checked>
+                            <label class="btn btn-outline-primary" for="uploadOption">
+                                <i class="bi bi-upload me-1"></i> Upload File
+                            </label>
+
+                            <input type="radio" class="btn-check" name="mediaSourceOption" id="externalOption" value="external">
+                            <label class="btn btn-outline-primary" for="externalOption">
+                                <i class="bi bi-link-45deg me-1"></i> External Link
+                            </label>
+
+                            <input type="radio" class="btn-check" name="mediaSourceOption" id="youtubeOption" value="youtube">
+                            <label class="btn btn-outline-primary" for="youtubeOption">
+                                <i class="bi bi-youtube me-1"></i> YouTube Video
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="FileName" class="form-label"></label>
+                    <input asp-for="FileName" class="form-control" />
+                    <span asp-validation-for="FileName" class="text-danger"></span>
+                </div>
+
+                <!-- Upload File Section -->
+                <div id="uploadSection">
+                    <div class="mb-3">
+                        <label asp-for="MediaType" class="form-label"></label>
+                        <select asp-for="MediaType" asp-items="Model.MediaTypes" class="form-select"></select>
+                        <span asp-validation-for="MediaType" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="StorageProvider" class="form-label"></label>
+                        <select asp-for="StorageProvider" asp-items="Model.StorageProviders" class="form-select"></select>
+                        <span asp-validation-for="StorageProvider" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="File" class="form-label"></label>
+                        <input asp-for="File" type="file" class="form-control" />
+                        <div class="form-text">Max file size: 10MB. Supported formats: images, videos, audio, documents.</div>
+                        <span asp-validation-for="File" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- External Link Section -->
+                <div id="externalSection" style="display: none;">
+                    <div class="mb-3">
+                        <label asp-for="ExternalUrl" class="form-label"></label>
+                        <input asp-for="ExternalUrl" class="form-control" placeholder="https://..." />
+                        <div class="form-text">Link to external content (image, document, etc.)</div>
+                        <span asp-validation-for="ExternalUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="MediaType" class="form-label"></label>
+                        <select asp-for="MediaType" asp-items="Model.MediaTypes" class="form-select"></select>
+                        <div class="form-text">Select the type of content you're linking to</div>
+                        <span asp-validation-for="MediaType" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- YouTube Section -->
+                <div id="youtubeSection" style="display: none;">
+                    <div class="mb-3">
+                        <label asp-for="YouTubeUrl" class="form-label">YouTube URL</label>
+                        <input asp-for="YouTubeUrl" class="form-control" placeholder="https://www.youtube.com/watch?v=..." />
+                        <div class="form-text">Enter a valid YouTube video URL (watch or share link)</div>
+                        <span asp-validation-for="YouTubeUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" asp-for="IsYouTube" id="isYouTube" checked>
+                            <label class="form-check-label" asp-for="IsYouTube">Is YouTube Video</label>
+                            <input type="hidden" name="MediaType" value="1"> <!-- Set to Video type -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Attribution" class="form-label"></label>
+                    <input asp-for="Attribution" class="form-control" />
+                    <div class="form-text">Credit the original creator if using external content</div>
+                    <span asp-validation-for="Attribution" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i> Add Media
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle the toggle between different media source types
+            $('input[name="mediaSourceOption"]').change(function() {
+                const option = $(this).val();
+
+                // Hide all sections first
+                $("#uploadSection, #externalSection, #youtubeSection").hide();
+
+                // Show the selected section
+                if (option === "upload") {
+                    $("#uploadSection").show();
+                    $("#isExternalLink").prop("checked", false);
+                    $("#isYouTube").prop("checked", false);
+                } else if (option === "external") {
+                    $("#externalSection").show();
+                    $("#isExternalLink").prop("checked", true);
+                    $("#isYouTube").prop("checked", false);
+                } else if (option === "youtube") {
+                    $("#youtubeSection").show();
+                    $("#isExternalLink").prop("checked", true);
+                    $("#isYouTube").prop("checked", true);
+                }
+            });
+
+            // Handle file input change to auto-populate file name
+            $("input[type='file']").change(function() {
+                if (this.files && this.files[0]) {
+                    var fileName = this.files[0].name;
+                    if (!$("#FileName").val()) {
+                        $("#FileName").val(fileName);
+                    }
+                }
+            });
+        });
+    </script>
+}

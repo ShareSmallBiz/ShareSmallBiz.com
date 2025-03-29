@@ -1,0 +1,153 @@
+﻿@model ProfileMediaViewModel
+@{
+    ViewData["Title"] = "Profile Picture";
+}
+
+<div class="container py-4">
+    <h1 class="mb-4">
+        <i class="bi bi-person-circle me-2"></i>
+        Profile Picture
+    </h1>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-image me-2"></i>
+                        Current Profile Picture
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    @if (Model.HasProfilePicture)
+                    {
+                        <img src="@Model.ProfilePictureUrl" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;" alt="Profile Picture" />
+                    }
+                    else
+                    {
+                        <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px;">
+                            <i class="bi bi-person text-secondary" style="font-size: 4rem;"></i>
+                        </div>
+                    }
+
+                    <p class="mb-0">
+                        @if (Model.HasProfilePicture)
+                        {
+                            <span class="text-success">
+                                <i class="bi bi-check-circle me-1"></i>
+                                Profile picture set
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">
+                                <i class="bi bi-exclamation-circle me-1"></i>
+                                No profile picture set
+                            </span>
+                        }
+                    </p>
+                </div>
+                @if (Model.HasProfilePicture)
+                {
+                    <div class="card-footer">
+                        <form asp-action="RemoveProfile" method="post">
+                            <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                <i class="bi bi-trash me-1"></i>
+                                Remove Profile Picture
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-upload me-2"></i>
+                        Upload New Profile Picture
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="UploadProfile" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="profilePicture" class="form-label">Select Image</label>
+                            <input type="file" class="form-control" id="profilePicture" name="profilePicture" accept="image/*" onchange="previewImage(event)">
+                            <div class="form-text">Recommended: Square image, at least 300x300 pixels. Max file size: 5MB.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-none" id="imagePreviewContainer">
+                                <p class="form-label">Preview</p>
+                                <img id="imagePreview" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-cloud-upload me-1"></i>
+                                Upload New Profile Picture
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light">
+                    <p class="mb-0 small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Your profile picture will be visible to other users and associated with your posts and comments.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a href="/" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Back to Home
+                </a>
+                <a asp-controller="Library" asp-action="Index" class="btn btn-outline-primary ms-2">
+                    <i class="bi bi-images me-1"></i>
+                    Go to Media Library
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function previewImage(event) {
+            const input = event.target;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const imagePreview = document.getElementById('imagePreview');
+                    imagePreview.src = e.target.result;
+
+                    document.getElementById('imagePreviewContainer').classList.remove('d-none');
+                }
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+}

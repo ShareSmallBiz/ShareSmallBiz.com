@@ -1,30 +1,45 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using ShareSmallBiz.Portal.Data;
-using ShareSmallBiz.Portal.Infrastructure.Services;
 using ShareSmallBiz.Portal.Services;
+using ShareSmallBiz.Portal.Infrastructure.Configuration;
+using Microsoft.Extensions.Options;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using System.Text.RegularExpressions;
 
-namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
+namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
-public class ManageMediaController(
-    ShareSmallBizUserContext _context,
-    ShareSmallBizUserManager userManager,
-    RoleManager<IdentityRole> _roleManager,
-    ILogger<AdminDiscussionController> _logger,
-    StorageProviderService _storageProviderService
-    ) : AdminBaseController(_context, userManager, _roleManager)
+[Area("Media")]
+[Authorize]
+[Route("Media/Library")]
+public class LibraryController : Controller
 {
-    // GET: ManageMedia
-    public async Task<IActionResult> Index(string searchString, int? mediaTypeFilter, int? storageProviderFilter)
+    private readonly ShareSmallBizUserContext _context;
+    private readonly MediaService _mediaService;
+    private readonly StorageProviderService _storageProviderService;
+    private readonly ILogger<LibraryController> _logger;
+    private readonly MediaStorageOptions _mediaOptions;
+
+    public LibraryController(
+        ShareSmallBizUserContext context,
+        MediaService mediaService,
+        StorageProviderService storageProviderService,
+        ILogger<LibraryController> logger,
+        IOptions<MediaStorageOptions> mediaOptions)
+    {
+        _context = context;
+        _mediaService = mediaService;
+        _storageProviderService = storageProviderService;
+        _logger = logger;
+        _mediaOptions = mediaOptions.Value;
+    }
+
+    // GET: /Media/Library
+    [HttpGet]
+    public async Task<IActionResult> Index(string? searchString, int? mediaTypeFilter, int? storageProviderFilter)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var user = await _userManager.FindByIdAsync(userId);
-
-        if (user == null)
-        {
-            return NotFound();
-        }
 
         var mediaQuery = _context.Media
             .Include(m => m.User)
@@ -50,7 +65,7 @@ public class ManageMediaController(
         // Apply storage provider filter
         if (storageProviderFilter.HasValue)
         {
-            var storageProvider = (Data.StorageProviderNames)storageProviderFilter.Value;
+            var storageProvider = (StorageProviderNames)storageProviderFilter.Value;
             mediaQuery = mediaQuery.Where(m => m.StorageProvider == storageProvider);
         }
 
@@ -67,8 +82,8 @@ public class ManageMediaController(
                     Value = ((int)mt).ToString(),
                     Text = mt.ToString()
                 }).ToList(),
-            StorageProviders = Enum.GetValues(typeof(Data.StorageProviderNames))
-                .Cast<Data.StorageProviderNames>()
+            StorageProviders = Enum.GetValues(typeof(StorageProviderNames))
+                .Cast<StorageProviderNames>()
                 .Select(sp => new SelectListItem
                 {
                     Value = ((int)sp).ToString(),
@@ -79,18 +94,12 @@ public class ManageMediaController(
         return View(viewModel);
     }
 
-    // GET: ManageMedia/Details/5
-    public async Task<IActionResult> Details(int? id)
+    // GET: /Media/Library/Details/5
+    [HttpGet("Details/{id:int}")]
+    public async Task<IActionResult> Details(int id)
     {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var media = await _context.Media
-            .Include(m => m.User)
-            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+        var media = await _mediaService.GetUserMediaByIdAsync(id, userId);
 
         if (media == null)
         {
@@ -98,7 +107,7 @@ public class ManageMediaController(
         }
 
         // Get public URL
-        var publicUrl = await _storageProviderService.GetPublicUrlAsync(media);
+        var publicUrl = await _mediaService.GetMediaUrlAsync(media);
         ViewBag.PublicUrl = publicUrl;
 
         // Set YouTube embed URL if applicable
@@ -107,15 +116,15 @@ public class ManageMediaController(
             ViewBag.YouTubeEmbedUrl = GetYouTubeEmbedUrl(media.Url);
         }
 
-        var vm = new ManageMediaViewModel(media);
-
+        var vm = new LibraryMediaViewModel(media);
         return View(vm);
     }
 
-    // GET: ManageMedia/Create
+    // GET: /Media/Library/Create
+    [HttpGet("Create")]
     public IActionResult Create()
     {
-        var viewModel = new ManageMediaViewModel
+        var viewModel = new LibraryMediaViewModel
         {
             MediaTypes = Enum.GetValues(typeof(MediaType))
                 .Cast<MediaType>()
@@ -136,10 +145,10 @@ public class ManageMediaController(
         return View(viewModel);
     }
 
-    // POST: ManageMedia/Create
-    [HttpPost]
+    // POST: /Media/Library/Create
+    [HttpPost("Create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(ManageMediaViewModel viewModel)
+    public async Task<IActionResult> Create(LibraryMediaViewModel viewModel)
     {
         if (ModelState.IsValid)
         {
@@ -147,7 +156,7 @@ public class ManageMediaController(
 
             try
             {
-                Media media;
+                ShareSmallBiz.Portal.Data.Media media;
 
                 if (IsValidYouTubeUrl(viewModel.ExternalUrl))
                 {
@@ -155,7 +164,9 @@ public class ManageMediaController(
                     viewModel.IsYouTube = true;
                     viewModel.YouTubeUrl = viewModel.ExternalUrl;
                 }
-
+                else {
+                    viewModel.IsYouTube = false;
+                }
 
                 if (viewModel.IsYouTube)
                 {
@@ -178,6 +189,14 @@ public class ManageMediaController(
                 }
                 else if (viewModel.IsExternalLink)
                 {
+                    // Validate external URL
+                    if (string.IsNullOrEmpty(viewModel.ExternalUrl))
+                    {
+                        ModelState.AddModelError("ExternalUrl", "Please enter a URL.");
+                        PrepareCreateViewModel(viewModel);
+                        return View(viewModel);
+                    }
+
                     // Create regular external link
                     media = await _storageProviderService.CreateExternalLinkAsync(
                         viewModel.ExternalUrl,
@@ -190,10 +209,27 @@ public class ManageMediaController(
                 }
                 else
                 {
-                    // Upload file (unchanged)
+                    // Upload file
                     if (viewModel.File == null || viewModel.File.Length == 0)
                     {
                         ModelState.AddModelError("File", "Please select a file to upload.");
+                        PrepareCreateViewModel(viewModel);
+                        return View(viewModel);
+                    }
+
+                    // Check file size
+                    if (viewModel.File.Length > _mediaOptions.MaxFileSize)
+                    {
+                        ModelState.AddModelError("File", $"File size exceeds the maximum allowed size of {_mediaOptions.MaxFileSize / (1024 * 1024)}MB.");
+                        PrepareCreateViewModel(viewModel);
+                        return View(viewModel);
+                    }
+
+                    // Check file extension
+                    var extension = Path.GetExtension(viewModel.File.FileName).ToLowerInvariant();
+                    if (!_mediaOptions.AllowedExtensions.Contains(extension))
+                    {
+                        ModelState.AddModelError("File", $"File type {extension} is not allowed.");
                         PrepareCreateViewModel(viewModel);
                         return View(viewModel);
                     }
@@ -220,27 +256,24 @@ public class ManageMediaController(
                 return View(viewModel);
             }
         }
+
         PrepareCreateViewModel(viewModel);
         return View(viewModel);
     }
-    // GET: ManageMedia/Edit/5
-    public async Task<IActionResult> Edit(int? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
 
+    // GET: /Media/Library/Edit/5
+    [HttpGet("Edit/{id:int}")]
+    public async Task<IActionResult> Edit(int id)
+    {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var media = await _context.Media
-            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+        var media = await _mediaService.GetUserMediaByIdAsync(id, userId);
 
         if (media == null)
         {
             return NotFound();
         }
 
-        var viewModel = new ManageMediaViewModel
+        var viewModel = new LibraryMediaViewModel
         {
             Id = media.Id,
             FileName = media.FileName,
@@ -259,16 +292,18 @@ public class ManageMediaController(
             ContentType = media.ContentType,
             FileSize = media.FileSize,
             IsExternalLink = media.StorageProvider == StorageProviderNames.External || media.StorageProvider == StorageProviderNames.YouTube,
-            ExternalUrl = media.Url
+            IsYouTube = media.StorageProvider == StorageProviderNames.YouTube,
+            ExternalUrl = media.Url,
+            YouTubeUrl = media.StorageProvider == StorageProviderNames.YouTube ? media.Url : string.Empty
         };
 
         return View(viewModel);
     }
 
-    // POST: ManageMedia/Edit/5
-    [HttpPost]
+    // POST: /Media/Library/Edit/5
+    [HttpPost("Edit/{id:int}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, ManageMediaViewModel viewModel)
+    public async Task<IActionResult> Edit(int id, LibraryMediaViewModel viewModel)
     {
         if (id != viewModel.Id)
         {
@@ -276,8 +311,7 @@ public class ManageMediaController(
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var media = await _context.Media
-            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+        var media = await _mediaService.GetUserMediaByIdAsync(id, userId);
 
         if (media == null)
         {
@@ -299,7 +333,7 @@ public class ManageMediaController(
                 if (viewModel.IsExternalLink && !string.IsNullOrEmpty(viewModel.ExternalUrl))
                 {
                     // If changing to YouTube or updating YouTube URL
-                    if ((StorageProviderNames)viewModel.StorageProvider == StorageProviderNames.YouTube)
+                    if (viewModel.IsYouTube)
                     {
                         if (!IsValidYouTubeUrl(viewModel.ExternalUrl))
                         {
@@ -312,9 +346,10 @@ public class ManageMediaController(
                         media.StorageProvider = StorageProviderNames.YouTube;
                         media.MediaType = MediaType.Video;
                     }
-                    else if ((StorageProviderNames)viewModel.StorageProvider == StorageProviderNames.External)
+                    else
                     {
                         media.Url = viewModel.ExternalUrl;
+                        media.StorageProvider = StorageProviderNames.External;
                     }
                 }
 
@@ -339,18 +374,12 @@ public class ManageMediaController(
         return View(viewModel);
     }
 
-    // GET: ManageMedia/Delete/5
-    public async Task<IActionResult> Delete(int? id)
+    // GET: /Media/Library/Delete/5
+    [HttpGet("Delete/{id:int}")]
+    public async Task<IActionResult> Delete(int id)
     {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var media = await _context.Media
-            .Include(m => m.User)
-            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+        var media = await _mediaService.GetUserMediaByIdAsync(id, userId);
 
         if (media == null)
         {
@@ -360,14 +389,13 @@ public class ManageMediaController(
         return View(media);
     }
 
-    // POST: ManageMedia/Delete/5
-    [HttpPost, ActionName("Delete")]
+    // POST: /Media/Library/Delete/5
+    [HttpPost("Delete/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var media = await _context.Media
-            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+        var media = await _mediaService.GetUserMediaByIdAsync(id, userId);
 
         if (media == null)
         {
@@ -376,7 +404,7 @@ public class ManageMediaController(
 
         try
         {
-            await _storageProviderService.DeleteFileAsync(media);
+            await _mediaService.DeleteMediaAsync(media);
             TempData["SuccessMessage"] = "Media deleted successfully.";
             return RedirectToAction(nameof(Index));
         }
@@ -387,17 +415,12 @@ public class ManageMediaController(
         }
     }
 
-    // GET: ManageMedia/Download/5
-    public async Task<IActionResult> Download(int? id)
+    // GET: /Media/Library/Download/5
+    [HttpGet("Download/{id:int}")]
+    public async Task<IActionResult> Download(int id)
     {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var media = await _context.Media
-            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+        var media = await _mediaService.GetUserMediaByIdAsync(id, userId);
 
         if (media == null)
         {
@@ -413,7 +436,7 @@ public class ManageMediaController(
 
         try
         {
-            var stream = await _storageProviderService.GetFileStreamAsync(media);
+            var stream = await _mediaService.GetFileStreamAsync(media);
             return File(stream, media.ContentType, media.FileName);
         }
         catch (Exception ex)
@@ -428,7 +451,7 @@ public class ManageMediaController(
         return _context.Media.Any(e => e.Id == id);
     }
 
-    private void PrepareCreateViewModel(ManageMediaViewModel viewModel)
+    private void PrepareCreateViewModel(LibraryMediaViewModel viewModel)
     {
         viewModel.MediaTypes = Enum.GetValues(typeof(MediaType))
             .Cast<MediaType>()
@@ -449,7 +472,7 @@ public class ManageMediaController(
             }).ToList();
     }
 
-    private void PrepareEditViewModel(ManageMediaViewModel viewModel)
+    private void PrepareEditViewModel(LibraryMediaViewModel viewModel)
     {
         PrepareCreateViewModel(viewModel);
     }
@@ -492,23 +515,23 @@ public class ManageMediaController(
     }
 }
 
-
 public class MediaIndexViewModel
 {
-    public IEnumerable<Media> Media { get; set; }
-    public string SearchString { get; set; }
+    public IEnumerable<ShareSmallBiz.Portal.Data.Media> Media { get; set; } = new List<ShareSmallBiz.Portal.Data.Media>();
+    public string? SearchString { get; set; }
     public int? MediaTypeFilter { get; set; }
     public int? StorageProviderFilter { get; set; }
-    public List<SelectListItem> MediaTypes { get; set; }
-    public List<SelectListItem> StorageProviders { get; set; }
+    public List<SelectListItem> MediaTypes { get; set; } = new List<SelectListItem>();
+    public List<SelectListItem> StorageProviders { get; set; } = new List<SelectListItem>();
 }
 
-public class ManageMediaViewModel
+public class LibraryMediaViewModel
 {
-    public ManageMediaViewModel()
+    public LibraryMediaViewModel()
     {
     }
-    public ManageMediaViewModel(Media media)
+
+    public LibraryMediaViewModel(ShareSmallBiz.Portal.Data.Media media)
     {
         Id = media.Id;
         FileName = media.FileName;
@@ -516,13 +539,17 @@ public class ManageMediaViewModel
         StorageProvider = (int)media.StorageProvider;
         Description = media.Description;
         Attribution = media.Attribution;
-        IsExternalLink = media.StorageProvider == StorageProviderNames.External;
+        IsExternalLink = media.StorageProvider == StorageProviderNames.External || media.StorageProvider == StorageProviderNames.YouTube;
         IsYouTube = media.StorageProvider == StorageProviderNames.YouTube;
         ExternalUrl = media.StorageProvider == StorageProviderNames.External ? media.Url : string.Empty;
         YouTubeUrl = media.StorageProvider == StorageProviderNames.YouTube ? media.Url : string.Empty;
-        ContentType = media.ContentType; FileSize = media.FileSize;
+        ContentType = media.ContentType;
+        FileSize = media.FileSize;
         Url = media.Url;
     }
+
+    public int Id { get; set; }
+
     [Display(Name = "Is YouTube Video")]
     public bool IsYouTube { get; set; }
 
@@ -533,25 +560,25 @@ public class ManageMediaViewModel
     [Required(ErrorMessage = "File name is required")]
     [StringLength(255, ErrorMessage = "File name cannot exceed 255 characters")]
     [Display(Name = "File Name")]
-    public string FileName { get; set; }
+    public string FileName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Media type is required")]
     [Display(Name = "Media Type")]
     public int MediaType { get; set; }
 
-    public List<SelectListItem>? MediaTypes { get; set; } = [];
+    public List<SelectListItem>? MediaTypes { get; set; } = new List<SelectListItem>();
 
     [Display(Name = "Storage Provider")]
     public int StorageProvider { get; set; }
 
-    public List<SelectListItem>? StorageProviders { get; set; }
+    public List<SelectListItem>? StorageProviders { get; set; } = new List<SelectListItem>();
 
     [StringLength(512, ErrorMessage = "Description cannot exceed 512 characters")]
-    public string Description { get; set; }
+    public string Description { get; set; } = string.Empty;
 
     [StringLength(255, ErrorMessage = "Attribution cannot exceed 255 characters")]
     [Display(Name = "Attribution (if applicable)")]
-    public string Attribution { get; set; }
+    public string Attribution { get; set; } = string.Empty;
 
     [Display(Name = "Is External Link")]
     public bool IsExternalLink { get; set; }
@@ -562,8 +589,8 @@ public class ManageMediaViewModel
     [Display(Name = "External URL")]
     [Url(ErrorMessage = "Please enter a valid URL")]
     public string? ExternalUrl { get; set; }
+
     public string? ContentType { get; set; } = string.Empty;
     public long? FileSize { get; set; }
     public string? Url { get; set; } = string.Empty;
-    public int Id { get; set; }
 }

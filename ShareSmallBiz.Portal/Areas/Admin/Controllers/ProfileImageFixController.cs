@@ -4,9 +4,6 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ShareSmallBiz.Portal.Data;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.Processing;
 using System;
 using System.IO;
 using System.Linq;
@@ -140,15 +137,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 {
                     await model.ProfilePictureFile.CopyToAsync(memoryStream);
                     _logger.LogInformation("Image uploaded. Size: {Size} bytes", memoryStream.Length);
-
-                    optimizedImage = await OptimizeImageWithImageSharp(memoryStream.ToArray());
-                }
-
-                if (optimizedImage == null)
-                {
-                    _logger.LogError("Failed to optimize image for user {UserId}", model.UserId);
-                    TempData["ErrorMessage"] = "Failed to process the image";
-                    return RedirectToAction(nameof(Upload), new { id = model.UserId });
+                    optimizedImage = memoryStream.ToArray();
                 }
 
                 // Just update the profile picture and related fields
@@ -346,7 +335,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                     await imageFile.CopyToAsync(memoryStream);
                     _logger.LogInformation("Image uploaded. Size: {Size} bytes", memoryStream.Length);
 
-                    optimizedImage = await OptimizeImageWithImageSharp(memoryStream.ToArray());
+                    optimizedImage = memoryStream.ToArray();
                 }
 
                 if (optimizedImage == null)
@@ -370,64 +359,6 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
             {
                 _logger.LogError(ex, "Error updating profile picture");
                 return StatusCode(500, "An error occurred: " + ex.Message);
-            }
-        }
-
-        /// <summary>
-        /// Optimizes an image using ImageSharp - resizes and compresses
-        /// </summary>
-        private async Task<byte[]> OptimizeImageWithImageSharp(byte[] originalImage)
-        {
-            _logger.LogInformation("Beginning ImageSharp optimization of {Size} byte image", originalImage.Length);
-
-            try
-            {
-                using var inputStream = new MemoryStream(originalImage);
-                using var outputStream = new MemoryStream();
-
-                using var image = await Image.LoadAsync(inputStream);
-
-                _logger.LogInformation("Original image dimensions: {Width}x{Height}", image.Width, image.Height);
-
-                // Calculate new dimensions while preserving aspect ratio
-                const int maxSize = 250; // Maximum dimension (width or height)
-                int width, height;
-
-                if (image.Width > image.Height)
-                {
-                    width = maxSize;
-                    height = (int)(image.Height * ((float)maxSize / image.Width));
-                }
-                else
-                {
-                    height = maxSize;
-                    width = (int)(image.Width * ((float)maxSize / image.Height));
-                }
-
-                _logger.LogInformation("Calculated new dimensions: {Width}x{Height}", width, height);
-
-                // Resize the image
-                image.Mutate(x => x.Resize(new ResizeOptions
-                {
-                    Size = new Size(width, height),
-                    Mode = ResizeMode.Max
-                }));
-
-                // Save as JPEG with quality setting
-                await image.SaveAsJpegAsync(outputStream, new JpegEncoder
-                {
-                    Quality = 80
-                });
-
-                var result = outputStream.ToArray();
-                _logger.LogInformation("Image optimization complete. Result size: {Size} bytes", result.Length);
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in ImageSharp processing: {ErrorMessage}", ex.Message);
-                return null;
             }
         }
     }

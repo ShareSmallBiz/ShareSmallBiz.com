@@ -27,12 +27,12 @@ public class CaptchaController : Controller
         using (Bitmap bitmap = new Bitmap(200, 50))
         using (Graphics g = Graphics.FromImage(bitmap))
         {
-            g.Clear(Color.White);
+            g.Clear(System.Drawing.Color.White);
 
             // Draw the captcha text.
             using (Font font = new Font("Arial", 20, FontStyle.Bold))
             {
-                g.DrawString(captchaText, font, Brushes.Black, new PointF(10, 10));
+                g.DrawString(captchaText, font, Brushes.Black, new System.Drawing.PointF(10, 10));
             }
 
             // Add some random noise lines.
