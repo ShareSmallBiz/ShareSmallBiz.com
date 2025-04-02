@@ -65,7 +65,7 @@
         "@fullhuman/postcss-purgecss": "^7.0.2",
         "autoprefixer": "10.4.21",
         "bootswatch": "^5.3.3",
-        "browser-sync": "3.0.3",
+        "browser-sync": "3.0.4",
         "chokidar": "4.0.3",
         "clean-css-cli": "^5.6.3",
         "concurrently": "9.1.2",
