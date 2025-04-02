@@ -188,6 +188,9 @@ public class StorageProviderService
             case StorageProviderNames.External:
                 // Nothing to delete for external links
                 break;
+            case StorageProviderNames.YouTube:
+                // Nothing to delete for Youtube Links
+                break;
             default:
                 throw new ArgumentException($"Unsupported storage provider: {media.StorageProvider}");
         }

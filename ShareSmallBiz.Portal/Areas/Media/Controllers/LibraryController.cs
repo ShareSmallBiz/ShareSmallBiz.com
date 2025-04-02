@@ -157,15 +157,18 @@ public class LibraryController : Controller
             try
             {
                 ShareSmallBiz.Portal.Data.Media media;
+                var videoId = IsValidYouTubeUrl(viewModel.YouTubeUrl);
 
-                if (IsValidYouTubeUrl(viewModel.ExternalUrl))
+                if (!string.IsNullOrEmpty(videoId))
                 {
+                    viewModel.YouTubeVideoId = videoId;
                     viewModel.IsExternalLink = true;
                     viewModel.IsYouTube = true;
-                    viewModel.YouTubeUrl = viewModel.ExternalUrl;
                 }
-                else {
+                else 
+                {
                     viewModel.IsYouTube = false;
+                    viewModel.YouTubeUrl = string.Empty;
                 }
 
                 if (viewModel.IsYouTube)
@@ -335,7 +338,8 @@ public class LibraryController : Controller
                     // If changing to YouTube or updating YouTube URL
                     if (viewModel.IsYouTube)
                     {
-                        if (!IsValidYouTubeUrl(viewModel.ExternalUrl))
+                        var videoId = IsValidYouTubeUrl(viewModel.YouTubeUrl);
+                        if (!string.IsNullOrEmpty(videoId))
                         {
                             ModelState.AddModelError("ExternalUrl", "Please enter a valid YouTube URL.");
                             PrepareEditViewModel(viewModel);
@@ -477,11 +481,11 @@ public class LibraryController : Controller
         PrepareCreateViewModel(viewModel);
     }
 
-    private bool IsValidYouTubeUrl(string? url)
+    private string? IsValidYouTubeUrl(string? url)
     {
         if (string.IsNullOrEmpty(url))
         {
-            return false;
+            return null;
         }
 
         // Match standard YouTube URLs
@@ -492,9 +496,14 @@ public class LibraryController : Controller
         // - https://www.youtube.com/embed/VIDEO_ID
         var regex = new Regex(@"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})");
 
-        return regex.IsMatch(url);
-    }
+        var match = regex.Match(url);
+        if (match.Success && match.Groups.Count > 1)
+        {
+            return match.Groups[1].Value; // Return the VIDEO_ID
+        }
 
+        return null; // Return null if not a valid YouTube URL
+    }
     private string GetYouTubeEmbedUrl(string url)
     {
         if (string.IsNullOrEmpty(url))
@@ -593,4 +602,5 @@ public class LibraryMediaViewModel
     public string? ContentType { get; set; } = string.Empty;
     public long? FileSize { get; set; }
     public string? Url { get; set; } = string.Empty;
+    public string? YouTubeVideoId { get; set; } = string.Empty;
 }
