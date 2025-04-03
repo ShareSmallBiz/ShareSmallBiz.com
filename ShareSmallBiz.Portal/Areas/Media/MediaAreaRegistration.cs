@@ -17,6 +17,9 @@ public static class MediaAreaRegistration
         // Register MediaService
         services.AddScoped<Services.MediaService>();
 
+        // Register HttpClient for YouTube API
+        services.AddHttpClient();
+
         return services;
     }
 

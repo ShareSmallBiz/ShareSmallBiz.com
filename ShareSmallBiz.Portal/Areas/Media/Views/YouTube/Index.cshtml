@@ -1,0 +1,303 @@
+﻿@model YouTubeSearchViewModel
+@{
+    ViewData["Title"] = "YouTube Integration";
+}
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Library" asp-action="Index">Media Library</a></li>
+            <li class="breadcrumb-item active" aria-current="page">YouTube</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="bi bi-youtube text-danger me-2"></i>
+            YouTube Integration
+        </h1>
+        <div>
+            <a asp-controller="Library" asp-action="Index" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-collection me-1"></i> Media Library
+            </a>
+            <a asp-action="Search" class="btn btn-danger">
+                <i class="bi bi-search me-1"></i> Search Videos
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Quick Search -->
+    <div class="card shadow-sm mb-4 border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-search me-2"></i>
+                Quick Search
+            </h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Search" method="post">
+                <div class="input-group">
+                    <input type="text" name="Query" class="form-control form-control-lg" placeholder="Search for YouTube videos...">
+                    <button class="btn btn-danger" type="submit">
+                        <i class="bi bi-search me-1"></i> Search
+                    </button>
+                </div>
+                <input type="hidden" name="MaxResults" value="12">
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Popular Categories -->
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4 h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bookmark-star me-2"></i>
+                        Popular Categories
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        @foreach (var category in Model.PopularCategories)
+                        {
+                            <a href="@Url.Action("Search", new { query = category })" class="list-group-item list-group-item-action">
+                                <i class="bi bi-tag me-2"></i>
+                                @category.First().ToString().ToUpper()@category.Substring(1)
+                            </a>
+                        }
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <a asp-action="Search" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-search me-1"></i> Advanced Search
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Getting Started -->
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Getting Started with YouTube Integration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-7">
+                            <h5>Add YouTube videos to your media library</h5>
+                            <p>Search and browse YouTube videos directly from within the portal. Add them to your media library for easy access and embedding on your website.</p>
+                            <p>All videos you add will be available in your media library alongside your other media files.</p>
+                            <a asp-action="Search" class="btn btn-danger">
+                                <i class="bi bi-search me-1"></i> Start Searching
+                            </a>
+                        </div>
+                        <div class="col-md-5 d-flex align-items-center justify-content-center">
+                            <div class="bg-light p-3 rounded text-center">
+                                <i class="bi bi-youtube text-danger" style="font-size: 5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5>How to use YouTube videos in your business</h5>
+                    <div class="row row-cols-1 row-cols-md-3 g-4 mt-2">
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-megaphone display-5 text-primary mb-3"></i>
+                                    <h6 class="card-title">Marketing</h6>
+                                    <p class="card-text small">Promote your products and services with engaging video content</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-book display-5 text-success mb-3"></i>
+                                    <h6 class="card-title">Education</h6>
+                                    <p class="card-text small">Create tutorials and how-to guides for your customers</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-people display-5 text-info mb-3"></i>
+                                    <h6 class="card-title">Testimonials</h6>
+                                    <p class="card-text small">Share customer success stories and reviews</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Added Videos -->
+    @if (Model.RecentlyAdded.Any())
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Recently Added YouTube Videos
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                    @foreach (var video in Model.RecentlyAdded)
+                    {
+                        <div class="col">
+                            <div class="card h-100 shadow-sm">
+                                <div class="position-relative">
+                                    <img src="/Media/Thumbnail/@video.Id" class="card-img-top" alt="@video.FileName" style="height: 140px; object-fit: cover;">
+                                    <div class="position-absolute top-50 start-50 translate-middle">
+                                        <div class="bg-danger bg-opacity-75 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="bi bi-play-fill text-white fs-5"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-title" title="@video.FileName">
+                                        @(video.FileName.Length > 40 ? video.FileName.Substring(0, 37) + "..." : video.FileName)
+                                    </h6>
+                                    <p class="card-text small text-muted">
+                                        Added @video.CreatedDate.ToString("MMM d, yyyy")
+                                    </p>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <a asp-controller="Library" asp-action="Details" asp-route-id="@video.Id" class="btn btn-sm btn-outline-secondary w-100">
+                                        <i class="bi bi-eye me-1"></i> View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="text-center mt-4">
+                    <a asp-controller="Library" asp-action="Index" class="btn btn-outline-primary">
+                        <i class="bi bi-collection me-1"></i> View All Media
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Feature Highlights -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">
+                <i class="bi bi-stars me-2"></i>
+                YouTube Integration Features
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                <div class="col">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="bg-danger rounded-circle p-3 text-white">
+                                <i class="bi bi-search"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5>Search</h5>
+                            <p class="text-muted">Search the entire YouTube library to find videos related to your business.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary rounded-circle p-3 text-white">
+                                <i class="bi bi-plus-circle"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5>Add</h5>
+                            <p class="text-muted">Add videos to your media library with a single click, no download required.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success rounded-circle p-3 text-white">
+                                <i class="bi bi-code-slash"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5>Embed</h5>
+                            <p class="text-muted">Generate embed codes to use videos on your website or blog.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="bg-info rounded-circle p-3 text-white">
+                                <i class="bi bi-person-video3"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5>Channels</h5>
+                            <p class="text-muted">Explore channels and subscribe to stay updated with new content.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="bg-warning rounded-circle p-3 text-white">
+                                <i class="bi bi-collection-play"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5>Organize</h5>
+                            <p class="text-muted">Categorize videos alongside your other media for easy management.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="bg-secondary rounded-circle p-3 text-white">
+                                <i class="bi bi-share"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5>Share</h5>
+                            <p class="text-muted">Easily share videos on your website, social media, or with clients.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
