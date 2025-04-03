@@ -526,12 +526,12 @@ public class LibraryController : Controller
 
 public class MediaIndexViewModel
 {
-    public IEnumerable<ShareSmallBiz.Portal.Data.Media> Media { get; set; } = new List<ShareSmallBiz.Portal.Data.Media>();
+    public IEnumerable<ShareSmallBiz.Portal.Data.Media> Media { get; set; } = [];
     public string? SearchString { get; set; }
     public int? MediaTypeFilter { get; set; }
     public int? StorageProviderFilter { get; set; }
-    public List<SelectListItem> MediaTypes { get; set; } = new List<SelectListItem>();
-    public List<SelectListItem> StorageProviders { get; set; } = new List<SelectListItem>();
+    public List<SelectListItem> MediaTypes { get; set; } = [];
+    public List<SelectListItem> StorageProviders { get; set; } = [];
 }
 
 public class LibraryMediaViewModel
@@ -575,12 +575,12 @@ public class LibraryMediaViewModel
     [Display(Name = "Media Type")]
     public int MediaType { get; set; }
 
-    public List<SelectListItem>? MediaTypes { get; set; } = new List<SelectListItem>();
+    public List<SelectListItem>? MediaTypes { get; set; } = [];
 
     [Display(Name = "Storage Provider")]
     public int StorageProvider { get; set; }
 
-    public List<SelectListItem>? StorageProviders { get; set; } = new List<SelectListItem>();
+    public List<SelectListItem>? StorageProviders { get; set; } = [];
 
     [StringLength(512, ErrorMessage = "Description cannot exceed 512 characters")]
     public string Description { get; set; } = string.Empty;

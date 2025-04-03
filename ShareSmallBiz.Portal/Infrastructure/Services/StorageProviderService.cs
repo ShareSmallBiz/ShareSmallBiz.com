@@ -231,10 +231,6 @@ public class StorageProviderService
                 return media.Url;
             case StorageProviderNames.External:
                 return media.Url;
-            case StorageProviderNames.AzureBlob:
-                return media.Url;
-            case StorageProviderNames.S3:
-                return media.Url;
             default:
                 throw new ArgumentException($"Unsupported storage provider: {media.StorageProvider}");
         }
