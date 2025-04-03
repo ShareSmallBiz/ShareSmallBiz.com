@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Configuration;
+using System.Text.Json;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
@@ -9,20 +11,29 @@ namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 [Route("[controller]")]
 public class MediaController : Controller
 {
-    private readonly ShareSmallBizUserContext _context;
-    private readonly MediaService _mediaService;
     private readonly ILogger<MediaController> _logger;
+    private readonly MediaService _mediaService;
+    private readonly StorageProviderService _storageProviderService;
+    private readonly MediaFactoryService _mediaFactoryService;
+    private readonly YouTubeService _youTubeService;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly MediaStorageOptions _mediaOptions;
 
     public MediaController(
-        ShareSmallBizUserContext context,
-        MediaService mediaService,
         ILogger<MediaController> logger,
+        MediaService mediaService,
+        StorageProviderService storageProviderService,
+        MediaFactoryService mediaFactoryService,
+        YouTubeService youTubeService,
+        IHttpClientFactory httpClientFactory,
         IOptions<MediaStorageOptions> mediaOptions)
     {
-        _context = context;
-        _mediaService = mediaService;
         _logger = logger;
+        _mediaService = mediaService;
+        _storageProviderService = storageProviderService;
+        _mediaFactoryService = mediaFactoryService;
+        _youTubeService = youTubeService;
+        _httpClientFactory = httpClientFactory;
         _mediaOptions = mediaOptions.Value;
     }
 
@@ -42,19 +53,24 @@ public class MediaController : Controller
             }
 
             // For external links, redirect to the external URL
-            if (media.StorageProvider == StorageProviderNames.External ||
-                media.StorageProvider == StorageProviderNames.YouTube)
+            if (media.StorageProvider == StorageProviderNames.External)
+            {
+                return Redirect(media.Url);
+            }
+
+            // For YouTube videos, redirect to the YouTube URL
+            if (media.StorageProvider == StorageProviderNames.YouTube)
             {
                 return Redirect(media.Url);
             }
 
             // For local files, return the file stream
-            var stream = await _mediaService.GetFileStreamAsync(media);
+            var stream = await _mediaFactoryService.GetFileStreamAsync(media);
 
             // Explicitly set content type
             string contentType = !string.IsNullOrEmpty(media.ContentType)
                 ? media.ContentType
-                : GetContentTypeFromFileName(media.FileName);
+                : _storageProviderService.GetContentTypeFromFileName(media.FileName);
 
             // Determine if this content should be displayed inline or as an attachment
             var contentDisposition = media.MediaType == MediaType.Image ||
@@ -73,30 +89,6 @@ public class MediaController : Controller
             _logger.LogError(ex, "Error retrieving media with ID {MediaId}", id);
             return StatusCode(500, "Error retrieving media");
         }
-    }
-
-    // Helper method to determine content type from file extension
-    private string GetContentTypeFromFileName(string fileName)
-    {
-        string extension = Path.GetExtension(fileName).ToLowerInvariant();
-
-        return extension switch
-        {
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".gif" => "image/gif",
-            ".webp" => "image/webp",
-            ".svg" => "image/svg+xml",
-            ".mp4" => "video/mp4",
-            ".webm" => "video/webm",
-            ".mp3" => "audio/mpeg",
-            ".wav" => "audio/wav",
-            ".pdf" => "application/pdf",
-            ".doc" or ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            ".xls" or ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            ".txt" => "text/plain",
-            _ => "application/octet-stream"  // Default binary content type
-        };
     }
 
     // GET: /Media/Thumbnail/{id}
@@ -120,6 +112,12 @@ public class MediaController : Controller
                 thumbnailSize = requestedSize;
             }
 
+            // For YouTube videos, fetch and return the thumbnail
+            if (media.StorageProvider == StorageProviderNames.YouTube)
+            {
+                return await GetYouTubeThumbnailAsync(media);
+            }
+
             // For non-image media, return appropriate icons
             if (media.MediaType != MediaType.Image)
             {
@@ -133,13 +131,81 @@ public class MediaController : Controller
             }
 
             // For local files, return the thumbnail stream
-            var stream = await _mediaService.GetThumbnailStreamAsync(media, thumbnailSize, thumbnailSize);
+            var stream = await _mediaFactoryService.GetThumbnailStreamAsync(media, thumbnailSize, thumbnailSize);
             return File(stream, "image/jpeg");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving thumbnail for media with ID {MediaId}", id);
             return StatusCode(500, "Error retrieving thumbnail");
+        }
+    }
+
+    private async Task<IActionResult> GetYouTubeThumbnailAsync(ShareSmallBiz.Portal.Data.Media media)
+    {
+        try
+        {
+            // Extract video ID from media URL or metadata
+            string videoId = string.Empty;
+
+            // First try to extract from metadata
+            if (!string.IsNullOrEmpty(media.StorageMetadata))
+            {
+                try
+                {
+                    var metadataObj = JsonSerializer.Deserialize<Dictionary<string, string>>(media.StorageMetadata);
+                    if (metadataObj != null && metadataObj.TryGetValue("videoId", out string id))
+                    {
+                        videoId = id;
+                    }
+                }
+                catch (JsonException) { /* Ignore if metadata is not valid JSON */ }
+            }
+
+            // If not found in metadata, extract from URL
+            if (string.IsNullOrEmpty(videoId))
+            {
+                videoId = _storageProviderService.ExtractYouTubeVideoId(media.Url);
+            }
+
+            if (string.IsNullOrEmpty(videoId))
+            {
+                // Fallback to default icon if we can't determine the video ID
+                return await GetMediaTypeIconAsync(MediaType.Video);
+            }
+
+            // Construct YouTube thumbnail URL
+            // Use maxresdefault first, and if that fails, fall back to mqdefault
+            string thumbnailUrl = $"https://img.youtube.com/vi/{videoId}/maxresdefault.jpg";
+
+            // Create HTTP client and fetch the thumbnail
+            var httpClient = _httpClientFactory.CreateClient();
+            var response = await httpClient.GetAsync(thumbnailUrl);
+
+            // If maxresdefault doesn't exist, try mqdefault
+            if (!response.IsSuccessStatusCode)
+            {
+                thumbnailUrl = $"https://img.youtube.com/vi/{videoId}/mqdefault.jpg";
+                response = await httpClient.GetAsync(thumbnailUrl);
+
+                // If that also fails, fall back to default image
+                if (!response.IsSuccessStatusCode)
+                {
+                    return await GetMediaTypeIconAsync(MediaType.Video);
+                }
+            }
+
+            // Read the image data
+            var imageData = await response.Content.ReadAsByteArrayAsync();
+
+            // Return the image
+            return File(imageData, "image/jpeg");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving YouTube thumbnail for media {MediaId}", media.Id);
+            // Fallback to media type icon
+            return await GetMediaTypeIconAsync(MediaType.Video);
         }
     }
 

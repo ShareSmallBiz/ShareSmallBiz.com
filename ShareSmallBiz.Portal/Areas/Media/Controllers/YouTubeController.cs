@@ -1,6 +1,8 @@
 ﻿using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Data;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
@@ -10,25 +12,28 @@ namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 public class YouTubeController : Controller
 {
     private readonly ShareSmallBizUserContext _context;
-    private readonly StorageProviderService _storageProviderService;
     private readonly ILogger<YouTubeController> _logger;
-    private readonly YouTubeService _youTubeService;
+    private readonly YouTubeMediaService _youTubeMediaService;
+    private readonly MediaService _mediaService;
+    private readonly MediaFactoryService _mediaFactoryService;
 
     public YouTubeController(
         ShareSmallBizUserContext context,
-        StorageProviderService storageProviderService,
         ILogger<YouTubeController> logger,
-        YouTubeService youTubeService)
+        YouTubeMediaService youTubeMediaService,
+        MediaService mediaService,
+        MediaFactoryService mediaFactoryService)
     {
         _context = context;
-        _storageProviderService = storageProviderService;
         _logger = logger;
-        _youTubeService = youTubeService;
+        _youTubeMediaService = youTubeMediaService;
+        _mediaService = mediaService;
+        _mediaFactoryService = mediaFactoryService;
     }
 
     // GET: /Media/YouTube
     [HttpGet]
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
         var viewModel = new YouTubeSearchViewModel();
 
@@ -45,13 +50,9 @@ public class YouTubeController : Controller
 
         // Get any recently added YouTube videos (for the "Recently Added" section)
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var recentYouTubeMedia = _context.Media
-            .Where(m => m.UserId == userId && m.StorageProvider == StorageProviderNames.YouTube)
-            .OrderByDescending(m => m.CreatedDate)
-            .Take(4)
-            .ToList();
+        var recentYouTubeMedia = await _youTubeMediaService.GetRecentlyAddedVideosAsync(userId, 4);
 
-        viewModel.RecentlyAdded = recentYouTubeMedia;
+        viewModel.RecentlyAdded = recentYouTubeMedia.ToList();
 
         return View(viewModel);
     }
@@ -70,23 +71,11 @@ public class YouTubeController : Controller
 
         try
         {
-            var searchResponse = await _youTubeService.SearchVideosAsync(
+            var searchResults = await _youTubeMediaService.SearchVideosAsync(
                 viewModel.Query,
                 viewModel.MaxResults > 0 ? viewModel.MaxResults : 10);
 
-            if (searchResponse != null && searchResponse.Items != null)
-            {
-                viewModel.SearchResults = searchResponse.Items.Select(item => new YouTubeVideoViewModel
-                {
-                    VideoId = item.Id.VideoId,
-                    Title = item.Snippet.Title,
-                    Description = item.Snippet.Description,
-                    ThumbnailUrl = item.Snippet.Thumbnails.Medium.Url,
-                    PublishedAt = item.Snippet.PublishedAt,
-                    ChannelId = item.Snippet.ChannelId,
-                    ChannelTitle = item.Snippet.ChannelTitle
-                }).ToList();
-            }
+            viewModel.SearchResults = searchResults.ToList();
         }
         catch (Exception ex)
         {
@@ -109,23 +98,11 @@ public class YouTubeController : Controller
 
         try
         {
-            var searchResponse = await _youTubeService.SearchVideosAsync(
+            var searchResults = await _youTubeMediaService.SearchVideosAsync(
                 viewModel.Query,
                 viewModel.MaxResults > 0 ? viewModel.MaxResults : 10);
 
-            if (searchResponse != null && searchResponse.Items != null)
-            {
-                viewModel.SearchResults = searchResponse.Items.Select(item => new YouTubeVideoViewModel
-                {
-                    VideoId = item.Id.VideoId,
-                    Title = item.Snippet.Title,
-                    Description = item.Snippet.Description,
-                    ThumbnailUrl = item.Snippet.Thumbnails.Medium.Url,
-                    PublishedAt = item.Snippet.PublishedAt,
-                    ChannelId = item.Snippet.ChannelId,
-                    ChannelTitle = item.Snippet.ChannelTitle
-                }).ToList();
-            }
+            viewModel.SearchResults = searchResults.ToList();
         }
         catch (Exception ex)
         {
@@ -157,27 +134,13 @@ public class YouTubeController : Controller
                 ? viewModel.Description
                 : $"YouTube video added on {DateTime.UtcNow:g}";
 
-            // Create the media entry
-            var media = await _storageProviderService.CreateExternalLinkAsync(
+            // Create the media entry using the YouTubeMediaService
+            var media = await _youTubeMediaService.CreateYouTubeMediaAsync(
                 youtubeUrl,
                 viewModel.Title,
-                MediaType.Video, // Force video type for YouTube
-                userId,
+                description,
                 viewModel.ChannelTitle, // Use channel title as attribution
-                description
-            );
-
-            // Update the storage provider to YouTube 
-            // (in case CreateExternalLinkAsync didn't set it correctly)
-            media.StorageProvider = StorageProviderNames.YouTube;
-
-            // Add channel ID to metadata if available
-            if (!string.IsNullOrEmpty(viewModel.ChannelId))
-            {
-                media.StorageMetadata = $"channelId:{viewModel.ChannelId}";
-            }
-
-            await _context.SaveChangesAsync();
+                userId);
 
             TempData["SuccessMessage"] = "YouTube video added successfully.";
             return RedirectToAction("Details", "Library", new { id = media.Id });
@@ -199,64 +162,34 @@ public class YouTubeController : Controller
             return NotFound();
         }
 
-        var viewModel = new YouTubeChannelViewModel
-        {
-            ChannelId = channelId
-        };
-
         try
         {
-            // 1. Get channel details
-            var channelResponse = await _youTubeService.GetChannelDetailsAsync(channelId);
+            // 1. Get channel details and videos from YouTubeMediaService
+            var viewModel = await _youTubeMediaService.GetChannelDetailsAsync(channelId);
 
-            if (channelResponse != null && channelResponse.Items != null && channelResponse.Items.Any())
+            if (viewModel == null)
             {
-                var channelInfo = channelResponse.Items[0];
-                viewModel.ChannelTitle = channelInfo.Snippet.Title;
-                viewModel.ChannelDescription = channelInfo.Snippet.Description;
-                viewModel.ThumbnailUrl = channelInfo.Snippet.Thumbnails.Medium?.Url ?? channelInfo.Snippet.Thumbnails.Default.Url;
-                viewModel.SubscriberCount = channelInfo.Statistics.SubscriberCount;
-                viewModel.VideoCount = channelInfo.Statistics.VideoCount;
-                viewModel.ViewCount = channelInfo.Statistics.ViewCount;
+                return NotFound("Channel not found or unavailable");
             }
 
-            // 2. Get channel videos
-            var videosResponse = await _youTubeService.GetChannelVideosAsync(channelId);
-
-            if (videosResponse != null && videosResponse.Items != null)
-            {
-                viewModel.Videos = videosResponse.Items.Select(item => new YouTubeVideoViewModel
-                {
-                    VideoId = item.Id.VideoId,
-                    Title = item.Snippet.Title,
-                    Description = item.Snippet.Description,
-                    ThumbnailUrl = item.Snippet.Thumbnails.Medium.Url,
-                    PublishedAt = item.Snippet.PublishedAt,
-                    ChannelId = item.Snippet.ChannelId,
-                    ChannelTitle = item.Snippet.ChannelTitle
-                }).ToList();
-            }
-
-            // 3. Check if user has already added videos from this channel
+            // 2. Check if user has already added videos from this channel
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var userVideosFromChannel = _context.Media
-                .Where(m => m.UserId == userId &&
-                       m.StorageProvider == StorageProviderNames.YouTube &&
-                       m.StorageMetadata.Contains(channelId))
-                .ToList();
+            var userVideosFromChannel = await _youTubeMediaService.GetUserMediaFromChannelAsync(userId, channelId);
 
-            viewModel.UserVideosFromChannel = userVideosFromChannel;
+            viewModel.UserVideosFromChannel = userVideosFromChannel.ToList();
+
+            return View(viewModel);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving YouTube channel {ChannelId}", channelId);
             ModelState.AddModelError(string.Empty, $"Error retrieving channel: {ex.Message}");
-        }
 
-        return View(viewModel);
+            // Return a basic view model with just the channel ID
+            return View(new YouTubeChannelViewModel { ChannelId = channelId });
+        }
     }
 }
-
 // View Models
 public class YouTubeSearchViewModel
 {

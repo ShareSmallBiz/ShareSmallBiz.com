@@ -1,4 +1,5 @@
 ﻿using ShareSmallBiz.Portal.Areas.Media.Services;
+using ShareSmallBiz.Portal.Infrastructure.Configuration;
 
 namespace ShareSmallBiz.Portal.Areas.Media;
 
@@ -13,16 +14,22 @@ public static class MediaAreaRegistration
     public static IServiceCollection AddMediaServices(this IServiceCollection services, IConfiguration configuration)
     {
         // Register MediaStorageOptions from configuration
-        services.Configure<Infrastructure.Configuration.MediaStorageOptions>(
-            configuration.GetSection(Infrastructure.Configuration.MediaStorageOptions.MediaStorage));
+        services.Configure<MediaStorageOptions>(
+            configuration.GetSection(MediaStorageOptions.MediaStorage));
 
-        // Register MediaService
+        // Register core services
         services.AddScoped<MediaService>();
+        services.AddScoped<StorageProviderService>();
 
-        // Register YouTubeService
-        services.AddScoped<Services.YouTubeService>();
+        // Register specialized services
+        services.AddScoped<FileUploadService>();
+        services.AddScoped<YouTubeMediaService>();
+        services.AddScoped<YouTubeService>();
 
-        // Register HttpClient for YouTube API
+        // Register factory service
+        services.AddScoped<MediaFactoryService>();
+
+        // Register HttpClient for external APIs
         services.AddHttpClient();
 
         return services;
@@ -41,8 +48,7 @@ public static class MediaAreaRegistration
             name: "media",
             pattern: "Media/{id?}",
             defaults: new { controller = "Media", action = "Index" });
+
         return endpoints;
-
-
     }
 }

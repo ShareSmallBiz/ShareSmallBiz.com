@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Options;
 using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Configuration;
 using System.Security.Claims;
-using System.Text.RegularExpressions;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
@@ -15,6 +16,7 @@ public class LibraryController : Controller
 {
     private readonly ShareSmallBizUserContext _context;
     private readonly MediaService _mediaService;
+    private readonly MediaFactoryService _mediaFactoryService;
     private readonly StorageProviderService _storageProviderService;
     private readonly ILogger<LibraryController> _logger;
     private readonly MediaStorageOptions _mediaOptions;
@@ -22,12 +24,14 @@ public class LibraryController : Controller
     public LibraryController(
         ShareSmallBizUserContext context,
         MediaService mediaService,
+        MediaFactoryService mediaFactoryService,
         StorageProviderService storageProviderService,
         ILogger<LibraryController> logger,
         IOptions<MediaStorageOptions> mediaOptions)
     {
         _context = context;
         _mediaService = mediaService;
+        _mediaFactoryService = mediaFactoryService;
         _storageProviderService = storageProviderService;
         _logger = logger;
         _mediaOptions = mediaOptions.Value;
@@ -39,37 +43,34 @@ public class LibraryController : Controller
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        var mediaQuery = _context.Media
-            .Include(m => m.User)
-            .Where(m => m.UserId == userId)
-            .AsQueryable();
+        IEnumerable<ShareSmallBiz.Portal.Data.Media> mediaItems;
+
+        // Get base collection
+        mediaItems = await _mediaService.GetUserMediaAsync(userId);
 
         // Apply search filter
         if (!string.IsNullOrEmpty(searchString))
         {
-            mediaQuery = mediaQuery.Where(m =>
-                m.FileName.Contains(searchString) ||
-                m.Description.Contains(searchString) ||
-                m.Attribution.Contains(searchString));
+            mediaItems = await _mediaService.SearchMediaAsync(userId, searchString);
         }
 
         // Apply media type filter
         if (mediaTypeFilter.HasValue)
         {
             var mediaType = (MediaType)mediaTypeFilter.Value;
-            mediaQuery = mediaQuery.Where(m => m.MediaType == mediaType);
+            mediaItems = mediaItems.Where(m => m.MediaType == mediaType);
         }
 
         // Apply storage provider filter
         if (storageProviderFilter.HasValue)
         {
             var storageProvider = (StorageProviderNames)storageProviderFilter.Value;
-            mediaQuery = mediaQuery.Where(m => m.StorageProvider == storageProvider);
+            mediaItems = mediaItems.Where(m => m.StorageProvider == storageProvider);
         }
 
         var viewModel = new MediaIndexViewModel
         {
-            Media = await mediaQuery.OrderByDescending(m => m.CreatedDate).ToListAsync(),
+            Media = mediaItems.OrderByDescending(m => m.CreatedDate).ToList(),
             SearchString = searchString,
             MediaTypeFilter = mediaTypeFilter,
             StorageProviderFilter = storageProviderFilter,
@@ -105,13 +106,14 @@ public class LibraryController : Controller
         }
 
         // Get public URL
-        var publicUrl = await _mediaService.GetMediaUrlAsync(media);
+        var publicUrl = await _mediaFactoryService.GetMediaUrlAsync(media);
         ViewBag.PublicUrl = publicUrl;
 
         // Set YouTube embed URL if applicable
         if (media.StorageProvider == StorageProviderNames.YouTube)
         {
-            ViewBag.YouTubeEmbedUrl = GetYouTubeEmbedUrl(media.Url);
+            string youtubeUrl = media.Url;
+            ViewBag.YouTubeEmbedUrl = _storageProviderService.GetYouTubeEmbedUrlFromVideoUrl(youtubeUrl);
         }
 
         var vm = new LibraryMediaViewModel(media);
@@ -154,63 +156,23 @@ public class LibraryController : Controller
 
             try
             {
-                ShareSmallBiz.Portal.Data.Media media;
-                var videoId = IsValidYouTubeUrl(viewModel.YouTubeUrl);
-
-                if (!string.IsNullOrEmpty(videoId))
+                // Validate YouTube URL if provided
+                if (viewModel.IsYouTube && !string.IsNullOrEmpty(viewModel.YouTubeUrl))
                 {
+                    var videoId = _storageProviderService.ExtractYouTubeVideoId(viewModel.YouTubeUrl);
+                    if (string.IsNullOrEmpty(videoId))
+                    {
+                        ModelState.AddModelError("YouTubeUrl", "Please enter a valid YouTube URL.");
+                        PrepareCreateViewModel(viewModel);
+                        return View(viewModel);
+                    }
                     viewModel.YouTubeVideoId = videoId;
                     viewModel.IsExternalLink = true;
-                    viewModel.IsYouTube = true;
-                }
-                else
-                {
-                    viewModel.IsYouTube = false;
-                    viewModel.YouTubeUrl = string.Empty;
                 }
 
-                if (viewModel.IsYouTube)
+                // Validate file upload
+                if (!viewModel.IsExternalLink && !viewModel.IsYouTube)
                 {
-                    // Handle YouTube video
-                    if (string.IsNullOrEmpty(viewModel.YouTubeUrl))
-                    {
-                        ModelState.AddModelError("YouTubeUrl", "Please enter a YouTube URL.");
-                        PrepareCreateViewModel(viewModel);
-                        return View(viewModel);
-                    }
-
-                    media = await _storageProviderService.CreateExternalLinkAsync(
-                        viewModel.YouTubeUrl,
-                        viewModel.FileName,
-                        MediaType.Video, // Force video type for YouTube
-                        userId,
-                        viewModel.Attribution,
-                        viewModel.Description
-                    );
-                }
-                else if (viewModel.IsExternalLink)
-                {
-                    // Validate external URL
-                    if (string.IsNullOrEmpty(viewModel.ExternalUrl))
-                    {
-                        ModelState.AddModelError("ExternalUrl", "Please enter a URL.");
-                        PrepareCreateViewModel(viewModel);
-                        return View(viewModel);
-                    }
-
-                    // Create regular external link
-                    media = await _storageProviderService.CreateExternalLinkAsync(
-                        viewModel.ExternalUrl,
-                        viewModel.FileName,
-                        (MediaType)viewModel.MediaType,
-                        userId,
-                        viewModel.Attribution,
-                        viewModel.Description
-                    );
-                }
-                else
-                {
-                    // Upload file
                     if (viewModel.File == null || viewModel.File.Length == 0)
                     {
                         ModelState.AddModelError("File", "Please select a file to upload.");
@@ -234,18 +196,10 @@ public class LibraryController : Controller
                         PrepareCreateViewModel(viewModel);
                         return View(viewModel);
                     }
-
-                    media = await _storageProviderService.UploadFileAsync(
-                        viewModel.File,
-                        userId,
-                        (StorageProviderNames)viewModel.StorageProvider,
-                        viewModel.Description
-                    );
-
-                    // Update additional properties
-                    media.Attribution = viewModel.Attribution;
-                    await _context.SaveChangesAsync();
                 }
+
+                // Create media using the factory service
+                var media = await _mediaFactoryService.CreateMediaAsync(viewModel, userId);
 
                 TempData["SuccessMessage"] = "Media uploaded successfully.";
                 return RedirectToAction(nameof(Details), new { id = media.Id });
@@ -294,7 +248,7 @@ public class LibraryController : Controller
             FileSize = media.FileSize,
             IsExternalLink = media.StorageProvider == StorageProviderNames.External || media.StorageProvider == StorageProviderNames.YouTube,
             IsYouTube = media.StorageProvider == StorageProviderNames.YouTube,
-            ExternalUrl = media.Url,
+            ExternalUrl = media.StorageProvider == StorageProviderNames.External ? media.Url : string.Empty,
             YouTubeUrl = media.StorageProvider == StorageProviderNames.YouTube ? media.Url : string.Empty
         };
 
@@ -312,9 +266,10 @@ public class LibraryController : Controller
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var media = await _mediaService.GetUserMediaByIdAsync(id, userId);
 
-        if (media == null)
+        // Verify media exists and belongs to the user
+        var mediaExists = await _mediaService.GetUserMediaByIdAsync(id, userId);
+        if (mediaExists == null)
         {
             return NotFound();
         }
@@ -323,52 +278,26 @@ public class LibraryController : Controller
         {
             try
             {
-                // Update editable properties
-                media.FileName = viewModel.FileName;
-                media.Description = viewModel.Description;
-                media.Attribution = viewModel.Attribution;
-                media.MediaType = (MediaType)viewModel.MediaType;
-                media.ModifiedDate = DateTime.UtcNow;
+                // Update media using the factory service
+                var success = await _mediaFactoryService.UpdateMediaAsync(id, viewModel, userId);
 
-                // Update URL if external or YouTube
-                if (viewModel.IsExternalLink && !string.IsNullOrEmpty(viewModel.ExternalUrl))
+                if (success)
                 {
-                    // If changing to YouTube or updating YouTube URL
-                    if (viewModel.IsYouTube)
-                    {
-                        var videoId = IsValidYouTubeUrl(viewModel.YouTubeUrl);
-                        if (!string.IsNullOrEmpty(videoId))
-                        {
-                            ModelState.AddModelError("ExternalUrl", "Please enter a valid YouTube URL.");
-                            PrepareEditViewModel(viewModel);
-                            return View(viewModel);
-                        }
-
-                        media.Url = viewModel.ExternalUrl;
-                        media.StorageProvider = StorageProviderNames.YouTube;
-                        media.MediaType = MediaType.Video;
-                    }
-                    else
-                    {
-                        media.Url = viewModel.ExternalUrl;
-                        media.StorageProvider = StorageProviderNames.External;
-                    }
-                }
-
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Media updated successfully.";
-                return RedirectToAction(nameof(Details), new { id = media.Id });
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!MediaExists(id))
-                {
-                    return NotFound();
+                    TempData["SuccessMessage"] = "Media updated successfully.";
+                    return RedirectToAction(nameof(Details), new { id });
                 }
                 else
                 {
-                    throw;
+                    TempData["ErrorMessage"] = "Failed to update media.";
+                    PrepareEditViewModel(viewModel);
+                    return View(viewModel);
                 }
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, $"Error updating media: {ex.Message}");
+                PrepareEditViewModel(viewModel);
+                return View(viewModel);
             }
         }
 
@@ -397,23 +326,17 @@ public class LibraryController : Controller
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var media = await _mediaService.GetUserMediaByIdAsync(id, userId);
-
-        if (media == null)
-        {
-            return NotFound();
-        }
 
         try
         {
-            await _mediaService.DeleteMediaAsync(media);
+            await _mediaFactoryService.DeleteMediaAsync(id, userId);
             TempData["SuccessMessage"] = "Media deleted successfully.";
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
             TempData["ErrorMessage"] = $"Error deleting media: {ex.Message}";
-            return RedirectToAction(nameof(Delete), new { id = media.Id });
+            return RedirectToAction(nameof(Delete), new { id });
         }
     }
 
@@ -438,7 +361,7 @@ public class LibraryController : Controller
 
         try
         {
-            var stream = await _mediaService.GetFileStreamAsync(media);
+            var stream = await _mediaFactoryService.GetFileStreamAsync(media);
             return File(stream, media.ContentType, media.FileName);
         }
         catch (Exception ex)
@@ -446,11 +369,6 @@ public class LibraryController : Controller
             TempData["ErrorMessage"] = $"Error downloading media: {ex.Message}";
             return RedirectToAction(nameof(Details), new { id = media.Id });
         }
-    }
-
-    private bool MediaExists(int id)
-    {
-        return _context.Media.Any(e => e.Id == id);
     }
 
     private void PrepareCreateViewModel(LibraryMediaViewModel viewModel)
@@ -477,48 +395,6 @@ public class LibraryController : Controller
     private void PrepareEditViewModel(LibraryMediaViewModel viewModel)
     {
         PrepareCreateViewModel(viewModel);
-    }
-
-    private string? IsValidYouTubeUrl(string? url)
-    {
-        if (string.IsNullOrEmpty(url))
-        {
-            return null;
-        }
-
-        // Match standard YouTube URLs
-        // Handles formats like:
-        // - https://www.youtube.com/watch?v=VIDEO_ID
-        // - https://youtu.be/VIDEO_ID
-        // - https://youtube.com/watch?v=VIDEO_ID
-        // - https://www.youtube.com/embed/VIDEO_ID
-        var regex = new Regex(@"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})");
-
-        var match = regex.Match(url);
-        if (match.Success && match.Groups.Count > 1)
-        {
-            return match.Groups[1].Value; // Return the VIDEO_ID
-        }
-
-        return null; // Return null if not a valid YouTube URL
-    }
-    private string GetYouTubeEmbedUrl(string url)
-    {
-        if (string.IsNullOrEmpty(url))
-        {
-            return string.Empty;
-        }
-
-        var regex = new Regex(@"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})");
-        var match = regex.Match(url);
-
-        if (match.Success && match.Groups.Count > 1)
-        {
-            var videoId = match.Groups[1].Value;
-            return $"https://www.youtube.com/embed/{videoId}";
-        }
-
-        return string.Empty;
     }
 }
 

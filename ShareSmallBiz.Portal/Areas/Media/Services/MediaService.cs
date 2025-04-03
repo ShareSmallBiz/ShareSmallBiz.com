@@ -1,40 +1,24 @@
 ﻿using ShareSmallBiz.Portal.Data;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Services;
 
+/// <summary>
+/// Service for database operations on media entities
+/// </summary>
 public class MediaService
 {
-    private readonly IWebHostEnvironment _environment;
-    private readonly IConfiguration _configuration;
-    private readonly StorageProviderService _storageProviderService;
     private readonly ShareSmallBizUserContext _context;
     private readonly ILogger<MediaService> _logger;
-    private readonly string _mediaRootPath;
+    private readonly StorageProviderService _storageProviderService;
 
     public MediaService(
-        IWebHostEnvironment environment,
-        IConfiguration configuration,
-        StorageProviderService storageProviderService,
         ShareSmallBizUserContext context,
-        ILogger<MediaService> logger)
+        ILogger<MediaService> logger,
+        StorageProviderService storageProviderService)
     {
-        _environment = environment;
-        _configuration = configuration;
-        _storageProviderService = storageProviderService;
         _context = context;
         _logger = logger;
-
-        // Get media path from configuration, or use default
-        _mediaRootPath = _configuration["MediaStorage:RootPath"] ?? Path.Combine("c:", "websites", "sharesmallbiz", "media");
-
-        // Ensure media directory exists
-        if (!Directory.Exists(_mediaRootPath))
-        {
-            Directory.CreateDirectory(_mediaRootPath);
-        }
+        _storageProviderService = storageProviderService;
     }
 
     /// <summary>
@@ -69,7 +53,62 @@ public class MediaService
     }
 
     /// <summary>
-    /// Converts a user's profile picture (byte array) to a Media entity
+    /// Creates a new media entity in the database
+    /// </summary>
+    public async Task<ShareSmallBiz.Portal.Data.Media> CreateMediaAsync(ShareSmallBiz.Portal.Data.Media media)
+    {
+        _context.Media.Add(media);
+        await _context.SaveChangesAsync();
+        return media;
+    }
+
+    /// <summary>
+    /// Updates an existing media entity in the database
+    /// </summary>
+    public async Task<bool> UpdateMediaAsync(ShareSmallBiz.Portal.Data.Media media)
+    {
+        try
+        {
+            media.ModifiedDate = DateTime.UtcNow;
+            _context.Update(media);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger.LogError(ex, "Concurrency exception when updating media with ID {MediaId}", media.Id);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating media with ID {MediaId}", media.Id);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Deletes a media entity and its associated files
+    /// </summary>
+    public async Task DeleteMediaAsync(ShareSmallBiz.Portal.Data.Media media)
+    {
+        try
+        {
+            // First, delete any files associated with the media
+            await _storageProviderService.DeleteFileAsync(media);
+
+            // Then remove from database
+            _context.Media.Remove(media);
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete media {MediaId}", media.Id);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Converts a user's profile picture to a Media entity
     /// </summary>
     public async Task<ShareSmallBiz.Portal.Data.Media?> ConvertProfilePictureToMediaAsync(ShareSmallBizUser user)
     {
@@ -80,30 +119,25 @@ public class MediaService
 
         try
         {
-            // Create a unique filename
-            string fileName = $"profile_{user.Id}_{DateTime.UtcNow.Ticks}.jpg";
-            string filePath = Path.Combine(_mediaRootPath, "profiles", fileName);
-
-            // Ensure the profiles directory exists
-            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-
-            // Save the image to disk
-            await File.WriteAllBytesAsync(filePath, user.ProfilePicture);
-
-            // Create the media entity
+            // Create a media entity for the profile picture
             var media = new ShareSmallBiz.Portal.Data.Media
             {
-                FileName = fileName,
+                FileName = $"profile_{user.Id}_{DateTime.UtcNow.Ticks}.jpg",
                 MediaType = MediaType.Image,
                 StorageProvider = StorageProviderNames.LocalStorage,
-                Url = filePath,
                 ContentType = "image/jpeg",
                 FileSize = user.ProfilePicture.Length,
                 Description = $"{user.DisplayName}'s profile picture",
                 StorageMetadata = "{\"type\":\"profile\"}",
-                UserId = user.Id
+                UserId = user.Id,
+                CreatedDate = DateTime.UtcNow,
+                ModifiedDate = DateTime.UtcNow
             };
 
+            // Save the file using the storage provider service
+            await _storageProviderService.SaveProfilePictureAsync(user.ProfilePicture, media);
+
+            // Add the media entity to the database
             _context.Media.Add(media);
             await _context.SaveChangesAsync();
 
@@ -121,93 +155,9 @@ public class MediaService
     }
 
     /// <summary>
-    /// Creates a thumbnail for an image
-    /// </summary>
-    public async Task<string> CreateThumbnailAsync(ShareSmallBiz.Portal.Data.Media media, int width = 200, int height = 200)
-    {
-        if (media.MediaType != MediaType.Image)
-        {
-            return string.Empty;
-        }
-
-        try
-        {
-            // Generate thumbnail filename
-            string thumbFileName = $"thumb_{width}x{height}_{Path.GetFileName(media.Url)}";
-            string thumbDirectory = Path.Combine(_mediaRootPath, "thumbnails");
-            string thumbPath = Path.Combine(thumbDirectory, thumbFileName);
-
-            // Ensure the thumbnails directory exists
-            Directory.CreateDirectory(thumbDirectory);
-
-            // Check if thumbnail already exists
-            if (File.Exists(thumbPath))
-            {
-                return thumbPath;
-            }
-
-            // Load the original image
-            using (var originalImage = Image.FromFile(media.Url))
-            {
-                // Calculate dimensions while maintaining aspect ratio
-                int newWidth, newHeight;
-                if (originalImage.Width > originalImage.Height)
-                {
-                    newWidth = width;
-                    newHeight = (int)(originalImage.Height * ((float)width / originalImage.Width));
-                }
-                else
-                {
-                    newHeight = height;
-                    newWidth = (int)(originalImage.Width * ((float)height / originalImage.Height));
-                }
-
-                // Create the thumbnail
-                using (var thumbnail = new Bitmap(newWidth, newHeight))
-                {
-                    using (var graphics = Graphics.FromImage(thumbnail))
-                    {
-                        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                        graphics.SmoothingMode = SmoothingMode.HighQuality;
-                        graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                        graphics.CompositingQuality = CompositingQuality.HighQuality;
-                        graphics.DrawImage(originalImage, 0, 0, newWidth, newHeight);
-                    }
-
-                    // Save the thumbnail
-                    thumbnail.Save(thumbPath, GetImageFormat(Path.GetExtension(media.Url)));
-                }
-            }
-
-            return thumbPath;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to create thumbnail for media {MediaId}", media.Id);
-            return string.Empty;
-        }
-    }
-
-    /// <summary>
-    /// Gets the appropriate ImageFormat for a file extension
-    /// </summary>
-    private ImageFormat GetImageFormat(string extension)
-    {
-        extension = extension.ToLowerInvariant();
-        return extension switch
-        {
-            ".jpg" or ".jpeg" => ImageFormat.Jpeg,
-            ".png" => ImageFormat.Png,
-            ".gif" => ImageFormat.Gif,
-            ".bmp" => ImageFormat.Bmp,
-            _ => ImageFormat.Jpeg  // Default to JPEG
-        };
-    }
-
-    /// <summary>
     /// Gets the URL for a media item
     /// </summary>
-    public async Task<string> GetMediaUrlAsync(ShareSmallBiz.Portal.Data.Media media)
+    public string GetMediaUrl(ShareSmallBiz.Portal.Data.Media media)
     {
         if (media.StorageProvider == StorageProviderNames.External ||
             media.StorageProvider == StorageProviderNames.YouTube)
@@ -221,7 +171,7 @@ public class MediaService
     /// <summary>
     /// Gets the URL for a media thumbnail
     /// </summary>
-    public async Task<string> GetThumbnailUrlAsync(ShareSmallBiz.Portal.Data.Media media)
+    public string GetThumbnailUrl(ShareSmallBiz.Portal.Data.Media media)
     {
         if (media.MediaType != MediaType.Image)
         {
@@ -233,65 +183,46 @@ public class MediaService
     }
 
     /// <summary>
-    /// Deletes a media item
+    /// Checks if a media entity exists
     /// </summary>
-    public async Task DeleteMediaAsync(ShareSmallBiz.Portal.Data.Media media)
+    public bool MediaExists(int id)
     {
-        try
-        {
-            // Remove any artifacts of the media
-            await _storageProviderService.DeleteFileAsync(media, _mediaRootPath);
-
-            // Remove from database
-            _context.Media.Remove(media);
-            await _context.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to delete media {MediaId}", media.Id);
-            throw;
-        }
+        return _context.Media.Any(e => e.Id == id);
     }
 
     /// <summary>
-    /// Gets a file stream for a media item
+    /// Gets media items by media type
     /// </summary>
-    public async Task<Stream> GetFileStreamAsync(ShareSmallBiz.Portal.Data.Media media)
+    public async Task<IEnumerable<ShareSmallBiz.Portal.Data.Media>> GetMediaByTypeAsync(string userId, MediaType mediaType)
     {
-        if (media.StorageProvider == StorageProviderNames.LocalStorage)
-        {
-            return new FileStream(media.Url, FileMode.Open, FileAccess.Read);
-        }
-
-        // For other storage providers, use the storage provider service
-        return await _storageProviderService.GetFileStreamAsync(media);
+        return await _context.Media
+            .Where(m => m.UserId == userId && m.MediaType == mediaType)
+            .OrderByDescending(m => m.CreatedDate)
+            .ToListAsync();
     }
 
     /// <summary>
-    /// Gets a file stream for a media thumbnail
+    /// Gets media items by storage provider
     /// </summary>
-    public async Task<Stream> GetThumbnailStreamAsync(ShareSmallBiz.Portal.Data.Media media, int width = 200, int height = 200)
+    public async Task<IEnumerable<ShareSmallBiz.Portal.Data.Media>> GetMediaByStorageProviderAsync(string userId, StorageProviderNames storageProvider)
     {
-        if (media.MediaType != MediaType.Image)
-        {
-            // Return default icon for non-image media
-            string iconPath = Path.Combine(_environment.WebRootPath, "images", $"{media.MediaType.ToString().ToLower()}-icon.png");
-            if (!File.Exists(iconPath))
-            {
-                iconPath = Path.Combine(_environment.WebRootPath, "images", "placeholder.png");
-            }
+        return await _context.Media
+            .Where(m => m.UserId == userId && m.StorageProvider == storageProvider)
+            .OrderByDescending(m => m.CreatedDate)
+            .ToListAsync();
+    }
 
-            return new FileStream(iconPath, FileMode.Open, FileAccess.Read);
-        }
-
-        // Create thumbnail if it doesn't exist
-        string thumbPath = await CreateThumbnailAsync(media, width, height);
-        if (string.IsNullOrEmpty(thumbPath) || !File.Exists(thumbPath))
-        {
-            // If thumbnail creation failed, return the original image
-            return await GetFileStreamAsync(media);
-        }
-
-        return new FileStream(thumbPath, FileMode.Open, FileAccess.Read);
+    /// <summary>
+    /// Searches for media by keywords
+    /// </summary>
+    public async Task<IEnumerable<ShareSmallBiz.Portal.Data.Media>> SearchMediaAsync(string userId, string searchTerm)
+    {
+        return await _context.Media
+            .Where(m => m.UserId == userId &&
+                  (m.FileName.Contains(searchTerm) ||
+                   m.Description.Contains(searchTerm) ||
+                   m.Attribution.Contains(searchTerm)))
+            .OrderByDescending(m => m.CreatedDate)
+            .ToListAsync();
     }
 }

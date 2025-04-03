@@ -1,4 +1,7 @@
-﻿using ShareSmallBiz.Portal.Areas.Media.Services;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Data;
 using System.Security.Claims;
 
@@ -9,18 +12,15 @@ namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 [Route("Media/User")]
 public class UserMediaController : Controller
 {
-    private readonly ShareSmallBizUserContext _context;
     private readonly MediaService _mediaService;
     private readonly UserManager<ShareSmallBizUser> _userManager;
     private readonly ILogger<UserMediaController> _logger;
 
     public UserMediaController(
-        ShareSmallBizUserContext context,
         MediaService mediaService,
         UserManager<ShareSmallBizUser> userManager,
         ILogger<UserMediaController> logger)
     {
-        _context = context;
         _mediaService = mediaService;
         _userManager = userManager;
         _logger = logger;
@@ -129,12 +129,9 @@ public class UserMediaController : Controller
             user.ProfilePictureUrl = null;
             await _userManager.UpdateAsync(user);
 
-            // Remove any associated media (if exists)
-            var profileMedia = await _context.Media
-                .Where(m => m.UserId == userId && m.StorageMetadata.Contains("profile"))
-                .ToListAsync();
-
-            foreach (var media in profileMedia)
+            // Find and remove any associated media with profile metadata
+            var profileMediaItems = await _mediaService.SearchMediaAsync(userId, "profile");
+            foreach (var media in profileMediaItems.Where(m => m.StorageMetadata.Contains("profile")))
             {
                 await _mediaService.DeleteMediaAsync(media);
             }
@@ -150,7 +147,6 @@ public class UserMediaController : Controller
         return RedirectToAction(nameof(Profile));
     }
 }
-
 public class UserMediaViewModel
 {
     public IEnumerable<ShareSmallBiz.Portal.Data.Media> Media { get; set; } = [];
