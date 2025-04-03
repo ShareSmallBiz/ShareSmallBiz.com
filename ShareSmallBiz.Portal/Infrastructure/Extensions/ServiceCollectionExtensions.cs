@@ -1,16 +1,8 @@
 ﻿using HttpClientUtility.MemoryCache;
 using HttpClientUtility.RequestResult;
-using HttpClientUtility.StringConverter;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using ShareSmallBiz.Portal.Data;
-using ShareSmallBiz.Portal.Infrastructure.Services;
-using ShareSmallBiz.Portal.Infrastructure.Utilities;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Extensions;
 

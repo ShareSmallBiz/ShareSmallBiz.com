@@ -1,10 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
+﻿using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Data;
-using ShareSmallBiz.Portal.Infrastructure.Configuration;
-using Microsoft.Extensions.Options;
 using System.Security.Claims;
-using ShareSmallBiz.Portal.Areas.Media.Services;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
@@ -95,7 +91,7 @@ public class YouTubeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error searching YouTube");
-            ModelState.AddModelError("", $"Error searching YouTube: {ex.Message}");
+            ModelState.AddModelError(string.Empty, $"Error searching YouTube: {ex.Message}");
         }
 
         return View(viewModel);
@@ -134,7 +130,7 @@ public class YouTubeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error searching YouTube");
-            ModelState.AddModelError("", $"Error searching YouTube: {ex.Message}");
+            ModelState.AddModelError(string.Empty, $"Error searching YouTube: {ex.Message}");
         }
 
         return View(viewModel);
@@ -254,7 +250,7 @@ public class YouTubeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving YouTube channel {ChannelId}", channelId);
-            ModelState.AddModelError("", $"Error retrieving channel: {ex.Message}");
+            ModelState.AddModelError(string.Empty, $"Error retrieving channel: {ex.Message}");
         }
 
         return View(viewModel);

@@ -1,8 +1,5 @@
-﻿using System.Net;
+﻿using Microsoft.AspNetCore.Identity.UI.Services;
 using System.Net.Mail;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.Extensions.Configuration;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Utilities;
 

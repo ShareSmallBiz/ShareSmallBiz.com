@@ -1,27 +1,15 @@
-﻿using System.Net.Http.Json;
-using System.Text.Json;
-
-namespace ShareSmallBiz.Portal.Areas.Media.Services;
+﻿namespace ShareSmallBiz.Portal.Areas.Media.Services;
 
 /// <summary>
 /// Service for interacting with the YouTube API
 /// </summary>
-public class YouTubeService
+public class YouTubeService(
+    IHttpClientFactory httpClientFactory,
+    ILogger<YouTubeService> logger,
+    IConfiguration configuration)
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<YouTubeService> _logger;
-    private readonly string _youTubeApiKey;
-
-    public YouTubeService(
-        IHttpClientFactory httpClientFactory,
-        ILogger<YouTubeService> logger,
-        IConfiguration configuration)
-    {
-        _httpClientFactory = httpClientFactory;
-        _logger = logger;
-        _youTubeApiKey = configuration["GOOGLE_YOUTUBE_API_KEY"] ??
+    private readonly string _youTubeApiKey = configuration["GOOGLE_YOUTUBE_API_KEY"] ??
             throw new ArgumentNullException("GOOGLE_YOUTUBE_API_KEY is not configured");
-    }
 
     /// <summary>
     /// Search YouTube videos with the given query
@@ -39,7 +27,7 @@ public class YouTubeService
             var requestUrl = $"https://www.googleapis.com/youtube/v3/search?part=snippet&q={searchQuery}&maxResults={maxResults}&type=video&key={_youTubeApiKey}";
 
             // Create HttpClient and send request
-            var httpClient = _httpClientFactory.CreateClient();
+            var httpClient = httpClientFactory.CreateClient();
             var response = await httpClient.GetAsync(requestUrl);
 
             if (response.IsSuccessStatusCode)
@@ -49,13 +37,13 @@ public class YouTubeService
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("YouTube API error: {StatusCode} - {Error}", response.StatusCode, errorContent);
+                logger.LogError("YouTube API error: {StatusCode} - {Error}", response.StatusCode, errorContent);
                 return null;
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error searching YouTube videos");
+            logger.LogError(ex, "Error searching YouTube videos");
             throw;
         }
     }
@@ -70,7 +58,7 @@ public class YouTubeService
         try
         {
             var channelUrl = $"https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id={channelId}&key={_youTubeApiKey}";
-            var httpClient = _httpClientFactory.CreateClient();
+            var httpClient = httpClientFactory.CreateClient();
             var response = await httpClient.GetAsync(channelUrl);
 
             if (response.IsSuccessStatusCode)
@@ -80,13 +68,13 @@ public class YouTubeService
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("YouTube API error when fetching channel: {StatusCode} - {Error}", response.StatusCode, errorContent);
+                logger.LogError("YouTube API error when fetching channel: {StatusCode} - {Error}", response.StatusCode, errorContent);
                 return null;
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting YouTube channel details for {ChannelId}", channelId);
+            logger.LogError(ex, "Error getting YouTube channel details for {ChannelId}", channelId);
             throw;
         }
     }
@@ -102,7 +90,7 @@ public class YouTubeService
         try
         {
             var videosUrl = $"https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={channelId}&maxResults={maxResults}&order=date&type=video&key={_youTubeApiKey}";
-            var httpClient = _httpClientFactory.CreateClient();
+            var httpClient = httpClientFactory.CreateClient();
             var response = await httpClient.GetAsync(videosUrl);
 
             if (response.IsSuccessStatusCode)
@@ -112,13 +100,13 @@ public class YouTubeService
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("YouTube API error when fetching channel videos: {StatusCode} - {Error}", response.StatusCode, errorContent);
+                logger.LogError("YouTube API error when fetching channel videos: {StatusCode} - {Error}", response.StatusCode, errorContent);
                 return null;
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting videos for YouTube channel {ChannelId}", channelId);
+            logger.LogError(ex, "Error getting videos for YouTube channel {ChannelId}", channelId);
             throw;
         }
     }

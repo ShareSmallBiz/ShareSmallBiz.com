@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using ShareSmallBiz.Portal.Data;
+﻿using ShareSmallBiz.Portal.Data;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Services;
 

@@ -2,7 +2,7 @@
 
 namespace ShareSmallBiz.Portal.Infrastructure.Models;
 
-public  class DiscussionListModel : List<DiscussionModel>
+public class DiscussionListModel : List<DiscussionModel>
 {
     public DiscussionListModel() { }
     public DiscussionListModel(IEnumerable<Post> posts)

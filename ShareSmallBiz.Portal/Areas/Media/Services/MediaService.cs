@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using ShareSmallBiz.Portal.Data;
-using System.IO;
-using System.Threading.Tasks;
+﻿using ShareSmallBiz.Portal.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;

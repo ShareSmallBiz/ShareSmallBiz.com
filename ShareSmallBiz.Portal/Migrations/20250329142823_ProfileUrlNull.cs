@@ -27,7 +27,7 @@ namespace ShareSmallBiz.Portal.Migrations
                 table: "AspNetUsers",
                 type: "TEXT",
                 nullable: false,
-                defaultValue: "",
+                defaultValue: string.Empty,
                 oldClrType: typeof(string),
                 oldType: "TEXT",
                 oldNullable: true);

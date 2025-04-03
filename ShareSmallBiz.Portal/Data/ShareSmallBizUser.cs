@@ -1,6 +1,4 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model;
-
-namespace ShareSmallBiz.Portal.Data;
+﻿namespace ShareSmallBiz.Portal.Data;
 
 public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUser>
 {

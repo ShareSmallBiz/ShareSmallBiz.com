@@ -1,5 +1,4 @@
 ﻿using ShareSmallBiz.Portal.Data;
-using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Models;
 
@@ -11,7 +10,7 @@ public class PostLikeModel : BaseModel
 {
     public PostLikeModel()
     {
-        
+
     }
     public PostLikeModel(PostLike like)
     {

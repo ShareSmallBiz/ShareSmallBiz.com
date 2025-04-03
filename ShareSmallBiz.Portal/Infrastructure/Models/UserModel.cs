@@ -91,7 +91,7 @@ public class UserModel
         IsEmailConfirmed = author.EmailConfirmed;
         LastModified = author.LastModified != default ? author.LastModified : DateTime.Now;
 
-        if(string.IsNullOrEmpty(DisplayName))
+        if (string.IsNullOrEmpty(DisplayName))
         {
             DisplayName = UserName; // Fallback to username if display name is not set
         }

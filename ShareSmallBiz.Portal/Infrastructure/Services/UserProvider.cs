@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using ShareSmallBiz.Portal.Data;
-using System.Security.Claims;
 using System.Linq;
+using System.Security.Claims;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
@@ -352,7 +351,7 @@ public class UserProvider(
         // If not found, try normalized search
         if (user == null)
         {
-            var normalizedInput = username.Replace(" ", "").ToLowerInvariant();
+            var normalizedInput = username.Replace(" ", string.Empty).ToLowerInvariant();
 
             user = await context.Users
                 .Include(u => u.Posts)
@@ -360,7 +359,7 @@ public class UserProvider(
                 .Include(u => u.UserRoles)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u =>
-                    u.UserName.Replace(" ", "").ToLower() == normalizedInput);
+                    u.UserName.Replace(" ", string.Empty).ToLower() == normalizedInput);
 
             if (user == null)
             {
@@ -397,7 +396,7 @@ public class UserProvider(
         // If not found, try normalized search
         if (user == null)
         {
-            var normalizedInput = username.Replace(" ", "").ToLowerInvariant();
+            var normalizedInput = username.Replace(" ", string.Empty).ToLowerInvariant();
 
             user = await context.Users
                 .Include(u => u.Posts)
@@ -405,7 +404,7 @@ public class UserProvider(
                 .Include(u => u.UserRoles)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u =>
-                    u.UserName.Replace(" ", "").ToLower() == normalizedInput);
+                    u.UserName.Replace(" ", string.Empty).ToLower() == normalizedInput);
 
             if (user == null)
             {
@@ -455,8 +454,8 @@ public class UserProvider(
             {
                 user.Slug = model.DisplayName.ToLowerInvariant()
                     .Replace(" ", "-")
-                    .Replace("'", "")
-                    .Replace("\"", "");
+                    .Replace("'", string.Empty)
+                    .Replace("\"", string.Empty);
                 changedProperties.Add("Slug");
             }
         }

@@ -1,6 +1,4 @@
 ﻿using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Reflection;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Extensions
 {

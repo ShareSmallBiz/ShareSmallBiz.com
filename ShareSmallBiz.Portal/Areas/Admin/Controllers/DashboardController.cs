@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ShareSmallBiz.Portal.Data;
+﻿using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
@@ -48,7 +47,8 @@ public class DashboardController(
         var usersByMonth = await _userManager.Users
             .Where(u => u.LastModified >= sixMonthsAgo)
             .GroupBy(u => new { u.LastModified.Year, u.LastModified.Month })
-            .Select(g => new {
+            .Select(g => new
+            {
                 Year = g.Key.Year,
                 Month = g.Key.Month,
                 Count = g.Count()
@@ -99,7 +99,8 @@ public class DashboardController(
         var discussionsByMonth = await _context.Posts
             .Where(d => d.CreatedDate >= sixMonthsAgo)
             .GroupBy(d => new { d.CreatedDate.Year, d.CreatedDate.Month })
-            .Select(g => new {
+            .Select(g => new
+            {
                 Year = g.Key.Year,
                 Month = g.Key.Month,
                 Count = g.Count()
@@ -150,7 +151,8 @@ public class DashboardController(
         var commentsByMonth = await _context.PostComments
             .Where(c => c.CreatedDate >= sixMonthsAgo)
             .GroupBy(c => new { c.CreatedDate.Year, c.CreatedDate.Month })
-            .Select(g => new {
+            .Select(g => new
+            {
                 Year = g.Key.Year,
                 Month = g.Key.Month,
                 Count = g.Count()

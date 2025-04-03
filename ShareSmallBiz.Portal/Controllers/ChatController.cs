@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ShareSmallBiz.Portal.Infrastructure.Services;
+﻿using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Controllers;
 

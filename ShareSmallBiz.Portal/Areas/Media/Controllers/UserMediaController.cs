@@ -1,9 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
+﻿using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Data;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using ShareSmallBiz.Portal.Areas.Media.Services;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
@@ -72,7 +69,7 @@ public class UserMediaController : Controller
     {
         if (profilePicture == null || profilePicture.Length == 0)
         {
-            ModelState.AddModelError("", "Please select a file to upload.");
+            ModelState.AddModelError(string.Empty, "Please select a file to upload.");
             return RedirectToAction(nameof(Profile));
         }
 

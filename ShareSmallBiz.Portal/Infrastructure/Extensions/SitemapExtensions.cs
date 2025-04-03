@@ -1,15 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Routing;
+﻿using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 using System;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
@@ -141,7 +135,7 @@ public static class SitemapExtensions
             if (controllerType.GetCustomAttributes<AuthorizeAttribute>(true).Any())
             {
                 // If controller has [Authorize], check if action has [AllowAnonymous]
-                var  controllerActionMethod = controllerActionDescriptor.MethodInfo;
+                var controllerActionMethod = controllerActionDescriptor.MethodInfo;
                 return controllerActionMethod.GetCustomAttributes<AllowAnonymousAttribute>(true).Any();
             }
 

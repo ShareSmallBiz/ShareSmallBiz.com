@@ -1,6 +1,5 @@
 ﻿using System.Drawing;
 using System.Drawing.Imaging;
-using System.IO;
 
 namespace ShareSmallBiz.Portal.Areas.Identity.Controllers;
 

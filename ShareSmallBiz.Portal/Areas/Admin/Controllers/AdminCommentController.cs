@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using ShareSmallBiz.Portal.Data;
+﻿using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
@@ -48,7 +46,7 @@ AdminCommentService _adminCommentService) : AdminBaseController(_context, _userM
         var newComment = await _adminCommentService.CreateCommentAsync(postId, content);
         if (newComment == null)
         {
-            ModelState.AddModelError("", "Unable to create comment. Please check your inputs and try again.");
+            ModelState.AddModelError(string.Empty, "Unable to create comment. Please check your inputs and try again.");
             return View();
         }
         return RedirectToAction(nameof(Index));
@@ -77,7 +75,7 @@ AdminCommentService _adminCommentService) : AdminBaseController(_context, _userM
         bool success = await _adminCommentService.UpdateCommentAsync(id, content);
         if (!success)
         {
-            ModelState.AddModelError("", "Unable to update comment. Please try again.");
+            ModelState.AddModelError(string.Empty, "Unable to update comment. Please try again.");
             return View();
         }
         return RedirectToAction(nameof(Index));
@@ -102,7 +100,7 @@ AdminCommentService _adminCommentService) : AdminBaseController(_context, _userM
         bool success = await _adminCommentService.DeleteCommentAsync(id);
         if (!success)
         {
-            ModelState.AddModelError("", "Unable to delete comment. Please try again.");
+            ModelState.AddModelError(string.Empty, "Unable to delete comment. Please try again.");
             return View();
         }
         return RedirectToAction(nameof(Index));

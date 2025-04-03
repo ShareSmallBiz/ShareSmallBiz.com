@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Options;
+using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Configuration;
-using Microsoft.Extensions.Options;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using System.Text.RegularExpressions;
-using ShareSmallBiz.Portal.Areas.Media.Services;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
@@ -165,7 +163,7 @@ public class LibraryController : Controller
                     viewModel.IsExternalLink = true;
                     viewModel.IsYouTube = true;
                 }
-                else 
+                else
                 {
                     viewModel.IsYouTube = false;
                     viewModel.YouTubeUrl = string.Empty;
@@ -254,7 +252,7 @@ public class LibraryController : Controller
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError("", $"Error creating media: {ex.Message}");
+                ModelState.AddModelError(string.Empty, $"Error creating media: {ex.Message}");
                 PrepareCreateViewModel(viewModel);
                 return View(viewModel);
             }

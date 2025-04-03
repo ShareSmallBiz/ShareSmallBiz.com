@@ -31,7 +31,7 @@ public class HomeController(DiscussionProvider postProvider, ILogger<HomeControl
     {
         var attemptedPath = HttpContext.Request.Path.Value;
         var queryString = HttpContext.Request.QueryString.Value;
-        logger.LogError("Catch All: Attempted path: {AttemptedPath}{queryString}", attemptedPath,queryString);
+        logger.LogError("Catch All: Attempted path: {AttemptedPath}{queryString}", attemptedPath, queryString);
         return RedirectToAction("Index", "Home");
     }
 

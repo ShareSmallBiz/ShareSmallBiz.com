@@ -58,7 +58,7 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
     {
         if (!User.Identity.IsAuthenticated)
         {
-            logger.LogWarning("Unauthorized Comment. User is not authenticated id:{id} - {comment}",id, comment);
+            logger.LogWarning("Unauthorized Comment. User is not authenticated id:{id} - {comment}", id, comment);
             return RedirectToAction("Index");
         }
         var userPrincipal = HttpContext.User;

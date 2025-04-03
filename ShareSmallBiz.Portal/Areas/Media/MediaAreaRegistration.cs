@@ -37,6 +37,12 @@ public static class MediaAreaRegistration
             name: "media_area",
             pattern: "{area:exists}/{controller=Media}/{action=Index}/{id?}");
 
+        endpoints.MapControllerRoute(
+            name: "media",
+            pattern: "Media/{id?}",
+            defaults: new { controller = "Media", action = "Index" });
         return endpoints;
+
+
     }
 }

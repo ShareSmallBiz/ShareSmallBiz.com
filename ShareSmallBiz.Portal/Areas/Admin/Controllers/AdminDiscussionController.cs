@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-
-namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
-
-using global::ShareSmallBiz.Portal.Areas.Forum.Controllers;
+﻿namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
 using global::ShareSmallBiz.Portal.Infrastructure.Services;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Models;
@@ -163,7 +159,7 @@ public class AdminDiscussionController(
             if (User.IsInRole("Admin") && !string.IsNullOrEmpty(discussionModel.AuthorId))
             {
                 var author = await userManager.FindByIdAsync(discussionModel.AuthorId);
-                if(author == null)
+                if (author == null)
                 {
                     logger.LogWarning("Author not found when updating discussionModel.");
                     return Unauthorized();

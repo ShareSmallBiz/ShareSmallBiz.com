@@ -134,10 +134,7 @@ app.Use(async (context, next) =>
 // ========================
 app.MapRazorPages();
 app.MapMediaEndpoints();
-app.MapControllerRoute(
-    name: "media",
-    pattern: "Media/{id?}",
-    defaults: new { controller = "Media", action = "Index" });
+
 
 app.MapControllerRoute(
     name: "areaRoute",
@@ -158,7 +155,7 @@ app.MapControllerRoute(
 );
 
 
-app.MapSitemap(); 
+app.MapSitemap();
 
 app.Logger.LogWarning("🔹 Application started successfully.");
 

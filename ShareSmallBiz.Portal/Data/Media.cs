@@ -1,7 +1,5 @@
 ﻿// First, let's create the Media entity class
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ShareSmallBiz.Portal.Data;
 
