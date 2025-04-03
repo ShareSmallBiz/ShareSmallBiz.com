@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Extensions;
-using ShareSmallBiz.Portal.Services;
 using System.Threading.Tasks;
 
 namespace ShareSmallBiz.Portal.Infrastructure.TagHelpers;

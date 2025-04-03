@@ -1,14 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using ShareSmallBiz.Portal.Data;
-using ShareSmallBiz.Portal.Services;
 using ShareSmallBiz.Portal.Infrastructure.Configuration;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using ShareSmallBiz.Portal.Areas.Media.Services;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
@@ -20,23 +16,18 @@ public class YouTubeController : Controller
     private readonly ShareSmallBizUserContext _context;
     private readonly StorageProviderService _storageProviderService;
     private readonly ILogger<YouTubeController> _logger;
-    private readonly IConfiguration _configuration;
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string _YouTubeApiKey;
+    private readonly YouTubeService _youTubeService;
 
     public YouTubeController(
         ShareSmallBizUserContext context,
         StorageProviderService storageProviderService,
         ILogger<YouTubeController> logger,
-        IConfiguration configuration,
-        IHttpClientFactory httpClientFactory)
+        YouTubeService youTubeService)
     {
         _context = context;
         _storageProviderService = storageProviderService;
         _logger = logger;
-        _configuration = configuration;
-        _httpClientFactory = httpClientFactory;
-        _YouTubeApiKey = _configuration["GOOGLE_YOUTUBE_API_KEY"] ?? throw new ArgumentNullException("GOOGLE_YOUTUBE_API_KEY is not configured");
+        _youTubeService = youTubeService;
     }
 
     // GET: /Media/YouTube
@@ -78,41 +69,27 @@ public class YouTubeController : Controller
         {
             return View(viewModel);
         }
+
         viewModel.Query = query;
+
         try
         {
-            // Build the YouTube API request
-            var searchQuery = Uri.EscapeDataString(viewModel.Query);
-            var maxResults = viewModel.MaxResults > 0 ? viewModel.MaxResults : 10;
-            var requestUrl = $"https://www.googleapis.com/youtube/v3/search?part=snippet&q={searchQuery}&maxResults={maxResults}&type=video&key={_YouTubeApiKey}";
+            var searchResponse = await _youTubeService.SearchVideosAsync(
+                viewModel.Query,
+                viewModel.MaxResults > 0 ? viewModel.MaxResults : 10);
 
-            // Create HttpClient and send request
-            var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.GetAsync(requestUrl);
-
-            if (response.IsSuccessStatusCode)
+            if (searchResponse != null && searchResponse.Items != null)
             {
-                var content = await response.Content.ReadFromJsonAsync<YouTubeSearchResponse>();
-
-                if (content != null && content.Items != null)
+                viewModel.SearchResults = searchResponse.Items.Select(item => new YouTubeVideoViewModel
                 {
-                    viewModel.SearchResults = content.Items.Select(item => new YouTubeVideoViewModel
-                    {
-                        VideoId = item.Id.VideoId,
-                        Title = item.Snippet.Title,
-                        Description = item.Snippet.Description,
-                        ThumbnailUrl = item.Snippet.Thumbnails.Medium.Url,
-                        PublishedAt = item.Snippet.PublishedAt,
-                        ChannelId = item.Snippet.ChannelId,
-                        ChannelTitle = item.Snippet.ChannelTitle
-                    }).ToList();
-                }
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("YouTube API error: {StatusCode} - {Error}", response.StatusCode, errorContent);
-                ModelState.AddModelError("", $"Error from YouTube API: {response.StatusCode}");
+                    VideoId = item.Id.VideoId,
+                    Title = item.Snippet.Title,
+                    Description = item.Snippet.Description,
+                    ThumbnailUrl = item.Snippet.Thumbnails.Medium.Url,
+                    PublishedAt = item.Snippet.PublishedAt,
+                    ChannelId = item.Snippet.ChannelId,
+                    ChannelTitle = item.Snippet.ChannelTitle
+                }).ToList();
             }
         }
         catch (Exception ex)
@@ -121,11 +98,7 @@ public class YouTubeController : Controller
             ModelState.AddModelError("", $"Error searching YouTube: {ex.Message}");
         }
 
-
-
         return View(viewModel);
-
-
     }
 
     // POST: /Media/YouTube/Search
@@ -140,38 +113,22 @@ public class YouTubeController : Controller
 
         try
         {
-            // Build the YouTube API request
-            var searchQuery = Uri.EscapeDataString(viewModel.Query);
-            var maxResults = viewModel.MaxResults > 0 ? viewModel.MaxResults : 10;
-            var requestUrl = $"https://www.googleapis.com/youtube/v3/search?part=snippet&q={searchQuery}&maxResults={maxResults}&type=video&key={_YouTubeApiKey}";
+            var searchResponse = await _youTubeService.SearchVideosAsync(
+                viewModel.Query,
+                viewModel.MaxResults > 0 ? viewModel.MaxResults : 10);
 
-            // Create HttpClient and send request
-            var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.GetAsync(requestUrl);
-
-            if (response.IsSuccessStatusCode)
+            if (searchResponse != null && searchResponse.Items != null)
             {
-                var content = await response.Content.ReadFromJsonAsync<YouTubeSearchResponse>();
-
-                if (content != null && content.Items != null)
+                viewModel.SearchResults = searchResponse.Items.Select(item => new YouTubeVideoViewModel
                 {
-                    viewModel.SearchResults = content.Items.Select(item => new YouTubeVideoViewModel
-                    {
-                        VideoId = item.Id.VideoId,
-                        Title = item.Snippet.Title,
-                        Description = item.Snippet.Description,
-                        ThumbnailUrl = item.Snippet.Thumbnails.Medium.Url,
-                        PublishedAt = item.Snippet.PublishedAt,
-                        ChannelId = item.Snippet.ChannelId,
-                        ChannelTitle = item.Snippet.ChannelTitle
-                    }).ToList();
-                }
-            }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("YouTube API error: {StatusCode} - {Error}", response.StatusCode, errorContent);
-                ModelState.AddModelError("", $"Error from YouTube API: {response.StatusCode}");
+                    VideoId = item.Id.VideoId,
+                    Title = item.Snippet.Title,
+                    Description = item.Snippet.Description,
+                    ThumbnailUrl = item.Snippet.Thumbnails.Medium.Url,
+                    PublishedAt = item.Snippet.PublishedAt,
+                    ChannelId = item.Snippet.ChannelId,
+                    ChannelTitle = item.Snippet.ChannelTitle
+                }).ToList();
             }
         }
         catch (Exception ex)
@@ -253,49 +210,35 @@ public class YouTubeController : Controller
 
         try
         {
-
-            // Create HttpClient for API requests
-            var httpClient = _httpClientFactory.CreateClient();
-
             // 1. Get channel details
-            var channelUrl = $"https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id={channelId}&key={_YouTubeApiKey}";
-            var channelResponse = await httpClient.GetAsync(channelUrl);
+            var channelResponse = await _youTubeService.GetChannelDetailsAsync(channelId);
 
-            if (channelResponse.IsSuccessStatusCode)
+            if (channelResponse != null && channelResponse.Items != null && channelResponse.Items.Any())
             {
-                var channelContent = await channelResponse.Content.ReadFromJsonAsync<YouTubeChannelResponse>();
-                if (channelContent != null && channelContent.Items != null && channelContent.Items.Any())
-                {
-                    var channelInfo = channelContent.Items[0];
-                    viewModel.ChannelTitle = channelInfo.Snippet.Title;
-                    viewModel.ChannelDescription = channelInfo.Snippet.Description;
-                    viewModel.ThumbnailUrl = channelInfo.Snippet.Thumbnails.Medium?.Url ?? channelInfo.Snippet.Thumbnails.Default.Url;
-                    viewModel.SubscriberCount = channelInfo.Statistics.SubscriberCount;
-                    viewModel.VideoCount = channelInfo.Statistics.VideoCount;
-                    viewModel.ViewCount = channelInfo.Statistics.ViewCount;
-                }
+                var channelInfo = channelResponse.Items[0];
+                viewModel.ChannelTitle = channelInfo.Snippet.Title;
+                viewModel.ChannelDescription = channelInfo.Snippet.Description;
+                viewModel.ThumbnailUrl = channelInfo.Snippet.Thumbnails.Medium?.Url ?? channelInfo.Snippet.Thumbnails.Default.Url;
+                viewModel.SubscriberCount = channelInfo.Statistics.SubscriberCount;
+                viewModel.VideoCount = channelInfo.Statistics.VideoCount;
+                viewModel.ViewCount = channelInfo.Statistics.ViewCount;
             }
 
             // 2. Get channel videos
-            var videosUrl = $"https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={channelId}&maxResults=12&order=date&type=video&key={apiKey}";
-            var videosResponse = await httpClient.GetAsync(videosUrl);
+            var videosResponse = await _youTubeService.GetChannelVideosAsync(channelId);
 
-            if (videosResponse.IsSuccessStatusCode)
+            if (videosResponse != null && videosResponse.Items != null)
             {
-                var videosContent = await videosResponse.Content.ReadFromJsonAsync<YouTubeSearchResponse>();
-                if (videosContent != null && videosContent.Items != null)
+                viewModel.Videos = videosResponse.Items.Select(item => new YouTubeVideoViewModel
                 {
-                    viewModel.Videos = videosContent.Items.Select(item => new YouTubeVideoViewModel
-                    {
-                        VideoId = item.Id.VideoId,
-                        Title = item.Snippet.Title,
-                        Description = item.Snippet.Description,
-                        ThumbnailUrl = item.Snippet.Thumbnails.Medium.Url,
-                        PublishedAt = item.Snippet.PublishedAt,
-                        ChannelId = item.Snippet.ChannelId,
-                        ChannelTitle = item.Snippet.ChannelTitle
-                    }).ToList();
-                }
+                    VideoId = item.Id.VideoId,
+                    Title = item.Snippet.Title,
+                    Description = item.Snippet.Description,
+                    ThumbnailUrl = item.Snippet.Thumbnails.Medium.Url,
+                    PublishedAt = item.Snippet.PublishedAt,
+                    ChannelId = item.Snippet.ChannelId,
+                    ChannelTitle = item.Snippet.ChannelTitle
+                }).ToList();
             }
 
             // 3. Check if user has already added videos from this channel
@@ -375,122 +318,4 @@ public class YouTubeChannelViewModel
     public List<YouTubeVideoViewModel> Videos { get; set; } = new();
 
     public List<ShareSmallBiz.Portal.Data.Media> UserVideosFromChannel { get; set; } = new();
-}
-
-// JSON response models for YouTube API
-public class YouTubeSearchResponse
-{
-    [JsonPropertyName("items")]
-    public List<YouTubeSearchItem> Items { get; set; } = new();
-
-    [JsonPropertyName("nextPageToken")]
-    public string NextPageToken { get; set; } = string.Empty;
-
-    [JsonPropertyName("prevPageToken")]
-    public string PrevPageToken { get; set; } = string.Empty;
-
-    [JsonPropertyName("pageInfo")]
-    public YouTubePageInfo PageInfo { get; set; } = new();
-}
-
-public class YouTubePageInfo
-{
-    [JsonPropertyName("totalResults")]
-    public int TotalResults { get; set; }
-
-    [JsonPropertyName("resultsPerPage")]
-    public int ResultsPerPage { get; set; }
-}
-
-public class YouTubeSearchItem
-{
-    [JsonPropertyName("id")]
-    public YouTubeVideoId Id { get; set; } = new();
-
-    [JsonPropertyName("snippet")]
-    public YouTubeSnippet Snippet { get; set; } = new();
-}
-
-public class YouTubeVideoId
-{
-    [JsonPropertyName("videoId")]
-    public string VideoId { get; set; } = string.Empty;
-}
-
-public class YouTubeSnippet
-{
-    [JsonPropertyName("title")]
-    public string Title { get; set; } = string.Empty;
-
-    [JsonPropertyName("description")]
-    public string Description { get; set; } = string.Empty;
-
-    [JsonPropertyName("publishedAt")]
-    public DateTime PublishedAt { get; set; }
-
-    [JsonPropertyName("thumbnails")]
-    public YouTubeThumbnails Thumbnails { get; set; } = new();
-
-    [JsonPropertyName("channelId")]
-    public string ChannelId { get; set; } = string.Empty;
-
-    [JsonPropertyName("channelTitle")]
-    public string ChannelTitle { get; set; } = string.Empty;
-}
-
-public class YouTubeThumbnails
-{
-    [JsonPropertyName("default")]
-    public YouTubeThumbnail Default { get; set; } = new();
-
-    [JsonPropertyName("medium")]
-    public YouTubeThumbnail Medium { get; set; } = new();
-
-    [JsonPropertyName("high")]
-    public YouTubeThumbnail High { get; set; } = new();
-}
-
-public class YouTubeThumbnail
-{
-    [JsonPropertyName("url")]
-    public string Url { get; set; } = string.Empty;
-
-    [JsonPropertyName("width")]
-    public int Width { get; set; }
-
-    [JsonPropertyName("height")]
-    public int Height { get; set; }
-}
-
-public class YouTubeChannelResponse
-{
-    [JsonPropertyName("items")]
-    public List<YouTubeChannelItem> Items { get; set; } = new();
-}
-
-public class YouTubeChannelItem
-{
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
-
-    [JsonPropertyName("snippet")]
-    public YouTubeSnippet Snippet { get; set; } = new();
-
-    [JsonPropertyName("statistics")]
-    public YouTubeChannelStatistics Statistics { get; set; } = new();
-}
-
-public class YouTubeChannelStatistics
-{
-    [JsonPropertyName("viewCount")]
-    public long ViewCount { get; set; }
-
-    [JsonPropertyName("subscriberCount")]
-    public long SubscriberCount { get; set; }
-
-    [JsonPropertyName("hiddenSubscriberCount")]
-    public bool HiddenSubscriberCount { get; set; }
-
-    [JsonPropertyName("videoCount")]
-    public long VideoCount { get; set; }
 }

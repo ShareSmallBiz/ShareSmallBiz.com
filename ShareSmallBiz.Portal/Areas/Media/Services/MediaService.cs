@@ -7,7 +7,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 
-namespace ShareSmallBiz.Portal.Services;
+namespace ShareSmallBiz.Portal.Areas.Media.Services;
 
 public class MediaService
 {
@@ -44,7 +44,7 @@ public class MediaService
     /// <summary>
     /// Gets all media for a specific user
     /// </summary>
-    public async Task<IEnumerable<Media>> GetUserMediaAsync(string userId)
+    public async Task<IEnumerable<ShareSmallBiz.Portal.Data.Media>> GetUserMediaAsync(string userId)
     {
         return await _context.Media
             .Where(m => m.UserId == userId)
@@ -55,7 +55,7 @@ public class MediaService
     /// <summary>
     /// Gets a specific media item by ID
     /// </summary>
-    public async Task<Media?> GetMediaByIdAsync(int id)
+    public async Task<ShareSmallBiz.Portal.Data.Media?> GetMediaByIdAsync(int id)
     {
         return await _context.Media
             .Include(m => m.User)
@@ -65,7 +65,7 @@ public class MediaService
     /// <summary>
     /// Gets a specific media item by ID and user ID (for security)
     /// </summary>
-    public async Task<Media?> GetUserMediaByIdAsync(int id, string userId)
+    public async Task<ShareSmallBiz.Portal.Data.Media?> GetUserMediaByIdAsync(int id, string userId)
     {
         return await _context.Media
             .Include(m => m.User)
@@ -75,7 +75,7 @@ public class MediaService
     /// <summary>
     /// Converts a user's profile picture (byte array) to a Media entity
     /// </summary>
-    public async Task<Media?> ConvertProfilePictureToMediaAsync(ShareSmallBizUser user)
+    public async Task<ShareSmallBiz.Portal.Data.Media?> ConvertProfilePictureToMediaAsync(ShareSmallBizUser user)
     {
         if (user.ProfilePicture == null || user.ProfilePicture.Length == 0)
         {
@@ -95,7 +95,7 @@ public class MediaService
             await File.WriteAllBytesAsync(filePath, user.ProfilePicture);
 
             // Create the media entity
-            var media = new Media
+            var media = new ShareSmallBiz.Portal.Data.Media
             {
                 FileName = fileName,
                 MediaType = MediaType.Image,
@@ -127,7 +127,7 @@ public class MediaService
     /// <summary>
     /// Creates a thumbnail for an image
     /// </summary>
-    public async Task<string> CreateThumbnailAsync(Media media, int width = 200, int height = 200)
+    public async Task<string> CreateThumbnailAsync(ShareSmallBiz.Portal.Data.Media media, int width = 200, int height = 200)
     {
         if (media.MediaType != MediaType.Image)
         {
@@ -211,7 +211,7 @@ public class MediaService
     /// <summary>
     /// Gets the URL for a media item
     /// </summary>
-    public async Task<string> GetMediaUrlAsync(Media media)
+    public async Task<string> GetMediaUrlAsync(ShareSmallBiz.Portal.Data.Media media)
     {
         if (media.StorageProvider == StorageProviderNames.External ||
             media.StorageProvider == StorageProviderNames.YouTube)
@@ -225,7 +225,7 @@ public class MediaService
     /// <summary>
     /// Gets the URL for a media thumbnail
     /// </summary>
-    public async Task<string> GetThumbnailUrlAsync(Media media)
+    public async Task<string> GetThumbnailUrlAsync(ShareSmallBiz.Portal.Data.Media media)
     {
         if (media.MediaType != MediaType.Image)
         {
@@ -239,7 +239,7 @@ public class MediaService
     /// <summary>
     /// Deletes a media item
     /// </summary>
-    public async Task DeleteMediaAsync(Media media)
+    public async Task DeleteMediaAsync(ShareSmallBiz.Portal.Data.Media media)
     {
         try
         {
@@ -260,7 +260,7 @@ public class MediaService
     /// <summary>
     /// Gets a file stream for a media item
     /// </summary>
-    public async Task<Stream> GetFileStreamAsync(Media media)
+    public async Task<Stream> GetFileStreamAsync(ShareSmallBiz.Portal.Data.Media media)
     {
         if (media.StorageProvider == StorageProviderNames.LocalStorage)
         {
@@ -274,7 +274,7 @@ public class MediaService
     /// <summary>
     /// Gets a file stream for a media thumbnail
     /// </summary>
-    public async Task<Stream> GetThumbnailStreamAsync(Media media, int width = 200, int height = 200)
+    public async Task<Stream> GetThumbnailStreamAsync(ShareSmallBiz.Portal.Data.Media media, int width = 200, int height = 200)
     {
         if (media.MediaType != MediaType.Image)
         {

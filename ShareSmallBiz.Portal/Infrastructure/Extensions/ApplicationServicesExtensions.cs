@@ -1,6 +1,6 @@
 ﻿using HttpClientUtility.StringConverter;
+using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Infrastructure.Services;
-using ShareSmallBiz.Portal.Services;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Extensions
 {

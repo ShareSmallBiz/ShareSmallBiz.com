@@ -1,4 +1,6 @@
-﻿namespace ShareSmallBiz.Portal.Areas.Media;
+﻿using ShareSmallBiz.Portal.Areas.Media.Services;
+
+namespace ShareSmallBiz.Portal.Areas.Media;
 
 /// <summary>
 /// Media Area Registration
@@ -15,7 +17,10 @@ public static class MediaAreaRegistration
             configuration.GetSection(Infrastructure.Configuration.MediaStorageOptions.MediaStorage));
 
         // Register MediaService
-        services.AddScoped<Services.MediaService>();
+        services.AddScoped<MediaService>();
+
+        // Register YouTubeService
+        services.AddScoped<Services.YouTubeService>();
 
         // Register HttpClient for YouTube API
         services.AddHttpClient();

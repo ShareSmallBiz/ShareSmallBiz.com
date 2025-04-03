@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ShareSmallBiz.Portal.Data;
 
-namespace ShareSmallBiz.Portal.Services;
+namespace ShareSmallBiz.Portal.Areas.Media.Services;
 
 public class StorageProviderService
 {
@@ -19,7 +19,7 @@ public class StorageProviderService
         _dbContext = dbContext;
     }
 
-    public async Task<Media> UploadFileAsync(
+    public async Task<ShareSmallBiz.Portal.Data.Media> UploadFileAsync(
         IFormFile file,
         string userId,
         StorageProviderNames provider,
@@ -43,7 +43,7 @@ public class StorageProviderService
         var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
 
         // Initialize new Media entity
-        var media = new Media
+        var media = new ShareSmallBiz.Portal.Data.Media
         {
             FileName = fileName,
             MediaType = mediaType,
@@ -75,7 +75,7 @@ public class StorageProviderService
         return media;
     }
 
-    public async Task<Media> CreateExternalLinkAsync(
+    public async Task<ShareSmallBiz.Portal.Data.Media> CreateExternalLinkAsync(
         string externalUrl,
         string fileName,
         MediaType mediaType,
@@ -96,7 +96,7 @@ public class StorageProviderService
             string embedUrl = $"https://www.youtube.com/embed/{videoId}";
 
             // Create media record with YouTube as provider
-            var media = new Media
+            var media = new ShareSmallBiz.Portal.Data.Media
             {
                 FileName = fileName,
                 ContentType = "video/youtube",
@@ -119,7 +119,7 @@ public class StorageProviderService
         else
         {
             // Handle other external links as before
-            var media = new Media
+            var media = new ShareSmallBiz.Portal.Data.Media
             {
                 FileName = fileName,
                 ContentType = DetermineContentType(externalUrl, mediaType),
@@ -165,7 +165,7 @@ public class StorageProviderService
         return "application/octet-stream";
     }
 
-    public async Task<Stream> GetFileStreamAsync(Media media)
+    public async Task<Stream> GetFileStreamAsync(ShareSmallBiz.Portal.Data.Media media)
     {
         switch (media.StorageProvider)
         {
@@ -178,7 +178,7 @@ public class StorageProviderService
         }
     }
 
-    public async Task DeleteFileAsync(Media media, string _mediaRootPath)
+    public async Task DeleteFileAsync(ShareSmallBiz.Portal.Data.Media media, string _mediaRootPath)
     {
         switch (media.StorageProvider)
         {
@@ -230,7 +230,7 @@ public class StorageProviderService
         return Array.Exists(allowedTypes, type => type.Equals(file.ContentType, StringComparison.OrdinalIgnoreCase));
     }
 
-    public async Task<string> GetPublicUrlAsync(Media media)
+    public async Task<string> GetPublicUrlAsync(ShareSmallBiz.Portal.Data.Media media)
     {
         switch (media.StorageProvider)
         {

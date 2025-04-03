@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ShareSmallBiz.Portal.Data;
-using ShareSmallBiz.Portal.Services;
 using ShareSmallBiz.Portal.Infrastructure.Configuration;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using System.Text.RegularExpressions;
+using ShareSmallBiz.Portal.Areas.Media.Services;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 

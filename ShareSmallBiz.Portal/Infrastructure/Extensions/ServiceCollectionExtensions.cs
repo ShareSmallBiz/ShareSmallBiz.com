@@ -55,16 +55,6 @@ public static class ServiceCollectionExtensions
             return cacheService;
         });
 
-        // Register the YouTubeApi service.
-        services.Configure<YouTubeApiOptions>(configuration.GetSection("YouTubeApi"));
-        services.AddHttpClient("YouTubeApi", client =>
-        {
-            var options = configuration.GetSection("YouTubeApi").Get<YouTubeApiOptions>();
-            client.BaseAddress = new Uri(options.BaseUrl);
-        });
-        services.AddScoped<IYouTubeService, YouTubeService>();
-
-
         return services;
     }
 
