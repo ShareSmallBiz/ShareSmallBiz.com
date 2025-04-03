@@ -178,12 +178,25 @@ public class StorageProviderService
         }
     }
 
-    public async Task DeleteFileAsync(Media media)
+    public async Task DeleteFileAsync(Media media, string _mediaRootPath)
     {
         switch (media.StorageProvider)
         {
             case StorageProviderNames.LocalStorage:
-                await DeleteLocalFileAsync(media.Url);
+                // Delete the physical file
+                if (File.Exists(media.Url))
+                {
+                    File.Delete(media.Url);
+                }
+
+                // Delete any thumbnails
+                string thumbDirectory = Path.Combine(_mediaRootPath, "thumbnails");
+                string fileNameWithoutPath = Path.GetFileName(media.Url);
+                var thumbFiles = Directory.GetFiles(thumbDirectory, $"thumb_*_{fileNameWithoutPath}");
+                foreach (var thumbFile in thumbFiles)
+                {
+                    File.Delete(thumbFile);
+                }
                 break;
             case StorageProviderNames.External:
                 // Nothing to delete for external links
@@ -194,9 +207,6 @@ public class StorageProviderService
             default:
                 throw new ArgumentException($"Unsupported storage provider: {media.StorageProvider}");
         }
-
-        _dbContext.Media.Remove(media);
-        await _dbContext.SaveChangesAsync();
     }
 
     public async Task<bool> ValidateFileAsync(IFormFile file)

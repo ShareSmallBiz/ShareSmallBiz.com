@@ -22,6 +22,7 @@ public class YouTubeController : Controller
     private readonly ILogger<YouTubeController> _logger;
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly string _YouTubeApiKey;
 
     public YouTubeController(
         ShareSmallBizUserContext context,
@@ -35,6 +36,7 @@ public class YouTubeController : Controller
         _logger = logger;
         _configuration = configuration;
         _httpClientFactory = httpClientFactory;
+        _YouTubeApiKey = _configuration["GOOGLE_YOUTUBE_API_KEY"] ?? throw new ArgumentNullException("GOOGLE_YOUTUBE_API_KEY is not configured");
     }
 
     // GET: /Media/YouTube
@@ -69,10 +71,61 @@ public class YouTubeController : Controller
 
     // GET: /Media/YouTube/Search
     [HttpGet("Search")]
-    public IActionResult Search()
+    public async Task<IActionResult> Search(string? query = "")
     {
         var viewModel = new YouTubeSearchViewModel();
+        if (string.IsNullOrEmpty(query))
+        {
+            return View(viewModel);
+        }
+        viewModel.Query = query;
+        try
+        {
+            // Build the YouTube API request
+            var searchQuery = Uri.EscapeDataString(viewModel.Query);
+            var maxResults = viewModel.MaxResults > 0 ? viewModel.MaxResults : 10;
+            var requestUrl = $"https://www.googleapis.com/youtube/v3/search?part=snippet&q={searchQuery}&maxResults={maxResults}&type=video&key={_YouTubeApiKey}";
+
+            // Create HttpClient and send request
+            var httpClient = _httpClientFactory.CreateClient();
+            var response = await httpClient.GetAsync(requestUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadFromJsonAsync<YouTubeSearchResponse>();
+
+                if (content != null && content.Items != null)
+                {
+                    viewModel.SearchResults = content.Items.Select(item => new YouTubeVideoViewModel
+                    {
+                        VideoId = item.Id.VideoId,
+                        Title = item.Snippet.Title,
+                        Description = item.Snippet.Description,
+                        ThumbnailUrl = item.Snippet.Thumbnails.Medium.Url,
+                        PublishedAt = item.Snippet.PublishedAt,
+                        ChannelId = item.Snippet.ChannelId,
+                        ChannelTitle = item.Snippet.ChannelTitle
+                    }).ToList();
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("YouTube API error: {StatusCode} - {Error}", response.StatusCode, errorContent);
+                ModelState.AddModelError("", $"Error from YouTube API: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching YouTube");
+            ModelState.AddModelError("", $"Error searching YouTube: {ex.Message}");
+        }
+
+
+
         return View(viewModel);
+
+
     }
 
     // POST: /Media/YouTube/Search
@@ -87,18 +140,10 @@ public class YouTubeController : Controller
 
         try
         {
-            // Get API key from configuration
-            var apiKey = _configuration["GOOGLE_YOUTUBE_API_KEY"];
-            if (string.IsNullOrEmpty(apiKey))
-            {
-                ModelState.AddModelError("", "YouTube API key is not configured");
-                return View(viewModel);
-            }
-
             // Build the YouTube API request
             var searchQuery = Uri.EscapeDataString(viewModel.Query);
             var maxResults = viewModel.MaxResults > 0 ? viewModel.MaxResults : 10;
-            var requestUrl = $"https://www.googleapis.com/youtube/v3/search?part=snippet&q={searchQuery}&maxResults={maxResults}&type=video&key={apiKey}";
+            var requestUrl = $"https://www.googleapis.com/youtube/v3/search?part=snippet&q={searchQuery}&maxResults={maxResults}&type=video&key={_YouTubeApiKey}";
 
             // Create HttpClient and send request
             var httpClient = _httpClientFactory.CreateClient();
@@ -208,19 +253,12 @@ public class YouTubeController : Controller
 
         try
         {
-            // Get API key from configuration
-            var apiKey = _configuration["YouTube:ApiKey"];
-            if (string.IsNullOrEmpty(apiKey))
-            {
-                ModelState.AddModelError("", "YouTube API key is not configured");
-                return View(viewModel);
-            }
 
             // Create HttpClient for API requests
             var httpClient = _httpClientFactory.CreateClient();
 
             // 1. Get channel details
-            var channelUrl = $"https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id={channelId}&key={apiKey}";
+            var channelUrl = $"https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id={channelId}&key={_YouTubeApiKey}";
             var channelResponse = await httpClient.GetAsync(channelUrl);
 
             if (channelResponse.IsSuccessStatusCode)

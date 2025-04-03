@@ -243,28 +243,8 @@ public class MediaService
     {
         try
         {
-            if (media.StorageProvider == StorageProviderNames.LocalStorage)
-            {
-                // Delete the physical file
-                if (File.Exists(media.Url))
-                {
-                    File.Delete(media.Url);
-                }
-
-                // Delete any thumbnails
-                string thumbDirectory = Path.Combine(_mediaRootPath, "thumbnails");
-                string fileNameWithoutPath = Path.GetFileName(media.Url);
-                var thumbFiles = Directory.GetFiles(thumbDirectory, $"thumb_*_{fileNameWithoutPath}");
-                foreach (var thumbFile in thumbFiles)
-                {
-                    File.Delete(thumbFile);
-                }
-            }
-            else
-            {
-                // For other storage providers, use the storage provider service
-                await _storageProviderService.DeleteFileAsync(media);
-            }
+            // Remove any artifacts of the media
+            await _storageProviderService.DeleteFileAsync(media, _mediaRootPath);
 
             // Remove from database
             _context.Media.Remove(media);
