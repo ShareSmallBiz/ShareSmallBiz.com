@@ -5,25 +5,26 @@ using System.Text.Json;
 namespace ShareSmallBiz.Portal.Areas.Media.Services;
 
 /// <summary>
-/// Service for YouTube-specific media operations
+/// Service for YouTube-specific media operations with database entities
+/// Acts as a specialized wrapper for MediaService to handle YouTube content
 /// </summary>
 public class YouTubeMediaService
 {
     private readonly ILogger<YouTubeMediaService> _logger;
-    private readonly StorageProviderService _storageProviderService;
     private readonly MediaService _mediaService;
     private readonly YouTubeService _youTubeService;
+    private readonly StorageProviderService _storageProviderService;
 
     public YouTubeMediaService(
         ILogger<YouTubeMediaService> logger,
-        StorageProviderService storageProviderService,
         MediaService mediaService,
-        YouTubeService youTubeService)
+        YouTubeService youTubeService,
+        StorageProviderService storageProviderService)
     {
         _logger = logger;
-        _storageProviderService = storageProviderService;
         _mediaService = mediaService;
         _youTubeService = youTubeService;
+        _storageProviderService = storageProviderService;
     }
 
     /// <summary>
@@ -37,14 +38,14 @@ public class YouTubeMediaService
         string userId)
     {
         // Validate YouTube URL
-        string videoId = _storageProviderService.ExtractYouTubeVideoId(youtubeUrl);
+        string videoId = _youTubeService.ExtractVideoIdFromUrl(youtubeUrl);
         if (string.IsNullOrEmpty(videoId))
         {
             throw new ArgumentException("Invalid YouTube URL format", nameof(youtubeUrl));
         }
 
         // Create a standardized YouTube embed URL
-        string embedUrl = _storageProviderService.GetYouTubeEmbedUrl(videoId);
+        string embedUrl = _youTubeService.GetEmbedUrlFromVideoId(videoId);
 
         // Fetch additional video details if possible
         string channelId = string.Empty;
@@ -72,17 +73,15 @@ public class YouTubeMediaService
             // Continue with basic information
         }
 
-        // Create metadata
-        var metadata = new Dictionary<string, string>
-        {
-            { "videoId", videoId },
-            { "originalUrl", youtubeUrl },
-            { "channelId", channelId },
-            { "channelTitle", channelTitle },
-            { "publishedDate", publishedDate.ToString("o") },
-            { "duration", duration },
-            { "viewCount", viewCount }
-        };
+        // Create metadata using the YouTubeService
+        var metadata = _youTubeService.CreateVideoMetadata(
+            videoId,
+            youtubeUrl,
+            channelId,
+            channelTitle,
+            publishedDate,
+            duration,
+            viewCount);
 
         // Create media entity
         MediaModel media = new()
@@ -122,13 +121,8 @@ public class YouTubeMediaService
         // Create a YouTube channel URL
         string channelUrl = $"https://www.youtube.com/channel/{channelId}";
 
-        // Create metadata
-        var metadata = new Dictionary<string, string>
-        {
-            { "channelId", channelId },
-            { "channelTitle", channelTitle },
-            { "type", "youtube_channel" }
-        };
+        // Create metadata using the YouTubeService
+        var metadata = _youTubeService.CreateChannelMetadata(channelId, channelTitle);
 
         // Create media entity
         MediaModel media = new()
@@ -163,7 +157,7 @@ public class YouTubeMediaService
 
         try
         {
-            var metadata = JsonSerializer.Deserialize<Dictionary<string, string>>(media.StorageMetadata);
+            var metadata = _youTubeService.ExtractMetadataFromJson(media.StorageMetadata);
             if (metadata != null && metadata.TryGetValue("channelId", out string channelId))
             {
                 return channelId;
@@ -189,7 +183,7 @@ public class YouTubeMediaService
 
         try
         {
-            var metadata = JsonSerializer.Deserialize<Dictionary<string, string>>(media.StorageMetadata);
+            var metadata = _youTubeService.ExtractMetadataFromJson(media.StorageMetadata);
             if (metadata != null && metadata.TryGetValue("videoId", out string videoId))
             {
                 return videoId;
@@ -201,11 +195,11 @@ public class YouTubeMediaService
         }
 
         // Fall back to extracting from URL
-        return _storageProviderService.ExtractYouTubeVideoId(media.Url);
+        return _youTubeService.ExtractVideoIdFromUrl(media.Url);
     }
 
     /// <summary>
-    /// Searches YouTube for videos matching a query
+    /// Converts YouTube API search results to view models
     /// </summary>
     public async Task<IEnumerable<YouTubeVideoViewModel>> SearchVideosAsync(string query, int maxResults = 10)
     {
@@ -237,7 +231,7 @@ public class YouTubeMediaService
     }
 
     /// <summary>
-    /// Gets details about a YouTube channel
+    /// Gets details about a YouTube channel and its videos
     /// </summary>
     public async Task<YouTubeChannelViewModel?> GetChannelDetailsAsync(string channelId, int videoCount = 12)
     {
@@ -316,8 +310,8 @@ public class YouTubeMediaService
                 PublishedAt = video.Snippet.PublishedAt,
                 ChannelId = video.Snippet.ChannelId,
                 ChannelTitle = video.Snippet.ChannelTitle,
-                Duration = YouTubeService.FormatDuration(video.ContentDetails.Duration),
-                ViewCount = YouTubeService.FormatViewCount(video.Statistics.ViewCount),
+                Duration = _youTubeService.FormatDuration(video.ContentDetails.Duration),
+                ViewCount = _youTubeService.FormatViewCount(video.Statistics.ViewCount),
                 LikeCount = video.Statistics.LikeCount,
                 CommentCount = video.Statistics.CommentCount
             };
@@ -347,34 +341,6 @@ public class YouTubeMediaService
     }
 
     /// <summary>
-    /// Gets user's media items that are from a specific YouTube channel
-    /// </summary>
-    public async Task<IEnumerable<MediaModel>> GetUserMediaFromChannelAsync(string userId, string channelId)
-    {
-        // Get all YouTube videos
-        var allYouTubeMedia = await _mediaService.GetMediaByStorageProviderAsync(userId, StorageProviderNames.YouTube);
-
-        // Filter by channel ID in metadata
-        return allYouTubeMedia.Where(m =>
-        {
-            if (string.IsNullOrEmpty(m.StorageMetadata))
-            {
-                return false;
-            }
-
-            try
-            {
-                var metadata = JsonSerializer.Deserialize<Dictionary<string, string>>(m.StorageMetadata);
-                return metadata != null && metadata.TryGetValue("channelId", out string storedChannelId) && storedChannelId == channelId;
-            }
-            catch
-            {
-                return false;
-            }
-        });
-    }
-
-    /// <summary>
     /// Gets the channel details for a YouTube video
     /// </summary>
     public async Task<YouTubeChannelViewModel?> GetChannelForVideoAsync(string videoId)
@@ -401,22 +367,31 @@ public class YouTubeMediaService
     }
 
     /// <summary>
-    /// Updates a YouTube video embed URL with parameters
+    /// Gets user's media items that are from a specific YouTube channel
     /// </summary>
-    public string UpdateYouTubeEmbedUrl(string embedUrl, string parameters)
+    public async Task<IEnumerable<MediaModel>> GetUserMediaFromChannelAsync(string userId, string channelId)
     {
-        if (string.IsNullOrEmpty(embedUrl))
-            return string.Empty;
+        // Get all YouTube videos
+        var allYouTubeMedia = await _mediaService.GetMediaByStorageProviderAsync(userId, StorageProviderNames.YouTube);
 
-        // Check if URL already has parameters
-        if (embedUrl.Contains('?'))
+        // Filter by channel ID in metadata
+        return allYouTubeMedia.Where(m =>
         {
-            return $"{embedUrl}&{parameters}";
-        }
-        else
-        {
-            return $"{embedUrl}?{parameters}";
-        }
+            if (string.IsNullOrEmpty(m.StorageMetadata))
+            {
+                return false;
+            }
+
+            try
+            {
+                var metadata = _youTubeService.ExtractMetadataFromJson(m.StorageMetadata);
+                return metadata != null && metadata.TryGetValue("channelId", out string storedChannelId) && storedChannelId == channelId;
+            }
+            catch
+            {
+                return false;
+            }
+        });
     }
 
     /// <summary>
