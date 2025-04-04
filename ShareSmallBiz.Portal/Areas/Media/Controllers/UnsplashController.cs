@@ -45,19 +45,20 @@ public class UnsplashController : Controller
 
     // GET: /Media/Unsplash/Search
     [HttpGet("Search")]
-    public async Task<IActionResult> Search(string? query = "", int page = 1)
+    public async Task<IActionResult> Search(string? query = "", int page = 1, int perPage = 9)
     {
         var viewModel = new UnsplashSearchViewModel
         {
             Query = query,
-            Page = page
+            Page = page,
+            PerPage = perPage
         };
 
         if (!string.IsNullOrEmpty(query))
         {
             try
             {
-                var searchResponse = await _unsplashService.SearchImagesAsync(query, page, viewModel.PerPage);
+                var searchResponse = await _unsplashService.SearchImagesAsync(query, page, perPage);
                 if (searchResponse != null)
                 {
                     viewModel.Photos = searchResponse.Results;
@@ -104,6 +105,42 @@ public class UnsplashController : Controller
         return View(viewModel);
     }
 
+    // GET: /Media/Unsplash/User/{username}
+    [HttpGet("User/{username}")]
+    public async Task<IActionResult> UserProfile(string username, int page = 1, int perPage = 9)
+    {
+        try
+        {
+            // Get user profile information
+            var userProfile = await _unsplashService.GetUserProfileAsync(username);
+            if (userProfile == null)
+            {
+                return NotFound();
+            }
+
+            // Get user photos
+            var userPhotosResponse = await _unsplashService.GetUserPhotosAsync(username, page, perPage);
+
+            var viewModel = new UnsplashUserViewModel
+            {
+                UserProfile = userProfile,
+                Photos = userPhotosResponse?.Photos ?? new List<UnsplashPhoto>(),
+                Page = page,
+                PerPage = perPage,
+                TotalPages = userPhotosResponse?.TotalPages ?? 1,
+                TotalPhotos = userPhotosResponse?.Total ?? 0
+            };
+
+            return View(viewModel);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting Unsplash user details for {Username}", username);
+            TempData["ErrorMessage"] = $"Error getting user details: {ex.Message}";
+            return RedirectToAction(nameof(Index));
+        }
+    }
+
     // GET: /Media/Unsplash/Details/{id}
     [HttpGet("Details/{id}")]
     public async Task<IActionResult> Details(string id)
@@ -133,7 +170,7 @@ public class UnsplashController : Controller
 
     // POST: /Media/Unsplash/Save
     [HttpPost("Save")]
-    public async Task<IActionResult> Save(string photoId)
+    public async Task<IActionResult> Save(string photoId, string? returnUrl = null)
     {
         if (string.IsNullOrEmpty(photoId))
         {
@@ -154,6 +191,13 @@ public class UnsplashController : Controller
             var media = await _unsplashService.CreateUnsplashMediaAsync(photo, userId);
 
             TempData["SuccessMessage"] = "Unsplash photo added successfully to your library.";
+
+            // Redirect back to referring page if provided
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
             return RedirectToAction("Details", "Library", new { id = media.Id });
         }
         catch (Exception ex)
@@ -164,10 +208,8 @@ public class UnsplashController : Controller
         }
     }
 
-
     // API endpoint for AJAX search
     [HttpGet("api/search")]
-    [Route("api/search")]
     public async Task<IActionResult> ApiSearch([FromQuery] string query, [FromQuery] int page = 1, [FromQuery] int perPage = 10)
     {
         try
@@ -178,6 +220,22 @@ public class UnsplashController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in Unsplash API search");
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    // API endpoint for AJAX user photos
+    [HttpGet("api/user/{username}")]
+    public async Task<IActionResult> ApiUserPhotos([FromRoute] string username, [FromQuery] int page = 1, [FromQuery] int perPage = 10)
+    {
+        try
+        {
+            var userPhotosResponse = await _unsplashService.GetUserPhotosAsync(username, page, perPage);
+            return Ok(userPhotosResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in Unsplash API user photos request");
             return StatusCode(500, new { error = ex.Message });
         }
     }
@@ -194,7 +252,7 @@ public class UnsplashSearchViewModel
 
     [Display(Name = "Results Per Page")]
     [Range(1, 30, ErrorMessage = "Please enter a value between 1 and 30")]
-    public int PerPage { get; set; } = 12;
+    public int PerPage { get; set; } = 9;
 
     public int TotalPages { get; set; }
 
@@ -208,4 +266,14 @@ public class UnsplashSearchViewModel
 public class UnsplashPhotoViewModel
 {
     public UnsplashPhoto Photo { get; set; } = new();
+}
+
+public class UnsplashUserViewModel
+{
+    public UnsplashUser UserProfile { get; set; } = new();
+    public List<UnsplashPhoto> Photos { get; set; } = new();
+    public int Page { get; set; } = 1;
+    public int PerPage { get; set; } = 9;
+    public int TotalPages { get; set; }
+    public int TotalPhotos { get; set; }
 }

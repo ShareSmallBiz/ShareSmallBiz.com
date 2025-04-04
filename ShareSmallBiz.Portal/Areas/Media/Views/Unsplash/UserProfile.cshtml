@@ -1,6 +1,6 @@
-﻿@model UnsplashSearchViewModel
+﻿@model UnsplashUserViewModel
 @{
-    ViewData["Title"] = "Search Unsplash Images";
+    ViewData["Title"] = $"Photos by {Model.UserProfile.Name}";
 }
 
 <div class="container py-4">
@@ -8,7 +8,7 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a asp-controller="Library" asp-action="Index">Media Library</a></li>
             <li class="breadcrumb-item"><a asp-action="Index">Unsplash</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Search</li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.UserProfile.Name</li>
         </ol>
     </nav>
 
@@ -30,53 +30,83 @@
         </div>
     }
 
+    <!-- User Profile Header -->
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">
-                <i class="bi bi-search me-2"></i>
-                Search Unsplash Images
-            </h5>
-        </div>
         <div class="card-body">
-            <form asp-action="Search" method="post">
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <div class="row align-items-center">
+                <div class="col-md-2 text-center">
+                    @if (!string.IsNullOrEmpty(Model.UserProfile.ProfileImage?.Medium))
+                    {
+                        <img src="@Model.UserProfile.ProfileImage.Medium"
+                             class="rounded-circle img-fluid"
+                             alt="@Model.UserProfile.Name's profile"
+                             style="max-width: 120px;">
+                    }
+                    else
+                    {
+                        <div class="bg-light rounded-circle p-3 d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px;">
+                            <i class="bi bi-person-circle text-primary" style="font-size: 4rem;"></i>
+                        </div>
+                    }
+                </div>
+                <div class="col-md-10">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h2 class="mb-1">@Model.UserProfile.Name</h2>
+                            <p class="text-muted mb-2">@@@Model.UserProfile.Username</p>
 
-                <div class="row g-3">
-                    <div class="col-md-8">
-                        <div class="form-floating">
-                            <input asp-for="Query" class="form-control" placeholder="Enter search terms">
-                            <label asp-for="Query">Search Terms</label>
-                            <span asp-validation-for="Query" class="text-danger"></span>
+                            @if (!string.IsNullOrEmpty(Model.UserProfile.Location))
+                            {
+                                <p class="mb-2">
+                                    <i class="bi bi-geo-alt me-1"></i> @Model.UserProfile.Location
+                                </p>
+                            }
+
+                            @if (!string.IsNullOrEmpty(Model.UserProfile.Bio))
+                            {
+                                <p class="mb-2">@Model.UserProfile.Bio</p>
+                            }
+
+                            <div class="d-flex gap-2 mt-2">
+                                <a href="@Model.UserProfile.Links.Html" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-unsplash me-1"></i> View on Unsplash
+                                </a>
+                                @if (!string.IsNullOrEmpty(Model.UserProfile.PortfolioUrl))
+                                {
+                                    <a href="@Model.UserProfile.PortfolioUrl" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-globe me-1"></i> Portfolio
+                                    </a>
+                                }
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-floating">
-                            <input asp-for="Page" class="form-control" placeholder="Page">
-                            <label asp-for="Page">Page</label>
-                            <span asp-validation-for="Page" class="text-danger"></span>
+                        <div>
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-light text-dark p-2">
+                                    <i class="bi bi-image me-1"></i> @Model.TotalPhotos Photos
+                                </span>
+                                <span class="badge bg-light text-dark p-2">
+                                    <i class="bi bi-collection me-1"></i> @Model.UserProfile.TotalCollections Collections
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary h-100 w-100">
-                            <i class="bi bi-search me-1"></i> Search
-                        </button>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
-    @if (Model.Photos != null && Model.Photos.Any())
-    {
-        <div class="card shadow-sm">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="bi bi-image me-2"></i>
-                    Search Results
-                </h5>
-                <span class="badge bg-primary">@Model.TotalResults total images, page @Model.Page of @Model.TotalPages</span>
-            </div>
-            <div class="card-body">
+    <!-- Photos Grid -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-images me-2"></i>
+                Photos by @Model.UserProfile.Name
+            </h5>
+            <span class="badge bg-primary">@Model.TotalPhotos total photos, page @Model.Page of @Model.TotalPages</span>
+        </div>
+        <div class="card-body">
+            @if (Model.Photos.Any())
+            {
                 <div class="row g-4">
                     @foreach (var photo in Model.Photos)
                     {
@@ -88,7 +118,7 @@
                                          alt="@(photo.AltDescription ?? "Unsplash photo")"
                                          loading="lazy">
                                     <div class="position-absolute top-0 end-0 p-2">
-                                        <a href="@Url.Action("Details", new { id = photo.Id, returnQuery = Model.Query })" class="btn btn-sm btn-primary me-1" title="View Details">
+                                        <a href="@Url.Action("Details", new { id = photo.Id })" class="btn btn-sm btn-primary me-1" title="View Details">
                                             <i class="bi bi-info-circle"></i>
                                         </a>
                                         <a href="@photo.Links.Html" target="_blank" class="btn btn-sm btn-dark" title="View on Unsplash">
@@ -104,9 +134,6 @@
                                                                         : photo.AltDescription)
                                                                         : photo.Description)
                             </h6>
-                            <p class="card-text small text-muted mb-3">
-                                Photo by <a asp-action="UserProfile" asp-route-username="@photo.User.Username">@photo.User.Name</a> on Unsplash
-                            </p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="text-muted small">@photo.Width x @photo.Height</span>
                                 <span class="badge bg-light text-dark">
@@ -117,7 +144,7 @@
                         <div class="card-footer bg-white">
                             <form asp-action="Save" method="post">
                                 <input type="hidden" name="photoId" value="@photo.Id" />
-                                <input type="hidden" name="returnUrl" value="@Url.Action("Search", new { query = Model.Query, page = Model.Page })" />
+                                <input type="hidden" name="returnUrl" value="@Url.Action("UserProfile", new { username = Model.UserProfile.Username, page = Model.Page })" />
                                 <div class="d-grid">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="bi bi-plus-circle me-1"></i> Add to Library
@@ -139,8 +166,8 @@
                                 {
                                     <li class="page-item">
                                         <a class="page-link"
-                                           asp-action="Search"
-                                           asp-route-query="@Model.Query"
+                                           asp-action="UserProfile"
+                                           asp-route-username="@Model.UserProfile.Username"
                                            asp-route-page="@(Model.Page - 1)">
                                             <i class="bi bi-chevron-left"></i>
                                         </a>
@@ -161,8 +188,8 @@
                                 {
                                     <li class="page-item @(i == Model.Page ? "active" : "")">
                                         <a class="page-link"
-                                           asp-action="Search"
-                                           asp-route-query="@Model.Query"
+                                           asp-action="UserProfile"
+                                           asp-route-username="@Model.UserProfile.Username"
                                            asp-route-page="@i">
                                             @i
                                         </a>
@@ -173,8 +200,8 @@
                                 {
                                     <li class="page-item">
                                         <a class="page-link"
-                                           asp-action="Search"
-                                           asp-route-query="@Model.Query"
+                                           asp-action="UserProfile"
+                                           asp-route-username="@Model.UserProfile.Username"
                                            asp-route-page="@(Model.Page + 1)">
                                             <i class="bi bi-chevron-right"></i>
                                         </a>
@@ -184,20 +211,24 @@
                         </nav>
                     </div>
                 }
-            </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    No photos found for this user.
+                </div>
+            }
         </div>
-    }
-    else if (!string.IsNullOrEmpty(Model.Query))
-    {
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>
-            No images found for your search query. Please try different keywords.
-        </div>
-    }
-</div>
+    </div>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}
+    <!-- Back Button -->
+    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-house me-1"></i> Unsplash Home
+        </a>
+        <a asp-action="Search" class="btn btn-outline-primary">
+            <i class="bi bi-search me-1"></i> Search Images
+        </a>
+    </div>
+</div>

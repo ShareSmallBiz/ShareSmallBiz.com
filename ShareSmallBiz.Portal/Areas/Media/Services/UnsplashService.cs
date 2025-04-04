@@ -76,6 +76,106 @@ public class UnsplashService
     }
 
     /// <summary>
+    /// Gets photos by a specific Unsplash user
+    /// </summary>
+    /// <param name="username">Unsplash username</param>
+    /// <param name="page">Page number</param>
+    /// <param name="perPage">Results per page</param>
+    /// <returns>User photos response</returns>
+    public async Task<UnsplashUserPhotosResponse?> GetUserPhotosAsync(string username, int page = 1, int perPage = 10)
+    {
+        try
+        {
+            // Validate parameters
+            perPage = Math.Clamp(perPage, 1, 30); // Unsplash limits per_page to 30
+            page = Math.Max(1, page);
+
+            // Build the Unsplash API request for user photos
+            var requestUrl = $"https://api.unsplash.com/users/{username}/photos?page={page}&per_page={perPage}&client_id={_unsplashKey}";
+
+            // Create HttpClient and send request
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Add("Accept-Version", "v1");
+
+            var response = await httpClient.GetAsync(requestUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var photos = JsonSerializer.Deserialize<List<UnsplashPhoto>>(content);
+
+                // Create a response object with pagination information
+                var userPhotosResponse = new UnsplashUserPhotosResponse
+                {
+                    Photos = photos ?? new List<UnsplashPhoto>(),
+                    Page = page,
+                    PerPage = perPage
+                };
+
+                // Try to get total counts from response headers
+                if (response.Headers.TryGetValues("x-total", out var totalValues))
+                {
+                    if (int.TryParse(totalValues.FirstOrDefault(), out int total))
+                    {
+                        userPhotosResponse.Total = total;
+                        userPhotosResponse.TotalPages = (int)Math.Ceiling((double)total / perPage);
+                    }
+                }
+
+                return userPhotosResponse;
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Unsplash API error: {StatusCode} - {Error}", response.StatusCode, errorContent);
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting Unsplash photos for user: {Username}", username);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets user profile information
+    /// </summary>
+    /// <param name="username">Unsplash username</param>
+    /// <returns>User profile information</returns>
+    public async Task<UnsplashUser?> GetUserProfileAsync(string username)
+    {
+        try
+        {
+            // Build the Unsplash API request for user profile
+            var requestUrl = $"https://api.unsplash.com/users/{username}?client_id={_unsplashKey}";
+
+            // Create HttpClient and send request
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Add("Accept-Version", "v1");
+
+            var response = await httpClient.GetAsync(requestUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<UnsplashUser>(content);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Unsplash API error: {StatusCode} - {Error}", response.StatusCode, errorContent);
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting Unsplash user profile: {Username}", username);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Gets a single photo by ID
     /// </summary>
     /// <param name="photoId">Unsplash photo ID</param>
@@ -172,13 +272,13 @@ public class UnsplashService
 
         // Create metadata
         var metadata = new Dictionary<string, string>
-    {
-        { "photoId", photo.Id },
-        { "source", "unsplash" },
-        { "username", photo.User.Username },
-        { "name", photo.User.Name },
-        { "downloadLocation", photo.Links.Download }
-    };
+        {
+            { "photoId", photo.Id },
+            { "source", "unsplash" },
+            { "username", photo.User.Username },
+            { "name", photo.User.Name },
+            { "downloadLocation", photo.Links.Download }
+        };
 
         // Create JSON string for metadata
         var metadataJson = JsonSerializer.Serialize(metadata);
@@ -259,6 +359,15 @@ public class UnsplashSearchResponse
 
     [JsonPropertyName("results")]
     public List<UnsplashPhoto> Results { get; set; } = new();
+}
+
+public class UnsplashUserPhotosResponse
+{
+    public List<UnsplashPhoto> Photos { get; set; } = new();
+    public int Total { get; set; }
+    public int TotalPages { get; set; }
+    public int Page { get; set; }
+    public int PerPage { get; set; }
 }
 
 public class UnsplashPhoto
@@ -347,8 +456,29 @@ public class UnsplashUser
     [JsonPropertyName("location")]
     public string? Location { get; set; }
 
+    [JsonPropertyName("total_photos")]
+    public int TotalPhotos { get; set; }
+
+    [JsonPropertyName("total_collections")]
+    public int TotalCollections { get; set; }
+
     [JsonPropertyName("links")]
     public UnsplashUserLinks Links { get; set; } = new();
+
+    [JsonPropertyName("profile_image")]
+    public UnsplashUserProfileImage ProfileImage { get; set; } = new();
+}
+
+public class UnsplashUserProfileImage
+{
+    [JsonPropertyName("small")]
+    public string Small { get; set; } = string.Empty;
+
+    [JsonPropertyName("medium")]
+    public string Medium { get; set; } = string.Empty;
+
+    [JsonPropertyName("large")]
+    public string Large { get; set; } = string.Empty;
 }
 
 public class UnsplashUserLinks

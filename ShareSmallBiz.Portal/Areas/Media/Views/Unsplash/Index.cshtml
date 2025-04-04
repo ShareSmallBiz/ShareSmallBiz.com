@@ -113,13 +113,35 @@
                             <h5>Find beautiful, free images for your business</h5>
                             <p>Search over millions of high-quality images directly from within the portal. Add them to your media library for easy access and usage on your website.</p>
                             <p>All images are free to use, but proper attribution is required as per the Unsplash license.</p>
-                            <a asp-action="Search" class="btn btn-primary">
-                                <i class="bi bi-search me-1"></i> Start Searching
-                            </a>
+                            <div class="d-flex gap-2">
+                                <a asp-action="Search" class="btn btn-primary">
+                                    <i class="bi bi-search me-1"></i> Start Searching
+                                </a>
+                                <a asp-action="Search" asp-route-query="business" class="btn btn-outline-primary">
+                                    <i class="bi bi-briefcase me-1"></i> Business Images
+                                </a>
+                            </div>
                         </div>
                         <div class="col-md-5 d-flex align-items-center justify-content-center">
                             <div class="bg-light p-3 rounded text-center">
                                 <i class="bi bi-image text-primary" style="font-size: 5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5>New Feature: Browse by Photographer</h5>
+                    <p class="mb-3">You can now explore images by specific photographers. When viewing an image, click on the photographer's name to see all their images.</p>
+
+                    <div class="alert alert-info">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-person-circle text-primary fs-3"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6>Find your favorite photographers</h6>
+                                <p class="mb-0">Discover new work from photographers you love. Just search for images and click the photographer's name to see their portfolio.</p>
                             </div>
                         </div>
                     </div>
@@ -175,17 +197,43 @@
             </h5>
         </div>
         <div class="card-body">
-            <div class="row row-cols-1 row-cols-md-3 g-4">
+            <div class="row row-cols-1 row-cols-md-4 g-4">
+                <div class="col">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary rounded-circle p-3 text-white">
+                                <i class="bi bi-search"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5>Search</h5>
+                            <p class="text-muted">Search millions of high-quality images for your business.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success rounded-circle p-3 text-white">
+                                <i class="bi bi-plus-circle"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5>Add</h5>
+                            <p class="text-muted">Add images to your library with a single click, with proper attribution.</p>
+                        </div>
+                    </div>
+                </div>
                 <div class="col">
                     <div class="d-flex">
                         <div class="flex-shrink-0">
                             <div class="bg-info rounded-circle p-3 text-white">
-                                <i class="bi bi-card-image"></i>
+                                <i class="bi bi-person"></i>
                             </div>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h5>Attribution</h5>
-                            <p class="text-muted">Automatic credit to photographers with every image used.</p>
+                            <h5>Photographers</h5>
+                            <p class="text-muted">Browse images by your favorite photographers.</p>
                         </div>
                     </div>
                 </div>
@@ -198,50 +246,11 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h5>Organize</h5>
-                            <p class="text-muted">Categorize images alongside your other media for easy management.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="d-flex">
-                        <div class="flex-shrink-0">
-                            <div class="bg-secondary rounded-circle p-3 text-white">
-                                <i class="bi bi-share"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h5>Share</h5>
-                            <p class="text-muted">Easily share images on your website, social media, or with clients.</p>
+                            <p class="text-muted">Categorize images alongside your other media.</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>d-flex">
-<div class="flex-shrink-0">
-    <div class="bg-primary rounded-circle p-3 text-white">
-        <i class="bi bi-search"></i>
-    </div>
 </div>
-<div class="flex-grow-1 ms-3">
-    <h5>Search</h5>
-    <p class="text-muted">Search millions of high-quality images for your business.</p>
-</div>
-</div>
-</div>
-<div class="col">
-    <div class="d-flex">
-        <div class="flex-shrink-0">
-            <div class="bg-success rounded-circle p-3 text-white">
-                <i class="bi bi-plus-circle"></i>
-            </div>
-        </div>
-        <div class="flex-grow-1 ms-3">
-            <h5>Add</h5>
-            <p class="text-muted">Add images to your media library with a single click, with proper attribution.</p>
-        </div>
-    </div>
-</div>
-<div class="col">
-    <div class="
