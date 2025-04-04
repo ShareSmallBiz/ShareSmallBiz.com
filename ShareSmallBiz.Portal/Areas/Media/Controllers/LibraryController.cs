@@ -156,50 +156,50 @@ public class LibraryController : Controller
 
             try
             {
-                // Validate YouTube URL if provided
-                if (viewModel.IsYouTube && !string.IsNullOrEmpty(viewModel.YouTubeUrl))
-                {
-                    var videoId = _storageProviderService.ExtractYouTubeVideoId(viewModel.YouTubeUrl);
-                    if (string.IsNullOrEmpty(videoId))
-                    {
-                        ModelState.AddModelError("YouTubeUrl", "Please enter a valid YouTube URL.");
-                        PrepareCreateViewModel(viewModel);
-                        return View(viewModel);
-                    }
-                    viewModel.YouTubeVideoId = videoId;
-                    viewModel.IsExternalLink = true;
-                }
-
                 // Validate file upload
-                if (!viewModel.IsExternalLink && !viewModel.IsYouTube)
+                if (viewModel.File == null || viewModel.File.Length == 0)
                 {
-                    if (viewModel.File == null || viewModel.File.Length == 0)
-                    {
-                        ModelState.AddModelError("File", "Please select a file to upload.");
-                        PrepareCreateViewModel(viewModel);
-                        return View(viewModel);
-                    }
-
-                    // Check file size
-                    if (viewModel.File.Length > _mediaOptions.MaxFileSize)
-                    {
-                        ModelState.AddModelError("File", $"File size exceeds the maximum allowed size of {_mediaOptions.MaxFileSize / (1024 * 1024)}MB.");
-                        PrepareCreateViewModel(viewModel);
-                        return View(viewModel);
-                    }
-
-                    // Check file extension
-                    var extension = Path.GetExtension(viewModel.File.FileName).ToLowerInvariant();
-                    if (!_mediaOptions.AllowedExtensions.Contains(extension))
-                    {
-                        ModelState.AddModelError("File", $"File type {extension} is not allowed.");
-                        PrepareCreateViewModel(viewModel);
-                        return View(viewModel);
-                    }
+                    ModelState.AddModelError("File", "Please select a file to upload.");
+                    PrepareCreateViewModel(viewModel);
+                    return View(viewModel);
                 }
 
-                // Create media using the factory service
-                var media = await _mediaFactoryService.CreateMediaAsync(viewModel, userId);
+                // Check file size
+                if (viewModel.File.Length > _mediaOptions.MaxFileSize)
+                {
+                    ModelState.AddModelError("File", $"File size exceeds the maximum allowed size of {_mediaOptions.MaxFileSize / (1024 * 1024)}MB.");
+                    PrepareCreateViewModel(viewModel);
+                    return View(viewModel);
+                }
+
+                // Check file extension
+                var extension = Path.GetExtension(viewModel.File.FileName).ToLowerInvariant();
+                if (!_mediaOptions.AllowedExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError("File", $"File type {extension} is not allowed.");
+                    PrepareCreateViewModel(viewModel);
+                    return View(viewModel);
+                }
+
+                // Force storage provider to LocalStorage
+                viewModel.StorageProvider = (int)StorageProviderNames.LocalStorage;
+                viewModel.IsExternalLink = false;
+                viewModel.IsYouTube = false;
+
+                // If no filename was provided, use the original file name
+                if (string.IsNullOrEmpty(viewModel.FileName))
+                {
+                    viewModel.FileName = viewModel.File.FileName;
+                }
+
+                // Create media using the file upload service directly
+                var fileUploadService = HttpContext.RequestServices.GetRequiredService<FileUploadService>();
+                var media = await fileUploadService.UploadFileAsync(
+                    viewModel.File,
+                    userId,
+                    StorageProviderNames.LocalStorage,
+                    viewModel.Description,
+                    viewModel.Attribution);
 
                 TempData["SuccessMessage"] = "Media uploaded successfully.";
                 return RedirectToAction(nameof(Details), new { id = media.Id });
@@ -215,6 +215,11 @@ public class LibraryController : Controller
         PrepareCreateViewModel(viewModel);
         return View(viewModel);
     }
+
+
+
+
+
 
     // GET: /Media/Library/Edit/5
     [HttpGet("Edit/{id:int}")]
@@ -382,14 +387,15 @@ public class LibraryController : Controller
                 Selected = viewModel.MediaType == (int)mt
             }).ToList();
 
-        viewModel.StorageProviders = Enum.GetValues(typeof(StorageProviderNames))
-            .Cast<StorageProviderNames>()
-            .Select(sp => new SelectListItem
+        viewModel.StorageProviders =
+        [
+            new SelectListItem
             {
-                Value = ((int)sp).ToString(),
-                Text = sp.ToString(),
-                Selected = viewModel.StorageProvider == (int)sp
-            }).ToList();
+                Value = ((int)StorageProviderNames.LocalStorage).ToString(),
+                Text = StorageProviderNames.LocalStorage.ToString(),
+                Selected = viewModel.StorageProvider == (int)StorageProviderNames.LocalStorage
+            }
+        ];
     }
 
     private void PrepareEditViewModel(LibraryMediaViewModel viewModel)

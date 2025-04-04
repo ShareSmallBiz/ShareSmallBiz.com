@@ -156,9 +156,8 @@ public class UnsplashService
     /// <param name="userId">User ID</param>
     /// <returns>Media entity</returns>
     public async Task<ShareSmallBiz.Portal.Data.Media> CreateUnsplashMediaAsync(
-        UnsplashPhoto photo,
-        string userId,
-        StorageProviderNames storageProvider = StorageProviderNames.External)
+    UnsplashPhoto photo,
+    string userId)
     {
         if (photo == null)
         {
@@ -173,68 +172,26 @@ public class UnsplashService
 
         // Create metadata
         var metadata = new Dictionary<string, string>
-        {
-            { "photoId", photo.Id },
-            { "source", "unsplash" },
-            { "username", photo.User.Username },
-            { "name", photo.User.Name },
-            { "downloadLocation", photo.Links.Download }
-        };
-        // create JSON strin for metadata
+    {
+        { "photoId", photo.Id },
+        { "source", "unsplash" },
+        { "username", photo.User.Username },
+        { "name", photo.User.Name },
+        { "downloadLocation", photo.Links.Download }
+    };
+
+        // Create JSON string for metadata
         var metadataJson = JsonSerializer.Serialize(metadata);
 
-
-        // For external link (just store the URL, don't download the image)
-        if (storageProvider == StorageProviderNames.External)
-        {
-            return await _fileUploadService.CreateExternalLinkAsync(
-                photo.Urls.Full,
-                fileName,
-                MediaType.Image,
-                userId,
-                attribution,
-                photo.Description ?? photo.AltDescription,
-                storageMetaData: metadataJson).ConfigureAwait(true);
-        }
-
-        // For local storage (download the image)
-        try
-        {
-            // Download the image
-            var imageData = await DownloadImageAsync(photo.Links.Download);
-
-            // Convert to IFormFile
-            using var memoryStream = new MemoryStream(imageData);
-            var formFile = new FormFile(
-                memoryStream,
-                0,
-                imageData.Length,
-                fileName,
-                fileName)
-            {
-                Headers = new HeaderDictionary(),
-                ContentType = "image/jpeg"
-            };
-
-            // Create media entity
-            var media = await _fileUploadService.UploadFileAsync(
-                formFile,
-                userId,
-                storageProvider,
-                photo.Description ?? photo.AltDescription,
-                attribution);
-
-            // Update metadata
-            media.StorageMetadata = JsonSerializer.Serialize(metadata);
-            await _mediaService.UpdateMediaAsync(media);
-
-            return media;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating Unsplash media for user {UserId}", userId);
-            throw;
-        }
+        // Create as external link
+        return await _fileUploadService.CreateExternalLinkAsync(
+            photo.Urls.Full,
+            fileName,
+            MediaType.Image,
+            userId,
+            attribution,
+            photo.Description ?? photo.AltDescription,
+            storageMetaData: metadataJson);
     }
 
     private string FormatAttribution(UnsplashPhoto photo)

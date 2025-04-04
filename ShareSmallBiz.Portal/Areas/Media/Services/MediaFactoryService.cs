@@ -68,8 +68,7 @@ public class MediaFactoryService
                             // Create media using UnsplashService
                             return await _unsplashService.CreateUnsplashMediaAsync(
                                 photo,
-                                userId,
-                                StorageProviderNames.External);
+                                userId);
                         }
                     }
                 }

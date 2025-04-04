@@ -133,7 +133,7 @@ public class UnsplashController : Controller
 
     // POST: /Media/Unsplash/Save
     [HttpPost("Save")]
-    public async Task<IActionResult> Save(string photoId, StorageProviderNames storageProvider = StorageProviderNames.External)
+    public async Task<IActionResult> Save(string photoId)
     {
         if (string.IsNullOrEmpty(photoId))
         {
@@ -150,10 +150,10 @@ public class UnsplashController : Controller
                 return NotFound("Photo not found");
             }
 
-            // Create the media entry
-            var media = await _unsplashService.CreateUnsplashMediaAsync(photo, userId, storageProvider);
+            // Create the media entry as external link only
+            var media = await _unsplashService.CreateUnsplashMediaAsync(photo, userId);
 
-            TempData["SuccessMessage"] = "Unsplash photo added successfully.";
+            TempData["SuccessMessage"] = "Unsplash photo added successfully to your library.";
             return RedirectToAction("Details", "Library", new { id = media.Id });
         }
         catch (Exception ex)
@@ -163,6 +163,7 @@ public class UnsplashController : Controller
             return RedirectToAction("Search");
         }
     }
+
 
     // API endpoint for AJAX search
     [HttpGet("api/search")]
