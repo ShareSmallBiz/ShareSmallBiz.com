@@ -1,0 +1,207 @@
+﻿@model UnsplashPhotoViewModel
+@{
+    ViewData["Title"] = "Photo Details";
+}
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Library" asp-action="Index">Media Library</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Unsplash</a></li>
+            <li class="breadcrumb-item"><a asp-action="Search" asp-route-query="@Context.Request.Query["returnQuery"]">Search</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Photo Details</li>
+        </ol>
+    </nav>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Image Preview -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-image me-2"></i>
+                        Image Preview
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <img src="@Model.Photo.Urls.Regular"
+                         class="img-fluid w-100"
+                         alt="@(Model.Photo.AltDescription ?? "Unsplash photo")"
+                         style="max-height: 600px; object-fit: contain;">
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="badge bg-primary me-2">@Model.Photo.Width x @Model.Photo.Height</span>
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-calendar me-1"></i> @Model.Photo.CreatedAt.ToString("MMM d, yyyy")
+                            </span>
+                        </div>
+                        <a href="@Model.Photo.Links.Html" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> View on Unsplash
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Photo Info -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Photo Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="mb-3">
+                        @(string.IsNullOrEmpty(Model.Photo.Description)
+                                                ? (string.IsNullOrEmpty(Model.Photo.AltDescription)
+                                                ? "Untitled Photo"
+                                                : Model.Photo.AltDescription)
+                                                : Model.Photo.Description)
+                    </h5>
+
+                    <dl class="row mb-0">
+                        <dt class="col-5">Photographer</dt>
+                        <dd class="col-7">
+                            <a asp-action="UserProfile" asp-route-username="@Model.Photo.User.Username">@Model.Photo.User.Name</a>
+                        </dd>
+
+                        @if (!string.IsNullOrEmpty(Model.Photo.User.Location))
+                        {
+                            <dt class="col-5">Location</dt>
+                            <dd class="col-7">@Model.Photo.User.Location</dd>
+                        }
+
+                        <dt class="col-5">Dimensions</dt>
+                        <dd class="col-7">@Model.Photo.Width x @Model.Photo.Height</dd>
+
+                        <dt class="col-5">Published</dt>
+                        <dd class="col-7">@Model.Photo.CreatedAt.ToString("MMMM d, yyyy")</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Photographer -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person me-2"></i>
+                        Photographer
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            @if (!string.IsNullOrEmpty(Model.Photo.User.Links.Html))
+                            {
+                                <a asp-action="UserProfile" asp-route-username="@Model.Photo.User.Username">
+                                    <div class="bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-person-circle text-primary fs-3"></i>
+                                    </div>
+                                </a>
+                            }
+                            else
+                            {
+                                <div class="bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="bi bi-person-circle text-primary fs-3"></i>
+                                </div>
+                            }
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-0">@Model.Photo.User.Name</h6>
+                            <p class="small text-muted mb-0">@@@Model.Photo.User.Username</p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Photo.User.Bio))
+                    {
+                        <p class="small text-muted mb-3">@Model.Photo.User.Bio</p>
+                    }
+
+                    <div class="d-grid gap-2">
+                        <a asp-action="UserProfile" asp-route-username="@Model.Photo.User.Username" class="btn btn-sm btn-primary">
+                            <i class="bi bi-images me-1"></i> View All Photos by This Photographer
+                        </a>
+
+                        @if (!string.IsNullOrEmpty(Model.Photo.User.PortfolioUrl))
+                        {
+                            <a href="@Model.Photo.User.PortfolioUrl" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-globe me-1"></i> Portfolio
+                            </a>
+                        }
+
+                        <a href="@Model.Photo.User.Links.Html" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-unsplash me-1"></i> View on Unsplash
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add to Library -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Add to Library
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Add this image to your media library:
+                    </p>
+
+                    <form asp-action="Save" method="post">
+                        <input type="hidden" name="photoId" value="@Model.Photo.Id" />
+                        <input type="hidden" name="returnUrl" value="@Url.Action("Details", new { id = Model.Photo.Id, returnQuery = Context.Request.Query["returnQuery"] })" />
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-1"></i> Add to Library
+                                <div class="small text-light-emphasis">Image remains on Unsplash servers</div>
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    <div class="alert alert-info small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <strong>Attribution Notice:</strong> We'll automatically add proper attribution to the photographer as required by the Unsplash license.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back Buttons -->
+            <div class="d-grid gap-2">
+                <a href="@Url.Action("Search", new { query = Context.Request.Query["returnQuery"] })" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Search Results
+                </a>
+                <a asp-action="Index" class="btn btn-outline-primary">
+                    <i class="bi bi-house me-1"></i> Unsplash Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

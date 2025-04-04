@@ -106,8 +106,8 @@ public class UnsplashController : Controller
         return View(viewModel);
     }
 
-    // GET: /Media/Unsplash/User/{username}
-    [HttpGet("User/{username}")]
+    // GET: /Media/Unsplash/UserProfile/{username}
+    [HttpGet("UserProfile/{username}")]
     public async Task<IActionResult> UserProfile(string username, int page = 1, int perPage = 9)
     {
         try
