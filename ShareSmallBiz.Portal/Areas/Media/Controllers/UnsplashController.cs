@@ -107,7 +107,8 @@ public class UnsplashController : Controller
     }
 
     // GET: /Media/Unsplash/UserProfile/{username}
-    [HttpGet("UserProfile/{username}")]
+    // Updated route to include page parameter
+    [HttpGet("UserProfile/{username}/{page:int?}")]
     public async Task<IActionResult> UserProfile(string username, int page = 1, int perPage = 9)
     {
         try
