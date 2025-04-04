@@ -25,6 +25,7 @@ public static class MediaAreaRegistration
         services.AddScoped<FileUploadService>();
         services.AddScoped<YouTubeMediaService>();
         services.AddScoped<YouTubeService>();
+        services.AddScoped<UnsplashService>();
 
         // Register factory service
         services.AddScoped<MediaFactoryService>();

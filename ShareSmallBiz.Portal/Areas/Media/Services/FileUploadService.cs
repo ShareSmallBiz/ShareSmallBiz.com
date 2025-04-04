@@ -1,6 +1,7 @@
 ﻿using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Configuration;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Services;
 
@@ -53,6 +54,20 @@ public class FileUploadService
         // Upload file to storage provider
         string fileUrl = await _storageProviderService.UploadFileAsync(file, storageProvider, fileName);
 
+        var storageMetaData = new Dictionary<string, string>()
+        {
+            {  "FileName", fileName },
+            { "StorageProvider", storageProvider.ToString() },
+            { "MediaType", mediaType.ToString() },
+            { "Description", description },
+            { "Attribution", attribution },
+            { "UserId", userId },
+            { "CreatedDate", DateTime.UtcNow.ToString("o") },
+            { "ModifiedDate", DateTime.UtcNow.ToString("o") }
+        };
+        string metaDataJson = JsonSerializer.Serialize(storageMetaData);
+
+
         // Create media entity
         var media = new ShareSmallBiz.Portal.Data.Media
         {
@@ -65,6 +80,7 @@ public class FileUploadService
             Attribution = attribution,
             Url = fileUrl,
             UserId = userId,
+            StorageMetadata = metaDataJson,
             CreatedDate = DateTime.UtcNow,
             ModifiedDate = DateTime.UtcNow
         };
@@ -82,7 +98,8 @@ public class FileUploadService
         MediaType mediaType,
         string userId,
         string attribution = "",
-        string description = "")
+        string description = "",
+        string storageMetaData = "")
     {
         if (string.IsNullOrEmpty(externalUrl))
         {
@@ -105,6 +122,7 @@ public class FileUploadService
             ContentType = contentType,
             StorageProvider = StorageProviderNames.External,
             MediaType = mediaType,
+            StorageMetadata = storageMetaData,
             Url = externalUrl,
             UserId = userId,
             CreatedDate = DateTime.UtcNow,

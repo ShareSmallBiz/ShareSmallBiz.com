@@ -13,6 +13,7 @@ public class MediaFactoryService
     private readonly MediaService _mediaService;
     private readonly FileUploadService _fileUploadService;
     private readonly YouTubeMediaService _youtubeMediaService;
+    private readonly UnsplashService _unsplashService;
     private readonly StorageProviderService _storageProviderService;
 
     public MediaFactoryService(
@@ -20,12 +21,14 @@ public class MediaFactoryService
         MediaService mediaService,
         FileUploadService fileUploadService,
         YouTubeMediaService youtubeMediaService,
+        UnsplashService unsplashService,
         StorageProviderService storageProviderService)
     {
         _logger = logger;
         _mediaService = mediaService;
         _fileUploadService = fileUploadService;
         _youtubeMediaService = youtubeMediaService;
+        _unsplashService = unsplashService;
         _storageProviderService = storageProviderService;
     }
 
@@ -51,6 +54,27 @@ public class MediaFactoryService
             // Handle external links
             else if (viewModel.IsExternalLink && !string.IsNullOrEmpty(viewModel.ExternalUrl))
             {
+                // Check if this is an Unsplash URL
+                if (viewModel.ExternalUrl.Contains("unsplash.com"))
+                {
+                    // Extract photo ID from URL
+                    string photoId = ExtractUnsplashPhotoId(viewModel.ExternalUrl);
+                    if (!string.IsNullOrEmpty(photoId))
+                    {
+                        // Get photo details from Unsplash API
+                        var photo = await _unsplashService.GetPhotoAsync(photoId);
+                        if (photo != null)
+                        {
+                            // Create media using UnsplashService
+                            return await _unsplashService.CreateUnsplashMediaAsync(
+                                photo,
+                                userId,
+                                StorageProviderNames.External);
+                        }
+                    }
+                }
+
+                // Default external link handling if not an Unsplash photo or ID extraction failed
                 return await _fileUploadService.CreateExternalLinkAsync(
                     viewModel.ExternalUrl,
                     viewModel.FileName,
@@ -124,6 +148,40 @@ public class MediaFactoryService
                 }
                 else if (!string.IsNullOrEmpty(viewModel.ExternalUrl))
                 {
+                    // Check for Unsplash URL
+                    if (viewModel.ExternalUrl.Contains("unsplash.com"))
+                    {
+                        string photoId = ExtractUnsplashPhotoId(viewModel.ExternalUrl);
+                        if (!string.IsNullOrEmpty(photoId))
+                        {
+                            var photo = await _unsplashService.GetPhotoAsync(photoId);
+                            if (photo != null)
+                            {
+                                media.Url = photo.Urls.Full;
+                                media.StorageProvider = StorageProviderNames.External;
+                                media.MediaType = MediaType.Image;
+
+                                // Update metadata
+                                var metadata = new Dictionary<string, string>
+                                {
+                                    { "photoId", photo.Id },
+                                    { "source", "unsplash" },
+                                    { "username", photo.User.Username },
+                                    { "name", photo.User.Name },
+                                    { "downloadLocation", photo.Links.Download }
+                                };
+                                media.StorageMetadata = System.Text.Json.JsonSerializer.Serialize(metadata);
+
+                                // Update attribution
+                                if (string.IsNullOrEmpty(viewModel.Attribution))
+                                {
+                                    media.Attribution = $"Photo by {photo.User.Name} on Unsplash";
+                                }
+                            }
+                        }
+                    }
+
+                    // Default handling for other external URLs
                     media.Url = viewModel.ExternalUrl;
                     media.StorageProvider = StorageProviderNames.External;
                 }
@@ -180,6 +238,45 @@ public class MediaFactoryService
         if (media != null)
         {
             await _mediaService.DeleteMediaAsync(media);
+        }
+    }
+
+    /// <summary>
+    /// Extracts the Unsplash photo ID from a URL
+    /// </summary>
+    private string ExtractUnsplashPhotoId(string url)
+    {
+        try
+        {
+            // Handle various Unsplash URL formats
+            // Examples:
+            // https://unsplash.com/photos/{photo_id}
+            // https://unsplash.com/photos/{photo_id}/download
+            // https://unsplash.com/photos/{photo_id}?utm_source=...
+
+            var uri = new Uri(url);
+
+            // Check if this is an Unsplash URL
+            if (uri.Host != "unsplash.com" && !uri.Host.EndsWith(".unsplash.com"))
+                return string.Empty;
+
+            // Split path segments
+            var segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            // Look for 'photos' segment followed by the ID
+            for (int i = 0; i < segments.Length - 1; i++)
+            {
+                if (segments[i].Equals("photos", StringComparison.OrdinalIgnoreCase))
+                {
+                    return segments[i + 1];
+                }
+            }
+
+            return string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
         }
     }
 }

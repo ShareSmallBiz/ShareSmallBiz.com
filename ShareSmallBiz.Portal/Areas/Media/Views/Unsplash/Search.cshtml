@@ -1,0 +1,193 @@
+﻿@model UnsplashSearchViewModel
+@{
+    ViewData["Title"] = "Search Unsplash Images";
+}
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Library" asp-action="Index">Media Library</a></li>
+            <li class="breadcrumb-item"><a asp-action="Index">Unsplash</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Search</li>
+        </ol>
+    </nav>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-search me-2"></i>
+                Search Unsplash Images
+            </h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Search" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="form-floating">
+                            <input asp-for="Query" class="form-control" placeholder="Enter search terms">
+                            <label asp-for="Query">Search Terms</label>
+                            <span asp-validation-for="Query" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-floating">
+                            <input asp-for="Page" class="form-control" placeholder="Page">
+                            <label asp-for="Page">Page</label>
+                            <span asp-validation-for="Page" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary h-100 w-100">
+                            <i class="bi bi-search me-1"></i> Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.Photos != null && Model.Photos.Any())
+    {
+        <div class="card shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-image me-2"></i>
+                    Search Results
+                </h5>
+                <span class="badge bg-primary">@Model.TotalResults total images, page @Model.Page of @Model.TotalPages</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    @foreach (var photo in Model.Photos)
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100 shadow-sm image-card">
+                                <div class="image-container position-relative" style="height: 200px; overflow: hidden;">
+                                    <img src="@photo.Urls.Small"
+                                         class="card-img-top h-100 w-100 object-fit-cover"
+                                         alt="@(photo.AltDescription ?? "Unsplash photo")"
+                                         loading="lazy">
+                                    <div class="position-absolute top-0 end-0 p-2">
+                                        <a href="@photo.Links.Html" target="_blank" class="btn btn-sm btn-dark" title="View on Unsplash">
+                                            <i class="bi bi-box-arrow-up-right"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        @(string.IsNullOrEmpty(photo.Description)
+                                                                        ? (string.IsNullOrEmpty(photo.AltDescription)
+                                                                        ? "Untitled Photo"
+                                                                        : photo.AltDescription)
+                                                                        : photo.Description)
+                            </h6>
+                            <p class="card-text small text-muted mb-3">
+                                Photo by <a href="@photo.User.Links.Html" target="_blank">@photo.User.Name</a> on Unsplash
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">@photo.Width x @photo.Height</span>
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-calendar me-1"></i> @photo.CreatedAt.ToString("MMM yyyy")
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <form asp-action="Save" method="post">
+                                <input type="hidden" name="photoId" value="@photo.Id" />
+                                <div class="d-grid gap-2">
+                                    <button type="submit" name="storageProvider" value="External" class="btn btn-primary">
+                                        <i class="bi bi-link me-1"></i> Add as External Link
+                                    </button>
+                                    <button type="submit" name="storageProvider" value="LocalStorage" class="btn btn-outline-primary">
+                                        <i class="bi bi-download me-1"></i> Download to Library
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                                }
+                </div>
+
+                @if (Model.TotalPages > 1)
+                {
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav>
+                            <ul class="pagination">
+                                @if (Model.Page > 1)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                           asp-action="Search"
+                                           asp-route-query="@Model.Query"
+                                           asp-route-page="@(Model.Page - 1)">
+                                            <i class="bi bi-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                }
+
+                                @{
+                                    var startPage = Math.Max(1, Model.Page - 2);
+                                    var endPage = Math.Min(Model.TotalPages, startPage + 4);
+
+                                    if (endPage - startPage < 4 && startPage > 1)
+                                    {
+                                        startPage = Math.Max(1, endPage - 4);
+                                    }
+                                }
+
+                                @for (var i = startPage; i <= endPage; i++)
+                                {
+                                    <li class="page-item @(i == Model.Page ? "active" : "")">
+                                        <a class="page-link"
+                                           asp-action="Search"
+                                           asp-route-query="@Model.Query"
+                                           asp-route-page="@i">
+                                            @i
+                                        </a>
+                                    </li>
+                                }
+
+                                @if (Model.Page < Model.TotalPages)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link"
+                                           asp-action="Search"
+                                           asp-route-query="@Model.Query"
+                                           asp-route-page="@(Model.Page + 1)">
+                                            <i class="bi bi-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(Model.Query))
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            No images found for your search query. Please try different keywords.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
