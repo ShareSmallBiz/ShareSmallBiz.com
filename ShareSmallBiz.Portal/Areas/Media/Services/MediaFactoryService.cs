@@ -1,5 +1,5 @@
-﻿using ShareSmallBiz.Portal.Areas.Media.Controllers;
-using ShareSmallBiz.Portal.Data;
+﻿using ShareSmallBiz.Portal.Areas.Media.Models;
+using ShareSmallBiz.Portal.Data.Enums;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Services;
 
@@ -35,7 +35,7 @@ public class MediaFactoryService
     /// <summary>
     /// Creates a media entity from the appropriate service based on input parameters
     /// </summary>
-    public async Task<ShareSmallBiz.Portal.Data.Media> CreateMediaAsync(
+    public async Task<MediaModel> CreateMediaAsync(
         LibraryMediaViewModel viewModel,
         string userId)
     {
@@ -199,7 +199,7 @@ public class MediaFactoryService
     /// <summary>
     /// Gets a media URL with appropriate formatting
     /// </summary>
-    public async Task<string> GetMediaUrlAsync(ShareSmallBiz.Portal.Data.Media media)
+    public async Task<string> GetMediaUrlAsync(MediaModel media)
     {
         return _mediaService.GetMediaUrl(media);
     }
@@ -207,7 +207,7 @@ public class MediaFactoryService
     /// <summary>
     /// Gets a media thumbnail URL
     /// </summary>
-    public async Task<string> GetThumbnailUrlAsync(ShareSmallBiz.Portal.Data.Media media)
+    public async Task<string> GetThumbnailUrlAsync(MediaModel media)
     {
         return _mediaService.GetThumbnailUrl(media);
     }
@@ -215,7 +215,7 @@ public class MediaFactoryService
     /// <summary>
     /// Gets a file stream for a media item
     /// </summary>
-    public async Task<Stream> GetFileStreamAsync(ShareSmallBiz.Portal.Data.Media media)
+    public async Task<Stream> GetFileStreamAsync(MediaModel media)
     {
         return await _storageProviderService.GetFileStreamAsync(media);
     }
@@ -223,7 +223,7 @@ public class MediaFactoryService
     /// <summary>
     /// Gets a thumbnail stream for a media item
     /// </summary>
-    public async Task<Stream> GetThumbnailStreamAsync(ShareSmallBiz.Portal.Data.Media media, int width, int height)
+    public async Task<Stream> GetThumbnailStreamAsync(MediaModel media, int width, int height)
     {
         return await _storageProviderService.GetThumbnailStreamAsync(media, width, height);
     }

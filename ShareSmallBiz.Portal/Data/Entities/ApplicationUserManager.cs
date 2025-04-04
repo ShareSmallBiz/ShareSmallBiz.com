@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 
-namespace ShareSmallBiz.Portal.Data;
+namespace ShareSmallBiz.Portal.Data.Entities;
 
 public class ApplicationUserManager : UserManager<ShareSmallBizUser>
 {

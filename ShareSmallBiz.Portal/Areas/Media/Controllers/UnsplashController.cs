@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ShareSmallBiz.Portal.Areas.Media.Models;
 using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Data;
 using System.Security.Claims;
@@ -239,41 +240,4 @@ public class UnsplashController : Controller
             return StatusCode(500, new { error = ex.Message });
         }
     }
-}
-
-public class UnsplashSearchViewModel
-{
-    [Display(Name = "Search Query")]
-    [Required(ErrorMessage = "Please enter a search term")]
-    public string Query { get; set; } = string.Empty;
-
-    [Display(Name = "Page")]
-    public int Page { get; set; } = 1;
-
-    [Display(Name = "Results Per Page")]
-    [Range(1, 30, ErrorMessage = "Please enter a value between 1 and 30")]
-    public int PerPage { get; set; } = 9;
-
-    public int TotalPages { get; set; }
-
-    public int TotalResults { get; set; }
-
-    public List<UnsplashPhoto> Photos { get; set; } = new();
-
-    public List<string> PopularCategories { get; set; } = new();
-}
-
-public class UnsplashPhotoViewModel
-{
-    public UnsplashPhoto Photo { get; set; } = new();
-}
-
-public class UnsplashUserViewModel
-{
-    public UnsplashUser UserProfile { get; set; } = new();
-    public List<UnsplashPhoto> Photos { get; set; } = new();
-    public int Page { get; set; } = 1;
-    public int PerPage { get; set; } = 9;
-    public int TotalPages { get; set; }
-    public int TotalPhotos { get; set; }
 }

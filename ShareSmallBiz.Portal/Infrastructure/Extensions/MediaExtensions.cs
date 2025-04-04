@@ -1,4 +1,5 @@
-﻿using ShareSmallBiz.Portal.Data;
+﻿using ShareSmallBiz.Portal.Areas.Media.Models;
+using ShareSmallBiz.Portal.Data.Enums;
 using System;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Extensions;
@@ -8,7 +9,7 @@ public static class MediaExtensions
     /// <summary>
     /// Gets the URL for a media thumbnail
     /// </summary>
-    public static string GetThumbnailUrl(this Media media, IUrlHelper urlHelper, string size = "sm")
+    public static string GetThumbnailUrl(this MediaModel media, IUrlHelper urlHelper, string size = "sm")
     {
         if (media == null)
         {
@@ -38,7 +39,7 @@ public static class MediaExtensions
     /// <summary>
     /// Gets the public URL for a media item
     /// </summary>
-    public static string GetPublicUrl(this Media media, IUrlHelper urlHelper)
+    public static string GetPublicUrl(this MediaModel media, IUrlHelper urlHelper)
     {
         if (media == null)
         {
@@ -58,7 +59,7 @@ public static class MediaExtensions
     /// <summary>
     /// Gets the embed URL for a YouTube video
     /// </summary>
-    public static string GetYouTubeEmbedUrl(this Media media)
+    public static string GetYouTubeEmbedUrl(this MediaModel media)
     {
         if (media == null || media.StorageProvider != StorageProviderNames.YouTube)
         {

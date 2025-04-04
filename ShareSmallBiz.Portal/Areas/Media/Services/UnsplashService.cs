@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
-using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Areas.Media.Models;
+using ShareSmallBiz.Portal.Data.Enums;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -255,7 +256,7 @@ public class UnsplashService
     /// <param name="photo">Unsplash photo</param>
     /// <param name="userId">User ID</param>
     /// <returns>Media entity</returns>
-    public async Task<ShareSmallBiz.Portal.Data.Media> CreateUnsplashMediaAsync(
+    public async Task<MediaModel> CreateUnsplashMediaAsync(
     UnsplashPhoto photo,
     string userId)
     {

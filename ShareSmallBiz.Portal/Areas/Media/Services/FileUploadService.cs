@@ -1,7 +1,8 @@
-﻿using ShareSmallBiz.Portal.Data;
-using ShareSmallBiz.Portal.Infrastructure.Configuration;
+﻿using ShareSmallBiz.Portal.Infrastructure.Configuration;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
+using ShareSmallBiz.Portal.Data.Enums;
+using ShareSmallBiz.Portal.Areas.Media.Models;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Services;
 
@@ -30,7 +31,7 @@ public class FileUploadService
     /// <summary>
     /// Uploads a file and creates a media entity
     /// </summary>
-    public async Task<ShareSmallBiz.Portal.Data.Media> UploadFileAsync(
+    public async Task<MediaModel> UploadFileAsync(
         IFormFile file,
         string userId,
         StorageProviderNames storageProvider,
@@ -69,7 +70,7 @@ public class FileUploadService
 
 
         // Create media entity
-        var media = new ShareSmallBiz.Portal.Data.Media
+        MediaModel media = new()
         {
             FileName = fileName,
             MediaType = mediaType,
@@ -92,7 +93,7 @@ public class FileUploadService
     /// <summary>
     /// Creates a media entity for an external link
     /// </summary>
-    public async Task<ShareSmallBiz.Portal.Data.Media> CreateExternalLinkAsync(
+    public async Task<MediaModel> CreateExternalLinkAsync(
         string externalUrl,
         string fileName,
         MediaType mediaType,
@@ -116,7 +117,7 @@ public class FileUploadService
         string contentType = _storageProviderService.DetermineContentType(externalUrl, mediaType);
 
         // Create media entity
-        var media = new ShareSmallBiz.Portal.Data.Media
+        MediaModel media = new()
         {
             FileName = fileName,
             ContentType = contentType,

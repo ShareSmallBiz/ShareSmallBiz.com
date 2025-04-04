@@ -1,4 +1,5 @@
 ﻿using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Entities;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 

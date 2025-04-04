@@ -1,5 +1,6 @@
 ﻿#nullable disable
 using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Entities;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 using System.Linq;
 

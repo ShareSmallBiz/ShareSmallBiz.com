@@ -3,6 +3,7 @@
 #nullable disable
 
 using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Entities;
 
 namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
 {

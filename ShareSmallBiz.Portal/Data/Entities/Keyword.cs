@@ -1,4 +1,4 @@
-﻿namespace ShareSmallBiz.Portal.Data;
+﻿namespace ShareSmallBiz.Portal.Data.Entities;
 
 public partial class Keyword : BaseEntity
 {

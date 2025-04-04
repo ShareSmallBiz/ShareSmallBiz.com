@@ -2,7 +2,8 @@
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
-using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Areas.Media.Services;
+using ShareSmallBiz.Portal.Data.Enums;
 using ShareSmallBiz.Portal.Infrastructure.Extensions;
 
 namespace ShareSmallBiz.Portal.Infrastructure.TagHelpers;
@@ -12,18 +13,10 @@ namespace ShareSmallBiz.Portal.Infrastructure.TagHelpers;
 /// Usage: <media id="1" size="md"></media>
 /// </summary>
 [HtmlTargetElement("media")]
-public class MediaTagHelper : TagHelper
+public class MediaTagHelper(
+        MediaService mediaService,
+        IUrlHelperFactory urlHelperFactory) : TagHelper
 {
-    private readonly ShareSmallBizUserContext _context;
-    private readonly IUrlHelperFactory _urlHelperFactory;
-
-    public MediaTagHelper(
-        ShareSmallBizUserContext context,
-        IUrlHelperFactory urlHelperFactory)
-    {
-        _context = context;
-        _urlHelperFactory = urlHelperFactory;
-    }
 
     [ViewContext]
     [HtmlAttributeNotBound]
@@ -71,8 +64,8 @@ public class MediaTagHelper : TagHelper
 
     public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
     {
-        var urlHelper = _urlHelperFactory.GetUrlHelper(ViewContext);
-        var media = await _context.Media.FindAsync(Id);
+        var urlHelper = urlHelperFactory.GetUrlHelper(ViewContext);
+        var media = await mediaService.GetMediaByIdAsync(Id);
 
         if (media == null)
         {

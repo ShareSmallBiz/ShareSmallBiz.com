@@ -1,23 +1,8 @@
 ﻿// First, let's create the Media entity class
+using ShareSmallBiz.Portal.Data.Enums;
 using System;
 
-namespace ShareSmallBiz.Portal.Data;
-
-public enum MediaType
-{
-    Image,
-    Video,
-    Audio,
-    Document,
-    Other
-}
-
-public enum StorageProviderNames
-{
-    LocalStorage = 0,      // Stored on your server
-    External = 1,   // Linked from external source (like Unsplash)
-    YouTube = 4     // Stored on YouTube
-}
+namespace ShareSmallBiz.Portal.Data.Entities;
 
 public class Media : BaseEntity
 {

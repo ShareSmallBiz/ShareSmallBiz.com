@@ -1,9 +1,6 @@
-﻿namespace ShareSmallBiz.Portal.Data;
-public enum PostType
-{
-    Unknown,
-    Post
-}
+﻿using ShareSmallBiz.Portal.Data.Enums;
+
+namespace ShareSmallBiz.Portal.Data.Entities;
 public class Post : BaseEntity
 {
     public ShareSmallBizUser Author { get; set; }

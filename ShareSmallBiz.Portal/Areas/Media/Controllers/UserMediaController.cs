@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using ShareSmallBiz.Portal.Areas.Media.Models;
 using ShareSmallBiz.Portal.Areas.Media.Services;
-using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Entities;
 using System.Security.Claims;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
@@ -146,14 +147,4 @@ public class UserMediaController : Controller
 
         return RedirectToAction(nameof(Profile));
     }
-}
-public class UserMediaViewModel
-{
-    public IEnumerable<ShareSmallBiz.Portal.Data.Media> Media { get; set; } = [];
-}
-
-public class ProfileMediaViewModel
-{
-    public bool HasProfilePicture { get; set; }
-    public string? ProfilePictureUrl { get; set; }
 }

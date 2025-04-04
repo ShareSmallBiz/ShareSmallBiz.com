@@ -3,6 +3,7 @@
 #nullable disable
 
 using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Entities;
 using System;
 using System.Linq;
 using System.Text.Encodings.Web;

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.IdentityModel.Tokens;
 using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Entities;
 using ShareSmallBiz.Portal.Infrastructure.Utilities;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Extensions

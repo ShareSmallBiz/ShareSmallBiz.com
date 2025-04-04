@@ -1,5 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 namespace ShareSmallBiz.Portal.Controllers.api;

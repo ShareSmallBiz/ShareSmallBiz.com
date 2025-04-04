@@ -1,4 +1,4 @@
-﻿namespace ShareSmallBiz.Portal.Data;
+﻿namespace ShareSmallBiz.Portal.Data.Entities;
 
 public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUser>
 {
@@ -77,20 +77,5 @@ public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUs
         // Implement the method to check if the user is confirmed
         return Task.FromResult(user.EmailConfirmed);
     }
-}
-
-public class SocialLink
-{
-    [Key]
-    public int Id { get; set; }
-
-    [Required]
-    public string Platform { get; set; } = string.Empty;
-
-    [Required]
-    public string Url { get; set; } = string.Empty;
-
-    public string? UserId { get; set; }
-    public virtual ShareSmallBizUser? User { get; set; } = null!;
 }
 

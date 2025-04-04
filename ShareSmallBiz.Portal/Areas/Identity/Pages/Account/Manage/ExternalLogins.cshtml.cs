@@ -3,7 +3,7 @@
 #nullable disable
 
 using Microsoft.AspNetCore.Authentication;
-using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Entities;
 using System;
 using System.Linq;
 

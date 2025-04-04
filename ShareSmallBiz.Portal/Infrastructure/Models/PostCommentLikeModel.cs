@@ -1,4 +1,4 @@
-﻿using ShareSmallBiz.Portal.Data;
+﻿using ShareSmallBiz.Portal.Data.Entities;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Models;
 

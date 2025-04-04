@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using ShareSmallBiz.Portal.Data.Enums;
+using ShareSmallBiz.Portal.Areas.Media.Models;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
@@ -277,7 +279,7 @@ public class YouTubeController : Controller
 
             // 2. Check if user has already added videos from this channel
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var userVideosFromChannel = await _youTubeMediaService.GetUserMediaFromChannelAsync(userId, channelId);
+            IEnumerable<MediaModel> userVideosFromChannel = await _youTubeMediaService.GetUserMediaFromChannelAsync(userId, channelId);
 
             // Add the user's videos to the viewModel
             viewModel.UserVideosFromChannel = userVideosFromChannel.ToList();

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using ShareSmallBiz.Portal.Data.Entities;
 
 namespace ShareSmallBiz.Portal.Data;
 

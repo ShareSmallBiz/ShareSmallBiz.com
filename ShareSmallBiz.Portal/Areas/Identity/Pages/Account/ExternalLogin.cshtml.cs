@@ -3,7 +3,7 @@
 #nullable disable
 
 using Microsoft.AspNetCore.Identity.UI.Services;
-using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Entities;
 using System;
 using System.Security.Claims;
 using System.Text.Encodings.Web;

@@ -1,5 +1,5 @@
-﻿using ShareSmallBiz.Portal.Areas.Media.Controllers;
-using ShareSmallBiz.Portal.Data;
+﻿using ShareSmallBiz.Portal.Areas.Media.Models;
+using ShareSmallBiz.Portal.Data.Enums;
 using System.Text.Json;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Services;
@@ -29,7 +29,7 @@ public class YouTubeMediaService
     /// <summary>
     /// Creates a media entity for a YouTube video
     /// </summary>
-    public async Task<ShareSmallBiz.Portal.Data.Media> CreateYouTubeMediaAsync(
+    public async Task<MediaModel> CreateYouTubeMediaAsync(
         string youtubeUrl,
         string title,
         string description,
@@ -85,7 +85,7 @@ public class YouTubeMediaService
         };
 
         // Create media entity
-        var media = new ShareSmallBiz.Portal.Data.Media
+        MediaModel media = new()
         {
             FileName = title,
             ContentType = "video/youtube",
@@ -108,7 +108,7 @@ public class YouTubeMediaService
     /// <summary>
     /// Creates a media entity for a YouTube channel
     /// </summary>
-    public async Task<ShareSmallBiz.Portal.Data.Media> CreateYouTubeChannelMediaAsync(
+    public async Task<MediaModel> CreateYouTubeChannelMediaAsync(
         string channelId,
         string channelTitle,
         string description,
@@ -131,7 +131,7 @@ public class YouTubeMediaService
         };
 
         // Create media entity
-        var media = new ShareSmallBiz.Portal.Data.Media
+        MediaModel media = new()
         {
             FileName = $"YouTube Channel: {channelTitle}",
             ContentType = "application/youtube.channel",
@@ -154,7 +154,7 @@ public class YouTubeMediaService
     /// <summary>
     /// Extracts channel ID from media
     /// </summary>
-    public string ExtractChannelIdFromMedia(ShareSmallBiz.Portal.Data.Media media)
+    public string ExtractChannelIdFromMedia(MediaModel media)
     {
         if (media.StorageProvider != StorageProviderNames.YouTube || string.IsNullOrEmpty(media.StorageMetadata))
         {
@@ -180,7 +180,7 @@ public class YouTubeMediaService
     /// <summary>
     /// Extracts video ID from media
     /// </summary>
-    public string ExtractVideoIdFromMedia(ShareSmallBiz.Portal.Data.Media media)
+    public string ExtractVideoIdFromMedia(MediaModel media)
     {
         if (media.StorageProvider != StorageProviderNames.YouTube || string.IsNullOrEmpty(media.StorageMetadata))
         {
@@ -349,7 +349,7 @@ public class YouTubeMediaService
     /// <summary>
     /// Gets user's media items that are from a specific YouTube channel
     /// </summary>
-    public async Task<IEnumerable<ShareSmallBiz.Portal.Data.Media>> GetUserMediaFromChannelAsync(string userId, string channelId)
+    public async Task<IEnumerable<MediaModel>> GetUserMediaFromChannelAsync(string userId, string channelId)
     {
         // Get all YouTube videos
         var allYouTubeMedia = await _mediaService.GetMediaByStorageProviderAsync(userId, StorageProviderNames.YouTube);
@@ -422,7 +422,7 @@ public class YouTubeMediaService
     /// <summary>
     /// Gets recently added YouTube videos for a user
     /// </summary>
-    public async Task<IEnumerable<ShareSmallBiz.Portal.Data.Media>> GetRecentlyAddedVideosAsync(string userId, int count = 4)
+    public async Task<IEnumerable<MediaModel>> GetRecentlyAddedVideosAsync(string userId, int count = 4)
     {
         var youtubeMedia = await _mediaService.GetMediaByStorageProviderAsync(userId, StorageProviderNames.YouTube);
         return youtubeMedia.OrderByDescending(m => m.CreatedDate).Take(count);

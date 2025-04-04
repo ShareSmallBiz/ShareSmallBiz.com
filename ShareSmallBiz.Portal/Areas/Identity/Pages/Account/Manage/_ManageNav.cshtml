@@ -1,4 +1,5 @@
 ﻿@using ShareSmallBiz.Portal.Data
+@using ShareSmallBiz.Portal.Data.Entities
 @inject SignInManager<ShareSmallBizUser> SignInManager
 @{
     var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();

@@ -1,4 +1,5 @@
-﻿using ShareSmallBiz.Portal.Data;
+﻿using ShareSmallBiz.Portal.Data.Entities;
+using ShareSmallBiz.Portal.Data.Enums;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Models;
 

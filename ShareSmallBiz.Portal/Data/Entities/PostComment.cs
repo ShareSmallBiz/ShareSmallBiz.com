@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ShareSmallBiz.Portal.Data;
+namespace ShareSmallBiz.Portal.Data.Entities;
 
 public class PostComment : BaseEntity
 {

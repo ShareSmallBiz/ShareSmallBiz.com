@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using ShareSmallBiz.Portal.Areas.Media.Models;
 using ShareSmallBiz.Portal.Areas.Media.Services;
-using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Enums;
 using ShareSmallBiz.Portal.Infrastructure.Configuration;
 using System.Text.Json;
 
@@ -141,7 +142,7 @@ public class MediaController : Controller
         }
     }
 
-    private async Task<IActionResult> GetYouTubeThumbnailAsync(ShareSmallBiz.Portal.Data.Media media)
+    private async Task<IActionResult> GetYouTubeThumbnailAsync(MediaModel media)
     {
         try
         {

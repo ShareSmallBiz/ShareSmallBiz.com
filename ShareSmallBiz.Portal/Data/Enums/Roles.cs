@@ -1,4 +1,4 @@
-﻿namespace ShareSmallBiz.Portal.Data;
+﻿namespace ShareSmallBiz.Portal.Data.Enums;
 
 public enum Roles
 {

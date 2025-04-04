@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Entities;
 using System.Linq;
 using System.Security.Claims;
 

@@ -1,4 +1,4 @@
-﻿namespace ShareSmallBiz.Portal.Data;
+﻿namespace ShareSmallBiz.Portal.Data.Entities;
 
 public class UserFollow : BaseEntity
 {

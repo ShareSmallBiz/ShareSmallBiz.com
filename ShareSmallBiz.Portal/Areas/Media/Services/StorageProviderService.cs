@@ -1,6 +1,7 @@
-﻿using ShareSmallBiz.Portal.Data;
+﻿using Microsoft.Extensions.Options;
+using ShareSmallBiz.Portal.Areas.Media.Models;
+using ShareSmallBiz.Portal.Data.Enums;
 using ShareSmallBiz.Portal.Infrastructure.Configuration;
-using Microsoft.Extensions.Options;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -69,7 +70,7 @@ public class StorageProviderService
     /// <summary>
     /// Gets the file stream for a media item
     /// </summary>
-    public async Task<Stream> GetFileStreamAsync(ShareSmallBiz.Portal.Data.Media media)
+    public async Task<Stream> GetFileStreamAsync(MediaModel media)
     {
         return media.StorageProvider switch
         {
@@ -83,7 +84,7 @@ public class StorageProviderService
     /// <summary>
     /// Deletes a file from the storage provider
     /// </summary>
-    public async Task DeleteFileAsync(ShareSmallBiz.Portal.Data.Media media)
+    public async Task DeleteFileAsync(MediaModel media)
     {
         switch (media.StorageProvider)
         {
@@ -206,7 +207,7 @@ public class StorageProviderService
     /// <summary>
     /// Gets a file stream for a thumbnail
     /// </summary>
-    public async Task<Stream> GetThumbnailStreamAsync(ShareSmallBiz.Portal.Data.Media media, int width = 200, int height = 200)
+    public async Task<Stream> GetThumbnailStreamAsync(MediaModel media, int width = 200, int height = 200)
     {
         if (media.MediaType != MediaType.Image || media.StorageProvider != StorageProviderNames.LocalStorage)
         {
@@ -321,7 +322,7 @@ public class StorageProviderService
     /// <summary>
     /// Saves a profile picture as a file
     /// </summary>
-    public async Task SaveProfilePictureAsync(byte[] profilePicture, ShareSmallBiz.Portal.Data.Media media)
+    public async Task SaveProfilePictureAsync(byte[] profilePicture, MediaModel media)
     {
         string filePath = Path.Combine(_mediaRootPath, "profiles", media.FileName);
 
