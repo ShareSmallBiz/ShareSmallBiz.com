@@ -3,6 +3,8 @@ using ShareSmallBiz.Portal.Data;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
@@ -16,19 +18,22 @@ public class YouTubeController : Controller
     private readonly YouTubeMediaService _youTubeMediaService;
     private readonly MediaService _mediaService;
     private readonly MediaFactoryService _mediaFactoryService;
+    private readonly YouTubeService _youTubeService;
 
     public YouTubeController(
         ShareSmallBizUserContext context,
         ILogger<YouTubeController> logger,
         YouTubeMediaService youTubeMediaService,
         MediaService mediaService,
-        MediaFactoryService mediaFactoryService)
+        MediaFactoryService mediaFactoryService,
+        YouTubeService youTubeService)
     {
         _context = context;
         _logger = logger;
         _youTubeMediaService = youTubeMediaService;
         _mediaService = mediaService;
         _mediaFactoryService = mediaFactoryService;
+        _youTubeService = youTubeService;
     }
 
     // GET: /Media/YouTube
@@ -45,7 +50,9 @@ public class YouTubeController : Controller
             "social media strategy",
             "web design tutorial",
             "product photography",
-            "presentation skills"
+            "presentation skills",
+            "customer service tips",
+            "sales techniques"
         };
 
         // Get any recently added YouTube videos (for the "Recently Added" section)
@@ -54,12 +61,66 @@ public class YouTubeController : Controller
 
         viewModel.RecentlyAdded = recentYouTubeMedia.ToList();
 
+        // Get popular channels if available
+        try
+        {
+            var popularChannels = await _context.Media
+                .Where(m => m.UserId == userId && m.StorageProvider == StorageProviderNames.YouTube)
+                .Where(m => !string.IsNullOrEmpty(m.StorageMetadata))
+                .OrderByDescending(m => m.CreatedDate)
+                .Take(20)
+                .ToListAsync();
+
+            // Extract unique channels
+            var channels = new Dictionary<string, (string ChannelId, string ChannelTitle, int Count)>();
+
+            foreach (var media in popularChannels)
+            {
+                try
+                {
+                    var metadata = JsonSerializer.Deserialize<Dictionary<string, string>>(media.StorageMetadata);
+                    if (metadata != null && metadata.TryGetValue("channelId", out string channelId) &&
+                        metadata.TryGetValue("channelTitle", out string channelTitle))
+                    {
+                        if (channels.TryGetValue(channelId, out var existing))
+                        {
+                            channels[channelId] = (channelId, channelTitle, existing.Count + 1);
+                        }
+                        else
+                        {
+                            channels[channelId] = (channelId, channelTitle, 1);
+                        }
+                    }
+                }
+                catch
+                {
+                    // Skip this media
+                }
+            }
+
+            // Get top 4 most frequently used channels
+            viewModel.PopularChannels = channels.Values
+                .OrderByDescending(c => c.Count)
+                .Take(4)
+                .Select(c => new YouTubeChannelListItemViewModel
+                {
+                    ChannelId = c.ChannelId,
+                    ChannelTitle = c.ChannelTitle,
+                    VideoCount = c.Count
+                })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving popular channels");
+        }
+
         return View(viewModel);
     }
 
     // GET: /Media/YouTube/Search
     [HttpGet("Search")]
-    public async Task<IActionResult> Search(string? query = "")
+    public async Task<IActionResult> Search(string? query = "", int pageNumber = 1, int maxResults = 12)
     {
         var viewModel = new YouTubeSearchViewModel();
         if (string.IsNullOrEmpty(query))
@@ -68,12 +129,14 @@ public class YouTubeController : Controller
         }
 
         viewModel.Query = query;
+        viewModel.MaxResults = maxResults;
+        viewModel.Page = pageNumber; // Set the page property with the pageNumber parameter
 
         try
         {
             var searchResults = await _youTubeMediaService.SearchVideosAsync(
                 viewModel.Query,
-                viewModel.MaxResults > 0 ? viewModel.MaxResults : 10);
+                viewModel.MaxResults > 0 ? viewModel.MaxResults : 12);
 
             viewModel.SearchResults = searchResults.ToList();
         }
@@ -100,7 +163,7 @@ public class YouTubeController : Controller
         {
             var searchResults = await _youTubeMediaService.SearchVideosAsync(
                 viewModel.Query,
-                viewModel.MaxResults > 0 ? viewModel.MaxResults : 10);
+                viewModel.MaxResults > 0 ? viewModel.MaxResults : 12);
 
             viewModel.SearchResults = searchResults.ToList();
         }
@@ -153,9 +216,49 @@ public class YouTubeController : Controller
         }
     }
 
+    // GET: /Media/YouTube/Video/{videoId}
+    [HttpGet("Video/{videoId}")]
+    public async Task<IActionResult> Video(string videoId)
+    {
+        if (string.IsNullOrEmpty(videoId))
+        {
+            return NotFound();
+        }
+
+        try
+        {
+            // Get video details
+            var videoDetails = await _youTubeMediaService.GetVideoDetailsAsync(videoId);
+            if (videoDetails == null)
+            {
+                return NotFound();
+            }
+
+            // Check if user already has this video in their library
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var existingMedia = await _context.Media
+                .Where(m => m.UserId == userId && m.StorageProvider == StorageProviderNames.YouTube)
+                .Where(m => m.StorageMetadata.Contains(videoId))
+                .FirstOrDefaultAsync();
+
+            if (existingMedia != null)
+            {
+                ViewBag.ExistingMediaId = existingMedia.Id;
+            }
+
+            return View(videoDetails);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving YouTube video {VideoId}", videoId);
+            TempData["ErrorMessage"] = "Error retrieving video details.";
+            return RedirectToAction("Search");
+        }
+    }
+
     // GET: /Media/YouTube/Channel/{channelId}
     [HttpGet("Channel/{channelId}")]
-    public async Task<IActionResult> Channel(string channelId)
+    public async Task<IActionResult> Channel(string channelId, int pageNumber = 1, int pageSize = 12)
     {
         if (string.IsNullOrEmpty(channelId))
         {
@@ -165,7 +268,7 @@ public class YouTubeController : Controller
         try
         {
             // 1. Get channel details and videos from YouTubeMediaService
-            var viewModel = await _youTubeMediaService.GetChannelDetailsAsync(channelId);
+            var viewModel = await _youTubeMediaService.GetChannelDetailsAsync(channelId, pageSize);
 
             if (viewModel == null)
             {
@@ -176,7 +279,11 @@ public class YouTubeController : Controller
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var userVideosFromChannel = await _youTubeMediaService.GetUserMediaFromChannelAsync(userId, channelId);
 
+            // Add the user's videos to the viewModel
             viewModel.UserVideosFromChannel = userVideosFromChannel.ToList();
+
+            // Set the page number - using CurrentPage property instead of Page to avoid method group error
+            viewModel.CurrentPage = pageNumber;
 
             return View(viewModel);
         }
@@ -189,62 +296,35 @@ public class YouTubeController : Controller
             return View(new YouTubeChannelViewModel { ChannelId = channelId });
         }
     }
-}
-// View Models
-public class YouTubeSearchViewModel
-{
-    [Display(Name = "Search Query")]
-    [Required(ErrorMessage = "Please enter a search term")]
-    public string Query { get; set; } = string.Empty;
 
-    [Display(Name = "Max Results")]
-    [Range(1, 50, ErrorMessage = "Please enter a value between 1 and 50")]
-    public int MaxResults { get; set; } = 10;
+    // POST: /Media/YouTube/SaveChannel
+    [HttpPost("SaveChannel")]
+    public async Task<IActionResult> SaveChannel(string channelId, string channelTitle, string channelDescription)
+    {
+        if (string.IsNullOrEmpty(channelId) || string.IsNullOrEmpty(channelTitle))
+        {
+            return BadRequest("Channel ID and title are required");
+        }
 
-    public List<YouTubeVideoViewModel> SearchResults { get; set; } = new();
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-    public List<string> PopularCategories { get; set; } = new();
+            // Create the media entry for the channel
+            var media = await _youTubeMediaService.CreateYouTubeChannelMediaAsync(
+                channelId,
+                channelTitle,
+                channelDescription,
+                userId);
 
-    public List<ShareSmallBiz.Portal.Data.Media> RecentlyAdded { get; set; } = new();
-}
-
-public class YouTubeVideoViewModel
-{
-    public string VideoId { get; set; } = string.Empty;
-
-    [Required(ErrorMessage = "Title is required")]
-    [StringLength(255, ErrorMessage = "Title cannot exceed 255 characters")]
-    public string Title { get; set; } = string.Empty;
-
-    [StringLength(512, ErrorMessage = "Description cannot exceed 512 characters")]
-    public string Description { get; set; } = string.Empty;
-
-    public string ThumbnailUrl { get; set; } = string.Empty;
-
-    public DateTime PublishedAt { get; set; }
-
-    public string ChannelId { get; set; } = string.Empty;
-
-    public string ChannelTitle { get; set; } = string.Empty;
-}
-
-public class YouTubeChannelViewModel
-{
-    public string ChannelId { get; set; } = string.Empty;
-
-    public string ChannelTitle { get; set; } = string.Empty;
-
-    public string ChannelDescription { get; set; } = string.Empty;
-
-    public string ThumbnailUrl { get; set; } = string.Empty;
-
-    public long SubscriberCount { get; set; }
-
-    public long VideoCount { get; set; }
-
-    public long ViewCount { get; set; }
-
-    public List<YouTubeVideoViewModel> Videos { get; set; } = new();
-
-    public List<ShareSmallBiz.Portal.Data.Media> UserVideosFromChannel { get; set; } = new();
+            TempData["SuccessMessage"] = "YouTube channel added successfully to your library.";
+            return RedirectToAction("Details", "Library", new { id = media.Id });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving YouTube channel");
+            TempData["ErrorMessage"] = $"Error saving channel: {ex.Message}";
+            return RedirectToAction("Channel", new { channelId });
+        }
+    }
 }

@@ -1,4 +1,6 @@
-﻿namespace ShareSmallBiz.Portal.Areas.Media.Services;
+﻿using System.Text.RegularExpressions;
+
+namespace ShareSmallBiz.Portal.Areas.Media.Services;
 
 /// <summary>
 /// Service for interacting with the YouTube API
@@ -80,16 +82,55 @@ public class YouTubeService(
     }
 
     /// <summary>
+    /// Get details about a YouTube channel by username instead of channel ID
+    /// </summary>
+    /// <param name="username">YouTube channel username</param>
+    /// <returns>Channel response with channel details</returns>
+    public async Task<YouTubeChannelResponse?> GetChannelByUsernameAsync(string username)
+    {
+        try
+        {
+            var channelUrl = $"https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&forUsername={username}&key={_youTubeApiKey}";
+            var httpClient = httpClientFactory.CreateClient();
+            var response = await httpClient.GetAsync(channelUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<YouTubeChannelResponse>();
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                logger.LogError("YouTube API error when fetching channel by username: {StatusCode} - {Error}", response.StatusCode, errorContent);
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting YouTube channel details for username {Username}", username);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Get videos from a specific YouTube channel
     /// </summary>
     /// <param name="channelId">YouTube channel ID</param>
     /// <param name="maxResults">Maximum number of results to return</param>
+    /// <param name="pageToken">Token for pagination</param>
     /// <returns>Search response with channel's videos</returns>
-    public async Task<YouTubeSearchResponse?> GetChannelVideosAsync(string channelId, int maxResults = 12)
+    public async Task<YouTubeSearchResponse?> GetChannelVideosAsync(string channelId, int maxResults = 12, string? pageToken = null)
     {
         try
         {
             var videosUrl = $"https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={channelId}&maxResults={maxResults}&order=date&type=video&key={_youTubeApiKey}";
+
+            // Add page token if provided
+            if (!string.IsNullOrEmpty(pageToken))
+            {
+                videosUrl += $"&pageToken={pageToken}";
+            }
+
             var httpClient = httpClientFactory.CreateClient();
             var response = await httpClient.GetAsync(videosUrl);
 
@@ -112,6 +153,69 @@ public class YouTubeService(
     }
 
     /// <summary>
+    /// Get details about a specific YouTube video
+    /// </summary>
+    /// <param name="videoId">YouTube video ID</param>
+    /// <returns>Video details</returns>
+    public async Task<YouTubeVideoDetailResponse?> GetVideoDetailsAsync(string videoId)
+    {
+        try
+        {
+            var videoUrl = $"https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id={videoId}&key={_youTubeApiKey}";
+            var httpClient = httpClientFactory.CreateClient();
+            var response = await httpClient.GetAsync(videoUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<YouTubeVideoDetailResponse>();
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                logger.LogError("YouTube API error when fetching video details: {StatusCode} - {Error}", response.StatusCode, errorContent);
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting details for YouTube video {VideoId}", videoId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Get related videos for a specific YouTube video
+    /// </summary>
+    /// <param name="videoId">YouTube video ID</param>
+    /// <param name="maxResults">Maximum number of results to return</param>
+    /// <returns>Search response with related videos</returns>
+    public async Task<YouTubeSearchResponse?> GetRelatedVideosAsync(string videoId, int maxResults = 10)
+    {
+        try
+        {
+            var relatedUrl = $"https://www.googleapis.com/youtube/v3/search?part=snippet&relatedToVideoId={videoId}&type=video&maxResults={maxResults}&key={_youTubeApiKey}";
+            var httpClient = httpClientFactory.CreateClient();
+            var response = await httpClient.GetAsync(relatedUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<YouTubeSearchResponse>();
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                logger.LogError("YouTube API error when fetching related videos: {StatusCode} - {Error}", response.StatusCode, errorContent);
+                return null;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting related videos for YouTube video {VideoId}", videoId);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Extract YouTube video ID from URL
     /// </summary>
     /// <param name="url">YouTube URL</param>
@@ -129,7 +233,7 @@ public class YouTubeService(
         // - https://youtu.be/VIDEO_ID
         // - https://youtube.com/watch?v=VIDEO_ID
         // - https://www.youtube.com/embed/VIDEO_ID
-        var regex = new System.Text.RegularExpressions.Regex(@"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})");
+        var regex = new Regex(@"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})");
 
         var match = regex.Match(url);
         if (match.Success && match.Groups.Count > 1)
@@ -138,6 +242,60 @@ public class YouTubeService(
         }
 
         return null; // Return null if not a valid YouTube URL
+    }
+
+    /// <summary>
+    /// Extract YouTube channel ID from URL
+    /// </summary>
+    /// <param name="url">YouTube channel URL</param>
+    /// <returns>Channel ID or null if invalid</returns>
+    public static string? ExtractChannelIdFromUrl(string? url)
+    {
+        if (string.IsNullOrEmpty(url))
+        {
+            return null;
+        }
+
+        // Match standard YouTube channel URLs
+        // Handles formats like:
+        // - https://www.youtube.com/channel/CHANNEL_ID
+        // - https://youtube.com/channel/CHANNEL_ID
+        var regex = new Regex(@"(?:https?:\/\/)?(?:www\.)?youtube\.com\/channel\/([a-zA-Z0-9_-]+)");
+
+        var match = regex.Match(url);
+        if (match.Success && match.Groups.Count > 1)
+        {
+            return match.Groups[1].Value; // Return the CHANNEL_ID
+        }
+
+        return null; // Return null if not a valid YouTube channel URL
+    }
+
+    /// <summary>
+    /// Extract YouTube username from URL
+    /// </summary>
+    /// <param name="url">YouTube user URL</param>
+    /// <returns>Username or null if invalid</returns>
+    public static string? ExtractUsernameFromUrl(string? url)
+    {
+        if (string.IsNullOrEmpty(url))
+        {
+            return null;
+        }
+
+        // Match standard YouTube user URLs
+        // Handles formats like:
+        // - https://www.youtube.com/user/USERNAME
+        // - https://youtube.com/user/USERNAME
+        var regex = new Regex(@"(?:https?:\/\/)?(?:www\.)?youtube\.com\/user\/([a-zA-Z0-9_-]+)");
+
+        var match = regex.Match(url);
+        if (match.Success && match.Groups.Count > 1)
+        {
+            return match.Groups[1].Value; // Return the USERNAME
+        }
+
+        return null; // Return null if not a valid YouTube user URL
     }
 
     /// <summary>
@@ -154,6 +312,69 @@ public class YouTubeService(
         }
 
         return $"https://www.youtube.com/embed/{videoId}";
+    }
+
+    /// <summary>
+    /// Format duration from ISO 8601 format to user-friendly format
+    /// </summary>
+    /// <param name="isoDuration">Duration in ISO 8601 format</param>
+    /// <returns>Formatted duration string</returns>
+    public static string FormatDuration(string isoDuration)
+    {
+        if (string.IsNullOrEmpty(isoDuration))
+        {
+            return "0:00";
+        }
+
+        try
+        {
+            // Parse the ISO 8601 duration
+            var duration = System.Xml.XmlConvert.ToTimeSpan(isoDuration);
+
+            // Format the duration
+            if (duration.TotalHours >= 1)
+            {
+                return $"{(int)duration.TotalHours}:{duration.Minutes:D2}:{duration.Seconds:D2}";
+            }
+            else
+            {
+                return $"{duration.Minutes}:{duration.Seconds:D2}";
+            }
+        }
+        catch
+        {
+            return "0:00";
+        }
+    }
+
+    /// <summary>
+    /// Format view count to user-friendly format
+    /// </summary>
+    /// <param name="viewCount">View count as string</param>
+    /// <returns>Formatted view count</returns>
+    public static string FormatViewCount(string viewCount)
+    {
+        if (string.IsNullOrEmpty(viewCount) || !long.TryParse(viewCount, out long views))
+        {
+            return "0 views";
+        }
+
+        if (views >= 1_000_000_000)
+        {
+            return $"{views / 1_000_000_000.0:0.#}B views";
+        }
+        else if (views >= 1_000_000)
+        {
+            return $"{views / 1_000_000.0:0.#}M views";
+        }
+        else if (views >= 1_000)
+        {
+            return $"{views / 1_000.0:0.#}K views";
+        }
+        else
+        {
+            return $"{views} views";
+        }
     }
 }
 
@@ -274,4 +495,59 @@ public class YouTubeChannelStatistics
 
     [System.Text.Json.Serialization.JsonPropertyName("videoCount")]
     public long VideoCount { get; set; }
+}
+
+// New response models for video details
+public class YouTubeVideoDetailResponse
+{
+    [System.Text.Json.Serialization.JsonPropertyName("items")]
+    public List<YouTubeVideoItem> Items { get; set; } = new();
+}
+
+public class YouTubeVideoItem
+{
+    [System.Text.Json.Serialization.JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("snippet")]
+    public YouTubeSnippet Snippet { get; set; } = new();
+
+    [System.Text.Json.Serialization.JsonPropertyName("contentDetails")]
+    public YouTubeContentDetails ContentDetails { get; set; } = new();
+
+    [System.Text.Json.Serialization.JsonPropertyName("statistics")]
+    public YouTubeVideoStatistics Statistics { get; set; } = new();
+}
+
+public class YouTubeContentDetails
+{
+    [System.Text.Json.Serialization.JsonPropertyName("duration")]
+    public string Duration { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("dimension")]
+    public string Dimension { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("definition")]
+    public string Definition { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("caption")]
+    public string Caption { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("licensedContent")]
+    public bool LicensedContent { get; set; }
+}
+
+public class YouTubeVideoStatistics
+{
+    [System.Text.Json.Serialization.JsonPropertyName("viewCount")]
+    public string ViewCount { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("likeCount")]
+    public string LikeCount { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("favoriteCount")]
+    public string FavoriteCount { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("commentCount")]
+    public string CommentCount { get; set; } = string.Empty;
 }

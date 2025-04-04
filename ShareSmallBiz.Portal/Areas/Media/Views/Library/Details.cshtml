@@ -1,6 +1,30 @@
 ﻿@model LibraryMediaViewModel
 @{
     ViewData["Title"] = "Media Details";
+    bool isYouTubeVideo = Model.StorageProvider == (int)StorageProviderNames.YouTube;
+    string? channelId = string.Empty;
+    string? channelTitle = string.Empty;
+
+    // Extract channel info from metadata if it's a YouTube video
+    if (isYouTubeVideo && !string.IsNullOrEmpty(Model.Url))
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(Model.StorageMetadata))
+            {
+                var metadata = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(Model.StorageMetadata);
+                if (metadata != null)
+                {
+                    metadata.TryGetValue("channelId", out channelId);
+                    metadata.TryGetValue("channelTitle", out channelTitle);
+                }
+            }
+        }
+        catch
+        {
+            // Ignore parsing errors
+        }
+    }
 }
 
 <div class="container py-4">
@@ -47,13 +71,35 @@
                         <dd class="col-sm-8">@((MediaType)Model.MediaType)</dd>
 
                         <dt class="col-sm-4">Storage Provider</dt>
-                        <dd class="col-sm-8">@((StorageProviderNames)Model.StorageProvider)</dd>
+                        <dd class="col-sm-8">
+                            @if (isYouTubeVideo)
+                            {
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-youtube me-1"></i> YouTube
+                                </span>
+                            }
+                            else
+                            {
+                                <span>@((StorageProviderNames)Model.StorageProvider)</span>
+                            }
+                        </dd>
 
                         <dt class="col-sm-4">Description</dt>
                         <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Description) ? "None" : Model.Description)</dd>
 
                         <dt class="col-sm-4">Attribution</dt>
-                        <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Attribution) ? "None" : Model.Attribution)</dd>
+                        <dd class="col-sm-8">
+                            @if (isYouTubeVideo && !string.IsNullOrEmpty(channelId) && !string.IsNullOrEmpty(channelTitle))
+                            {
+                                <a asp-controller="YouTube" asp-action="Channel" asp-route-channelId="@channelId">
+                                    @Model.Attribution
+                                </a>
+                            }
+                            else
+                            {
+                                @(string.IsNullOrEmpty(Model.Attribution) ? "None" : Model.Attribution)
+                            }
+                        </dd>
 
                         @if (Model.ContentType != null)
                         {
@@ -65,6 +111,19 @@
                         {
                             <dt class="col-sm-4">File Size</dt>
                             <dd class="col-sm-8">@(Model.FileSize / 1024) KB</dd>
+                        }
+
+                        @if (isYouTubeVideo)
+                        {
+                            <dt class="col-sm-4">YouTube URL</dt>
+                            <dd class="col-sm-8">
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-sm" value="@Model.Url" id="youtubeUrlInput" readonly>
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="copyToClipboard('youtubeUrlInput')">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
+                                </div>
+                            </dd>
                         }
 
                         @if (!string.IsNullOrEmpty(ViewBag.PublicUrl))
@@ -89,7 +148,20 @@
                         <a asp-action="Index" class="btn btn-sm btn-secondary">
                             <i class="bi bi-arrow-left me-1"></i> Back to List
                         </a>
-                        @if ((StorageProviderNames)Model.StorageProvider != StorageProviderNames.YouTube)
+                        @if (isYouTubeVideo)
+                        {
+                            <a href="@Model.Url" target="_blank" class="btn btn-sm btn-danger">
+                                <i class="bi bi-youtube me-1"></i> Open in YouTube
+                            </a>
+
+                            @if (!string.IsNullOrEmpty(channelId))
+                            {
+                                <a asp-controller="YouTube" asp-action="Channel" asp-route-channelId="@channelId" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-person-video3 me-1"></i> View Channel
+                                </a>
+                            }
+                        }
+                        else
                         {
                             <a asp-action="Download" asp-route-id="@Model.Id" class="btn btn-sm btn-success">
                                 <i class="bi bi-download me-1"></i> Download
@@ -121,7 +193,7 @@
                     }
                     else if ((MediaType)Model.MediaType == MediaType.Video)
                     {
-                        @if ((StorageProviderNames)Model.StorageProvider == StorageProviderNames.YouTube)
+                        @if (isYouTubeVideo)
                         {
                             <div class="bg-light p-2 rounded mb-2">
                                 <code id="embedCode">&lt;iframe width="560" height="315" src="@ViewBag.YouTubeEmbedUrl" title="@Model.FileName" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen&gt;&lt;/iframe&gt;</code>
@@ -152,6 +224,46 @@
                     </button>
                 </div>
             </div>
+
+            @if (isYouTubeVideo)
+            {
+                <!-- YouTube Stats Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-youtube me-2"></i>
+                            YouTube Tools
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>View Video Stats</span>
+                                <button type="button" id="getStatsBtn" class="btn btn-sm btn-outline-danger"
+                                        onclick="window.open('https://www.youtube.com/analytics?o=U&video_id=@(ExtractYouTubeVideoId(Model.Url))', '_blank')">
+                                    <i class="bi bi-bar-chart me-1"></i> View Stats
+                                </button>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Find Related Videos</span>
+                                <button type="button" id="searchRelatedBtn" class="btn btn-sm btn-outline-danger"
+                                        onclick="window.location.href='@Url.Action("Search", "YouTube", new { query = Model.FileName })'">
+                                    <i class="bi bi-search me-1"></i> Search
+                                </button>
+                            </li>
+                            @if (!string.IsNullOrEmpty(channelId))
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Explore Channel</span>
+                                    <a asp-controller="YouTube" asp-action="Channel" asp-route-channelId="@channelId" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-person-video3 me-1"></i> Channel
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
         </div>
 
         <div class="col-md-7">
@@ -170,7 +282,7 @@
                         }
                         else if ((MediaType)Model.MediaType == MediaType.Video)
                         {
-                            @if ((StorageProviderNames)Model.StorageProvider == StorageProviderNames.YouTube)
+                            @if (isYouTubeVideo)
                             {
                                 <div class="ratio ratio-16x9">
                                     <iframe src="@ViewBag.YouTubeEmbedUrl"
@@ -179,6 +291,29 @@
                                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                             allowfullscreen>
                                     </iframe>
+                                </div>
+
+                                <div class="mt-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Playback Options</h6>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="updateYouTubeEmbed('autoplay=1')">
+                                            <i class="bi bi-play-fill me-1"></i> Autoplay
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="updateYouTubeEmbed('loop=1&playlist=@(ExtractYouTubeVideoId(Model.Url))')">
+                                            <i class="bi bi-arrow-repeat me-1"></i> Loop
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="updateYouTubeEmbed('controls=0')">
+                                            <i class="bi bi-toggles me-1"></i> Hide Controls
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="updateYouTubeEmbed('start=30')">
+                                            <i class="bi bi-skip-forward me-1"></i> Start at 0:30
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetYouTubeEmbed()">
+                                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                                        </button>
+                                    </div>
                                 </div>
                             }
                             else
@@ -252,5 +387,48 @@
                 }, 2000);
             });
         }
+
+        @if (isYouTubeVideo)
+        {
+                    <text>
+                    let originalEmbedUrl = '@ViewBag.YouTubeEmbedUrl';
+
+                    function updateYouTubeEmbed(paramString) {
+                        const iframe = document.querySelector('.ratio-16x9 iframe');
+                        let url = originalEmbedUrl;
+
+                        // Check if URL already has parameters
+                        if (url.includes('?')) {
+                            url += '&' + paramString;
+                        } else {
+                            url += '?' + paramString;
+                        }
+
+                        iframe.src = url;
+                    }
+
+                    function resetYouTubeEmbed() {
+                        const iframe = document.querySelector('.ratio-16x9 iframe');
+                        iframe.src = originalEmbedUrl;
+                    }
+                    </text>
+        }
     </script>
+}
+
+@functions {
+    public string ExtractYouTubeVideoId(string url)
+    {
+        if (string.IsNullOrEmpty(url))
+            return string.Empty;
+
+        // Extract video ID from various YouTube URL formats
+        var regex = new System.Text.RegularExpressions.Regex(@"(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^""&?\/\s]{11})");
+        var match = regex.Match(url);
+
+        if (match.Success && match.Groups.Count > 1)
+            return match.Groups[1].Value;
+
+        return string.Empty;
+    }
 }

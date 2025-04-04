@@ -483,4 +483,5 @@ public class LibraryMediaViewModel
     public long? FileSize { get; set; }
     public string? Url { get; set; } = string.Empty;
     public string? YouTubeVideoId { get; set; } = string.Empty;
+    public string StorageMetadata { get; set; } = string.Empty;
 }
