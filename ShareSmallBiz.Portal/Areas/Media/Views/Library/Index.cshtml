@@ -32,6 +32,17 @@
                             <i class="bi bi-image me-2 text-dark"></i> Unsplash Images
                         </a>
                     </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item" href="@Url.Action("Profile", "UserMedia")">
+                            <i class="bi bi-person-circle me-2 text-info"></i> Profile Picture
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="@Url.Action("Index", "UserMedia")">
+                            <i class="bi bi-person-video me-2 text-info"></i> My Media
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -99,7 +110,7 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="bi bi-upload text-primary display-4 mb-3"></i>
@@ -111,7 +122,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="bi bi-youtube text-danger display-4 mb-3"></i>
@@ -123,7 +134,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="card h-100">
                                 <div class="card-body text-center">
                                     <i class="bi bi-image text-dark display-4 mb-3"></i>
@@ -132,6 +143,23 @@
                                     <a asp-controller="Unsplash" asp-action="Index" class="btn btn-dark mt-2">
                                         <i class="bi bi-image me-1"></i> Browse Images
                                     </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-person-circle text-info display-4 mb-3"></i>
+                                    <h5>User Media</h5>
+                                    <p class="text-muted">Manage your profile picture and personal media collection.</p>
+                                    <div class="d-grid gap-2">
+                                        <a asp-controller="UserMedia" asp-action="Profile" class="btn btn-info mt-2">
+                                            <i class="bi bi-person-circle me-1"></i> Profile Picture
+                                        </a>
+                                        <a asp-controller="UserMedia" asp-action="Index" class="btn btn-outline-info">
+                                            <i class="bi bi-person-video me-1"></i> My Media
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>

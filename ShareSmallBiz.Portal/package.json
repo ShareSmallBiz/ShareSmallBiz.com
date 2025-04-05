@@ -41,7 +41,7 @@
         "@popperjs/core": "^2.11.8",
         "bootstrap": "^5.3.5",
         "bootstrap-icons": "^1.11.3",
-        "bootswatch": "^5.3.3",
+        "bootswatch": "^5.3.5",
         "datatables.net": "^2.2.2",
         "datatables.net-bs5": "^2.2.2",
         "datatables.net-buttons-bs5": "^3.2.2",
@@ -64,7 +64,7 @@
     "devDependencies": {
         "@fullhuman/postcss-purgecss": "^7.0.2",
         "autoprefixer": "10.4.21",
-        "bootswatch": "^5.3.3",
+        "bootswatch": "^5.3.5",
         "browser-sync": "3.0.4",
         "chokidar": "4.0.3",
         "clean-css-cli": "^5.6.3",

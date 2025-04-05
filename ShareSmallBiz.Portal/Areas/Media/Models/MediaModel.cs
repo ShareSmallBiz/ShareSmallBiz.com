@@ -19,5 +19,7 @@ public class MediaModel
     public DateTime ModifiedDate { get; set; } = DateTime.UtcNow;
     public int? PostId { get; set; }
     public int? CommentId { get; set; }
+    public string CreatedID { get;  set; }
+    public string ModifiedID { get; set; }
 }
 

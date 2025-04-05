@@ -19,7 +19,7 @@ public class MediaService
     private readonly ShareSmallBizUserContext _context;
     private readonly ILogger<MediaService> _logger;
     private readonly StorageProviderService _storageProviderService;
-
+    
     public MediaService(
         ShareSmallBizUserContext context,
         ILogger<MediaService> logger,
@@ -78,7 +78,9 @@ public class MediaService
             Attribution = model.Attribution,
             UserId = model.UserId,
             CreatedDate = model.CreatedDate,
+            CreatedID = model.CreatedID,
             ModifiedDate = model.ModifiedDate,
+            ModifiedID = model.ModifiedID,
             PostId = model.PostId,
             CommentId = model.CommentId
         };
@@ -208,6 +210,7 @@ public class MediaService
         }
     }
 
+
     /// <summary>
     /// Converts a user's profile picture to a Media model.
     /// </summary>
@@ -220,10 +223,24 @@ public class MediaService
 
         try
         {
-            // Create a media model for the profile picture.
+            // Create a temporary file path first - we need this for the URL property
+            string fileName = $"profile_{user.Id}_{DateTime.UtcNow.Ticks}.jpg";
+            string filePath = Path.Combine(_storageProviderService.GetMediaRootPath(), "profiles", fileName);
+
+            // Ensure the profiles directory exists
+            var profilesDir = Path.Combine(_storageProviderService.GetMediaRootPath(), "profiles");
+            if (!Directory.Exists(profilesDir))
+            {
+                Directory.CreateDirectory(profilesDir);
+            }
+
+            // Save the profile picture bytes to the file
+            await File.WriteAllBytesAsync(filePath, user.ProfilePicture);
+
+            // Create a media model for the profile picture
             var mediaModel = new MediaModel
             {
-                FileName = $"profile_{user.Id}_{DateTime.UtcNow.Ticks}.jpg",
+                FileName = fileName,
                 MediaType = MediaType.Image,
                 StorageProvider = StorageProviderNames.LocalStorage,
                 ContentType = "image/jpeg",
@@ -231,30 +248,38 @@ public class MediaService
                 Description = $"{user.DisplayName}'s profile picture",
                 StorageMetadata = "{\"type\":\"profile\"}",
                 UserId = user.Id,
+                Url = filePath,  // Set the URL to the file path
+                Attribution = user.DisplayName ?? "Personal", // Set attribution to avoid NOT NULL constraint
                 CreatedDate = DateTime.UtcNow,
-                ModifiedDate = DateTime.UtcNow
+                ModifiedDate = DateTime.UtcNow,
+                CreatedID = user.Id,  // Set the CreatedID from BaseEntity
+                ModifiedID = user.Id  // Set the ModifiedID from BaseEntity
             };
 
-            // Convert to entity for the storage provider operation.
+            // Convert to entity for database operation
             var entity = MapToEntity(mediaModel);
 
-            // Save the file using the storage provider service.
-            await _storageProviderService.SaveProfilePictureAsync(user.ProfilePicture, mediaModel).ConfigureAwait(true);
-
-            // Add the media entity to the database.
+            // Add the media entity to the database
             _context.Media.Add(entity);
             await _context.SaveChangesAsync();
 
-            // Update the user's ProfilePictureUrl to point to the media.
+            // Map back to model with the generated ID
+            mediaModel = MapToModel(entity);
+
+            // Update the user's ProfilePictureUrl to point to the media
             user.ProfilePictureUrl = $"/Media/{entity.Id}";
+
+            // Clear the byte array to save space
+            user.ProfilePicture = null;
+
             await _context.SaveChangesAsync();
 
-            return MapToModel(entity);
+            return mediaModel;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to convert profile picture to media for user {UserId}", user.Id);
-            return null;
+            throw; // Re-throw to see detailed error in development
         }
     }
 

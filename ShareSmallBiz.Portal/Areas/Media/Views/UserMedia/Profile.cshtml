@@ -64,6 +64,19 @@
                             </span>
                         }
                     </p>
+
+                    @if (Model.HasLegacyProfilePicture)
+                    {
+                        <div class="mt-3 alert alert-info">
+                            <i class="bi bi-info-circle me-1"></i>
+                            You have a profile picture in legacy format.
+                            <form asp-action="MigrateProfilePicture" method="post" class="mt-2">
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-arrow-up-circle me-1"></i> Migrate to Media Library
+                                </button>
+                            </form>
+                        </div>
+                    }
                 </div>
                 @if (Model.HasProfilePicture)
                 {
@@ -80,41 +93,115 @@
         </div>
 
         <div class="col-md-8">
-            <div class="card shadow-sm">
+            <!-- Upload Tabs -->
+            <div class="card shadow-sm mb-4">
                 <div class="card-header bg-light">
-                    <h5 class="mb-0">
-                        <i class="bi bi-upload me-2"></i>
-                        Upload New Profile Picture
-                    </h5>
+                    <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-content" type="button" role="tab" aria-controls="upload-content" aria-selected="true">
+                                <i class="bi bi-upload me-1"></i> Upload File
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="external-tab" data-bs-toggle="tab" data-bs-target="#external-content" type="button" role="tab" aria-controls="external-content" aria-selected="false">
+                                <i class="bi bi-link me-1"></i> External Image
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="unsplash-tab" data-bs-toggle="tab" data-bs-target="#unsplash-content" type="button" role="tab" aria-controls="unsplash-content" aria-selected="false">
+                                <i class="bi bi-image me-1"></i> Unsplash
+                            </button>
+                        </li>
+                    </ul>
                 </div>
                 <div class="card-body">
-                    <form asp-action="UploadProfile" method="post" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label for="profilePicture" class="form-label">Select Image</label>
-                            <input type="file" class="form-control" id="profilePicture" name="profilePicture" accept="image/*" onchange="previewImage(event)">
-                            <div class="form-text">Recommended: Square image, at least 300x300 pixels. Max file size: 5MB.</div>
+                    <div class="tab-content" id="profileTabsContent">
+                        <!-- Upload File Tab -->
+                        <div class="tab-pane fade show active" id="upload-content" role="tabpanel" aria-labelledby="upload-tab" tabindex="0">
+                            <form asp-action="UploadProfile" method="post" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="profilePicture" class="form-label">Select Image</label>
+                                    <input type="file" class="form-control" id="profilePicture" name="profilePicture" accept="image/*" onchange="previewImage(event, 'uploadPreview', 'uploadPreviewContainer')">
+                                    <div class="form-text">Recommended: Square image, at least 300x300 pixels. Max file size: 5MB.</div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="d-none" id="uploadPreviewContainer">
+                                        <p class="form-label">Preview</p>
+                                        <img id="uploadPreview" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                                    </div>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-cloud-upload me-1"></i>
+                                        Upload New Profile Picture
+                                    </button>
+                                </div>
+                            </form>
                         </div>
 
-                        <div class="mb-4">
-                            <div class="d-none" id="imagePreviewContainer">
-                                <p class="form-label">Preview</p>
-                                <img id="imagePreview" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                        <!-- External URL Tab -->
+                        <div class="tab-pane fade" id="external-content" role="tabpanel" aria-labelledby="external-tab" tabindex="0">
+                            <form asp-action="UseExternalProfile" method="post">
+                                <div class="mb-3">
+                                    <label for="externalUrl" class="form-label">External Image URL</label>
+                                    <input type="url" class="form-control" id="externalUrl" name="externalUrl" placeholder="https://example.com/image.jpg" required onchange="previewExternalImage()">
+                                    <div class="form-text">Direct link to an image (JPG, PNG, GIF, etc.)</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description (Optional)</label>
+                                    <input type="text" class="form-control" id="description" name="description" placeholder="My profile picture">
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="d-none" id="externalPreviewContainer">
+                                        <p class="form-label">Preview</p>
+                                        <img id="externalPreview" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                                    </div>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-link me-1"></i>
+                                        Use External Image
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Unsplash Tab -->
+                        <div class="tab-pane fade" id="unsplash-content" role="tabpanel" aria-labelledby="unsplash-tab" tabindex="0">
+                            <div class="mb-3">
+                                <label for="unsplashSearch" class="form-label">Search Unsplash Images</label>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="unsplashSearch" placeholder="Search for images...">
+                                    <button class="btn btn-outline-primary" type="button" id="searchUnsplashBtn" onclick="searchUnsplash()">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">Search for free, high-quality photos from Unsplash.</div>
                             </div>
-                        </div>
 
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-cloud-upload me-1"></i>
-                                Upload New Profile Picture
-                            </button>
+                            <div id="unsplashResults" class="row row-cols-2 row-cols-md-3 g-3 mb-3">
+                                <!-- Search results will be populated here -->
+                                <div class="col-12 text-center text-muted">
+                                    <p>Search for images to see results</p>
+                                </div>
+                            </div>
+
+                            <form asp-action="UseUnsplashProfile" method="post" id="unsplashForm">
+                                <input type="hidden" id="photoId" name="photoId" required>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary" disabled id="useUnsplashBtn">
+                                        <i class="bi bi-image me-1"></i>
+                                        Use Selected Unsplash Image
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                    </form>
-                </div>
-                <div class="card-footer bg-light">
-                    <p class="mb-0 small">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Your profile picture will be visible to other users and associated with your posts and comments.
-                    </p>
+                    </div>
                 </div>
             </div>
 
@@ -134,20 +221,101 @@
 
 @section Scripts {
     <script>
-        function previewImage(event) {
+        function previewImage(event, previewId, containerId) {
             const input = event.target;
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
 
                 reader.onload = function(e) {
-                    const imagePreview = document.getElementById('imagePreview');
+                    const imagePreview = document.getElementById(previewId);
                     imagePreview.src = e.target.result;
 
-                    document.getElementById('imagePreviewContainer').classList.remove('d-none');
+                    document.getElementById(containerId).classList.remove('d-none');
                 }
 
                 reader.readAsDataURL(input.files[0]);
             }
         }
+
+        function previewExternalImage() {
+            const url = document.getElementById('externalUrl').value;
+            if (url) {
+                const preview = document.getElementById('externalPreview');
+                preview.src = url;
+                document.getElementById('externalPreviewContainer').classList.remove('d-none');
+
+                // Handle image load errors
+                preview.onerror = function() {
+                    document.getElementById('externalPreviewContainer').classList.add('d-none');
+                    alert('Unable to load the image. Please check the URL.');
+                };
+            }
+        }
+
+        function searchUnsplash() {
+            const query = document.getElementById('unsplashSearch').value;
+            if (!query) return;
+
+            const resultsContainer = document.getElementById('unsplashResults');
+            resultsContainer.innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+            // This would normally call your backend API that interfaces with Unsplash
+            // For demo purposes, we'll simulate the call and response
+            // In a real implementation, you would use AJAX to call your Unsplash controller
+
+            fetch(`/Media/Unsplash/api/search?query=${encodeURIComponent(query)}&page=1&perPage=9`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.results && data.results.length > 0) {
+                        resultsContainer.innerHTML = '';
+
+                        data.results.forEach(photo => {
+                            const col = document.createElement('div');
+                            col.className = 'col';
+                            col.innerHTML = `
+                                <div class="card h-100 unsplash-card" data-photo-id="${photo.id}">
+                                    <img src="${photo.urls.small}" class="card-img-top" alt="${photo.alt_description || 'Unsplash photo'}"
+                                         style="height: 120px; object-fit: cover;">
+                                    <div class="card-body p-2">
+                                        <small class="text-muted">Photo by ${photo.user.name}</small>
+                                    </div>
+                                </div>
+                            `;
+                            resultsContainer.appendChild(col);
+                        });
+
+                        // Add click event listeners to the cards
+                        document.querySelectorAll('.unsplash-card').forEach(card => {
+                            card.addEventListener('click', function() {
+                                // Remove selected class from all cards
+                                document.querySelectorAll('.unsplash-card').forEach(c => c.classList.remove('border-primary'));
+
+                                // Add selected class to this card
+                                this.classList.add('border-primary');
+
+                                // Set the photo ID in the hidden input
+                                document.getElementById('photoId').value = this.dataset.photoId;
+
+                                // Enable the submit button
+                                document.getElementById('useUnsplashBtn').disabled = false;
+                            });
+                        });
+                    } else {
+                        resultsContainer.innerHTML = '<div class="col-12 text-center text-muted"><p>No results found</p></div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching Unsplash results:', error);
+                    resultsContainer.innerHTML = '<div class="col-12 text-center text-danger"><p>Error fetching results</p></div>';
+                });
+        }
+
+        // Add event listener for enter key in Unsplash search
+        document.getElementById('unsplashSearch').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchUnsplash();
+            }
+        });
     </script>
 }

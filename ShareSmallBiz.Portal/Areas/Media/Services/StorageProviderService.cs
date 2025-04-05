@@ -14,10 +14,11 @@ namespace ShareSmallBiz.Portal.Areas.Media.Services;
 public class StorageProviderService
 {
     private readonly IConfiguration _configuration;
-    private readonly ILogger<StorageProviderService> _logger;
     private readonly IWebHostEnvironment _environment;
+    private readonly ILogger<StorageProviderService> _logger;
     private readonly MediaStorageOptions _mediaOptions;
     private readonly string _mediaRootPath;
+
 
     public StorageProviderService(
         IConfiguration configuration,
@@ -38,107 +39,6 @@ public class StorageProviderService
         EnsureDirectoryExists(_mediaRootPath);
         EnsureDirectoryExists(Path.Combine(_mediaRootPath, "thumbnails"));
         EnsureDirectoryExists(Path.Combine(_mediaRootPath, "profiles"));
-    }
-
-    /// <summary>
-    /// Uploads a file to the appropriate storage provider
-    /// </summary>
-    public async Task<string> UploadFileAsync(
-        IFormFile file,
-        StorageProviderNames provider,
-        string fileName)
-    {
-        if (file == null || file.Length == 0)
-        {
-            throw new ArgumentException("File is null or empty", nameof(file));
-        }
-
-        // Validate file
-        if (!await ValidateFileAsync(file))
-        {
-            throw new ArgumentException("Invalid file type or size", nameof(file));
-        }
-
-        // Upload file based on provider
-        return provider switch
-        {
-            StorageProviderNames.LocalStorage => await UploadToLocalStorageAsync(file, fileName),
-            _ => throw new ArgumentException($"Unsupported storage provider: {provider}")
-        };
-    }
-
-    /// <summary>
-    /// Gets the file stream for a media item
-    /// </summary>
-    public async Task<Stream> GetFileStreamAsync(MediaModel media)
-    {
-        return media.StorageProvider switch
-        {
-            StorageProviderNames.LocalStorage => await GetLocalFileStreamAsync(media.Url),
-            StorageProviderNames.External or StorageProviderNames.YouTube =>
-                throw new InvalidOperationException("Cannot get file stream for external links"),
-            _ => throw new ArgumentException($"Unsupported storage provider: {media.StorageProvider}")
-        };
-    }
-
-    /// <summary>
-    /// Deletes a file from the storage provider
-    /// </summary>
-    public async Task DeleteFileAsync(MediaModel media)
-    {
-        switch (media.StorageProvider)
-        {
-            case StorageProviderNames.LocalStorage:
-                // Delete the physical file
-                if (File.Exists(media.Url))
-                {
-                    File.Delete(media.Url);
-                }
-
-                // Delete any thumbnails
-                string thumbDirectory = Path.Combine(_mediaRootPath, "thumbnails");
-                string fileNameWithoutPath = Path.GetFileName(media.Url);
-                var thumbFiles = Directory.GetFiles(thumbDirectory, $"thumb_*_{fileNameWithoutPath}");
-                foreach (var thumbFile in thumbFiles)
-                {
-                    File.Delete(thumbFile);
-                }
-                break;
-            case StorageProviderNames.External:
-            case StorageProviderNames.YouTube:
-                // Nothing to delete for external links
-                break;
-            default:
-                throw new ArgumentException($"Unsupported storage provider: {media.StorageProvider}");
-        }
-    }
-
-    /// <summary>
-    /// Validates a file for upload
-    /// </summary>
-    public async Task<bool> ValidateFileAsync(IFormFile file)
-    {
-        if (file == null || file.Length == 0)
-            return false;
-
-        // Check file size against configured maximum
-        if (file.Length > _mediaOptions.MaxFileSize)
-            return false;
-
-        // Check file extension against configured allowed extensions
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!_mediaOptions.AllowedExtensions.Contains(extension))
-            return false;
-
-        // Check file type (whitelist approach)
-        var allowedTypes = new[] {
-            "image/jpeg", "image/png", "image/gif", "image/webp", // Images
-            "video/mp4", "video/webm", "video/ogg", // Videos
-            "audio/mpeg", "audio/ogg", "audio/wav", // Audio
-            "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" // Documents
-        };
-
-        return Array.Exists(allowedTypes, type => type.Equals(file.ContentType, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -205,90 +105,35 @@ public class StorageProviderService
     }
 
     /// <summary>
-    /// Gets a file stream for a thumbnail
+    /// Deletes a file from the storage provider
     /// </summary>
-    public async Task<Stream> GetThumbnailStreamAsync(MediaModel media, int width = 200, int height = 200)
+    public async Task DeleteFileAsync(MediaModel media)
     {
-        if (media.MediaType != MediaType.Image || media.StorageProvider != StorageProviderNames.LocalStorage)
+        switch (media.StorageProvider)
         {
-            // Return default icon for non-image media
-            string iconPath = Path.Combine(_environment.WebRootPath, "images", $"{media.MediaType.ToString().ToLower()}-icon.png");
-            if (!File.Exists(iconPath))
-            {
-                iconPath = Path.Combine(_environment.WebRootPath, "images", "placeholder.png");
-            }
+            case StorageProviderNames.LocalStorage:
+                // Delete the physical file
+                if (File.Exists(media.Url))
+                {
+                    File.Delete(media.Url);
+                }
 
-            return new FileStream(iconPath, FileMode.Open, FileAccess.Read);
+                // Delete any thumbnails
+                string thumbDirectory = Path.Combine(_mediaRootPath, "thumbnails");
+                string fileNameWithoutPath = Path.GetFileName(media.Url);
+                var thumbFiles = Directory.GetFiles(thumbDirectory, $"thumb_*_{fileNameWithoutPath}");
+                foreach (var thumbFile in thumbFiles)
+                {
+                    File.Delete(thumbFile);
+                }
+                break;
+            case StorageProviderNames.External:
+            case StorageProviderNames.YouTube:
+                // Nothing to delete for external links
+                break;
+            default:
+                throw new ArgumentException($"Unsupported storage provider: {media.StorageProvider}");
         }
-
-        // Create thumbnail if it doesn't exist
-        string thumbPath = await CreateThumbnailAsync(media.Url, width, height);
-        if (string.IsNullOrEmpty(thumbPath) || !File.Exists(thumbPath))
-        {
-            // If thumbnail creation failed, return the original image
-            return await GetFileStreamAsync(media);
-        }
-
-        return new FileStream(thumbPath, FileMode.Open, FileAccess.Read);
-    }
-
-    /// <summary>
-    /// Determines the media type from content type
-    /// </summary>
-    public MediaType GetMediaTypeFromContentType(string contentType)
-    {
-        if (contentType.StartsWith("image/"))
-            return MediaType.Image;
-        if (contentType.StartsWith("video/"))
-            return MediaType.Video;
-        if (contentType.StartsWith("audio/"))
-            return MediaType.Audio;
-        if (contentType.StartsWith("application/pdf") || contentType.StartsWith("application/msword") ||
-            contentType.StartsWith("application/vnd.openxmlformats-officedocument"))
-            return MediaType.Document;
-
-        return MediaType.Other;
-    }
-
-    /// <summary>
-    /// Gets the content type from a media type
-    /// </summary>
-    public string GetContentTypeFromMediaType(MediaType mediaType)
-    {
-        return mediaType switch
-        {
-            MediaType.Image => "image/jpeg",
-            MediaType.Video => "video/mp4",
-            MediaType.Audio => "audio/mpeg",
-            MediaType.Document => "application/pdf",
-            _ => "application/octet-stream"
-        };
-    }
-
-    /// <summary>
-    /// Gets the content type from a file name
-    /// </summary>
-    public string GetContentTypeFromFileName(string fileName)
-    {
-        string extension = Path.GetExtension(fileName).ToLowerInvariant();
-
-        return extension switch
-        {
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".gif" => "image/gif",
-            ".webp" => "image/webp",
-            ".svg" => "image/svg+xml",
-            ".mp4" => "video/mp4",
-            ".webm" => "video/webm",
-            ".mp3" => "audio/mpeg",
-            ".wav" => "audio/wav",
-            ".pdf" => "application/pdf",
-            ".doc" or ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            ".xls" or ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            ".txt" => "text/plain",
-            _ => "application/octet-stream"  // Default binary content type
-        };
     }
 
     /// <summary>
@@ -317,38 +162,6 @@ public class StorageProviderService
 
         // For other types, return a generic content type
         return "application/octet-stream";
-    }
-
-    /// <summary>
-    /// Saves a profile picture as a file
-    /// </summary>
-    public async Task SaveProfilePictureAsync(byte[] profilePicture, MediaModel media)
-    {
-        string filePath = Path.Combine(_mediaRootPath, "profiles", media.FileName);
-
-        // Ensure the profiles directory exists
-        EnsureDirectoryExists(Path.GetDirectoryName(filePath));
-
-        // Save the image to disk
-        await File.WriteAllBytesAsync(filePath, profilePicture);
-
-        // Update the URL in the media entity
-        media.Url = filePath;
-    }
-
-    /// <summary>
-    /// Checks if a URL is a YouTube URL
-    /// </summary>
-    public bool IsYouTubeUrl(string url)
-    {
-        if (string.IsNullOrEmpty(url))
-            return false;
-
-        // Check various YouTube URL formats
-        return url.Contains("youtube.com/watch") ||
-               url.Contains("youtu.be/") ||
-               url.Contains("youtube.com/embed/") ||
-               url.Contains("youtube.com/v/");
     }
 
     /// <summary>
@@ -394,6 +207,111 @@ public class StorageProviderService
     }
 
     /// <summary>
+    /// Gets the content type from a file name
+    /// </summary>
+    public string GetContentTypeFromFileName(string fileName)
+    {
+        string extension = Path.GetExtension(fileName).ToLowerInvariant();
+
+        return extension switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
+            ".svg" => "image/svg+xml",
+            ".mp4" => "video/mp4",
+            ".webm" => "video/webm",
+            ".mp3" => "audio/mpeg",
+            ".wav" => "audio/wav",
+            ".pdf" => "application/pdf",
+            ".doc" or ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".xls" or ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ".txt" => "text/plain",
+            _ => "application/octet-stream"  // Default binary content type
+        };
+    }
+
+    /// <summary>
+    /// Gets the content type from a media type
+    /// </summary>
+    public string GetContentTypeFromMediaType(MediaType mediaType)
+    {
+        return mediaType switch
+        {
+            MediaType.Image => "image/jpeg",
+            MediaType.Video => "video/mp4",
+            MediaType.Audio => "audio/mpeg",
+            MediaType.Document => "application/pdf",
+            _ => "application/octet-stream"
+        };
+    }
+
+    /// <summary>
+    /// Gets the file stream for a media item
+    /// </summary>
+    public async Task<Stream> GetFileStreamAsync(MediaModel media)
+    {
+        return media.StorageProvider switch
+        {
+            StorageProviderNames.LocalStorage => await GetLocalFileStreamAsync(media.Url),
+            StorageProviderNames.External or StorageProviderNames.YouTube =>
+                throw new InvalidOperationException("Cannot get file stream for external links"),
+            _ => throw new ArgumentException($"Unsupported storage provider: {media.StorageProvider}")
+        };
+    }
+    public string GetMediaRootPath()
+    {
+        return _mediaRootPath;
+    }
+
+    /// <summary>
+    /// Determines the media type from content type
+    /// </summary>
+    public MediaType GetMediaTypeFromContentType(string contentType)
+    {
+        if (contentType.StartsWith("image/"))
+            return MediaType.Image;
+        if (contentType.StartsWith("video/"))
+            return MediaType.Video;
+        if (contentType.StartsWith("audio/"))
+            return MediaType.Audio;
+        if (contentType.StartsWith("application/pdf") || contentType.StartsWith("application/msword") ||
+            contentType.StartsWith("application/vnd.openxmlformats-officedocument"))
+            return MediaType.Document;
+
+        return MediaType.Other;
+    }
+
+    /// <summary>
+    /// Gets a file stream for a thumbnail
+    /// </summary>
+    public async Task<Stream> GetThumbnailStreamAsync(MediaModel media, int width = 200, int height = 200)
+    {
+        if (media.MediaType != MediaType.Image || media.StorageProvider != StorageProviderNames.LocalStorage)
+        {
+            // Return default icon for non-image media
+            string iconPath = Path.Combine(_environment.WebRootPath, "images", $"{media.MediaType.ToString().ToLower()}-icon.png");
+            if (!File.Exists(iconPath))
+            {
+                iconPath = Path.Combine(_environment.WebRootPath, "images", "placeholder.png");
+            }
+
+            return new FileStream(iconPath, FileMode.Open, FileAccess.Read);
+        }
+
+        // Create thumbnail if it doesn't exist
+        string thumbPath = await CreateThumbnailAsync(media.Url, width, height);
+        if (string.IsNullOrEmpty(thumbPath) || !File.Exists(thumbPath))
+        {
+            // If thumbnail creation failed, return the original image
+            return await GetFileStreamAsync(media);
+        }
+
+        return new FileStream(thumbPath, FileMode.Open, FileAccess.Read);
+    }
+
+    /// <summary>
     /// Gets the YouTube embed URL from a video ID
     /// </summary>
     public string GetYouTubeEmbedUrl(string videoId)
@@ -411,6 +329,93 @@ public class StorageProviderService
     {
         string videoId = ExtractYouTubeVideoId(url);
         return GetYouTubeEmbedUrl(videoId);
+    }
+
+    /// <summary>
+    /// Checks if a URL is a YouTube URL
+    /// </summary>
+    public bool IsYouTubeUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url))
+            return false;
+
+        // Check various YouTube URL formats
+        return url.Contains("youtube.com/watch") ||
+               url.Contains("youtu.be/") ||
+               url.Contains("youtube.com/embed/") ||
+               url.Contains("youtube.com/v/");
+    }
+
+    /// <summary>
+    /// Saves a profile picture as a file
+    /// </summary>
+    public async Task SaveProfilePictureAsync(byte[] profilePicture, MediaModel media)
+    {
+        string filePath = Path.Combine(_mediaRootPath, "profiles", media.FileName);
+
+        // Ensure the profiles directory exists
+        EnsureDirectoryExists(Path.GetDirectoryName(filePath));
+
+        // Save the image to disk
+        await File.WriteAllBytesAsync(filePath, profilePicture);
+
+        // Update the URL in the media entity
+        media.Url = filePath;
+    }
+
+    /// <summary>
+    /// Uploads a file to the appropriate storage provider
+    /// </summary>
+    public async Task<string> UploadFileAsync(
+        IFormFile file,
+        StorageProviderNames provider,
+        string fileName)
+    {
+        if (file == null || file.Length == 0)
+        {
+            throw new ArgumentException("File is null or empty", nameof(file));
+        }
+
+        // Validate file
+        if (!await ValidateFileAsync(file))
+        {
+            throw new ArgumentException("Invalid file type or size", nameof(file));
+        }
+
+        // Upload file based on provider
+        return provider switch
+        {
+            StorageProviderNames.LocalStorage => await UploadToLocalStorageAsync(file, fileName),
+            _ => throw new ArgumentException($"Unsupported storage provider: {provider}")
+        };
+    }
+
+    /// <summary>
+    /// Validates a file for upload
+    /// </summary>
+    public async Task<bool> ValidateFileAsync(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return false;
+
+        // Check file size against configured maximum
+        if (file.Length > _mediaOptions.MaxFileSize)
+            return false;
+
+        // Check file extension against configured allowed extensions
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!_mediaOptions.AllowedExtensions.Contains(extension))
+            return false;
+
+        // Check file type (whitelist approach)
+        var allowedTypes = new[] {
+            "image/jpeg", "image/png", "image/gif", "image/webp", // Images
+            "video/mp4", "video/webm", "video/ogg", // Videos
+            "audio/mpeg", "audio/ogg", "audio/wav", // Audio
+            "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" // Documents
+        };
+
+        return Array.Exists(allowedTypes, type => type.Equals(file.ContentType, StringComparison.OrdinalIgnoreCase));
     }
 
     #region Private Helper Methods

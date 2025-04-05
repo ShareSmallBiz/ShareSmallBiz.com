@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using ShareSmallBiz.Portal.Areas.Media.Models;
 using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Data.Entities;
+using ShareSmallBiz.Portal.Data.Enums;
 using System.Security.Claims;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
@@ -14,15 +15,24 @@ namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 public class UserMediaController : Controller
 {
     private readonly MediaService _mediaService;
+    private readonly MediaFactoryService _mediaFactoryService;
+    private readonly FileUploadService _fileUploadService;
+    private readonly UnsplashService _unsplashService;
     private readonly UserManager<ShareSmallBizUser> _userManager;
     private readonly ILogger<UserMediaController> _logger;
 
     public UserMediaController(
         MediaService mediaService,
+        MediaFactoryService mediaFactoryService,
+        FileUploadService fileUploadService,
+        UnsplashService unsplashService,
         UserManager<ShareSmallBizUser> userManager,
         ILogger<UserMediaController> logger)
     {
         _mediaService = mediaService;
+        _mediaFactoryService = mediaFactoryService;
+        _fileUploadService = fileUploadService;
+        _unsplashService = unsplashService;
         _userManager = userManager;
         _logger = logger;
     }
@@ -56,8 +66,9 @@ public class UserMediaController : Controller
 
         var viewModel = new ProfileMediaViewModel
         {
-            HasProfilePicture = user.ProfilePicture != null && user.ProfilePicture.Length > 0,
-            ProfilePictureUrl = user.ProfilePictureUrl
+            HasProfilePicture = (user.ProfilePicture != null && user.ProfilePicture.Length > 0) || !string.IsNullOrEmpty(user.ProfilePictureUrl),
+            ProfilePictureUrl = user.ProfilePictureUrl,
+            HasLegacyProfilePicture = user.ProfilePicture != null && user.ProfilePicture.Length > 0
         };
 
         return View(viewModel);
@@ -84,16 +95,30 @@ public class UserMediaController : Controller
 
         try
         {
-            // Read the uploaded file into a byte array
-            using var memoryStream = new MemoryStream();
-            await profilePicture.CopyToAsync(memoryStream);
-            user.ProfilePicture = memoryStream.ToArray();
-
-            // Convert profile picture to media
-            var media = await _mediaService.ConvertProfilePictureToMediaAsync(user);
+            // Create media directly using file upload service
+            var media = await _fileUploadService.UploadFileAsync(
+                profilePicture,
+                userId,
+                StorageProviderNames.LocalStorage,
+                "Profile picture",
+                "Personal"
+            );
 
             if (media != null)
             {
+                // Update user's profile picture URL
+                user.ProfilePictureUrl = $"/Media/{media.Id}";
+
+                // Clear any existing byte array to save space
+                user.ProfilePicture = null;
+
+                // Update metadata for the media to indicate it's a profile picture
+                media.StorageMetadata = $"{{\"type\":\"profile\",\"userId\":\"{userId}\"}}";
+                await _mediaService.UpdateMediaAsync(media);
+
+                // Save user changes
+                await _userManager.UpdateAsync(user);
+
                 TempData["SuccessMessage"] = "Profile picture updated successfully.";
             }
             else
@@ -105,6 +130,181 @@ public class UserMediaController : Controller
         {
             _logger.LogError(ex, "Error uploading profile picture for user {UserId}", userId);
             TempData["ErrorMessage"] = $"Error uploading profile picture: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Profile));
+    }
+
+    // POST: /Media/User/UseExternalProfile
+    [HttpPost("UseExternalProfile")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UseExternalProfile(string externalUrl, string description = "Profile picture")
+    {
+        if (string.IsNullOrEmpty(externalUrl))
+        {
+            ModelState.AddModelError(string.Empty, "External URL is required.");
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        try
+        {
+            // Create external media
+            var fileName = $"profile_{user.Id}_{DateTime.UtcNow.Ticks}.jpg";
+            var media = await _fileUploadService.CreateExternalLinkAsync(
+                externalUrl,
+                fileName,
+                MediaType.Image,
+                userId,
+                "External Profile", // Attribution
+                description, // Description 
+                $"{{\"type\":\"profile\",\"userId\":\"{userId}\"}}"
+            );
+
+            if (media != null)
+            {
+                // Update user's profile picture URL
+                user.ProfilePictureUrl = $"/Media/{media.Id}";
+
+                // Clear any existing byte array to save space
+                user.ProfilePicture = null;
+
+                // Save user changes
+                await _userManager.UpdateAsync(user);
+
+                TempData["SuccessMessage"] = "Profile picture updated successfully using external image.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to update profile picture.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting external profile picture for user {UserId}", userId);
+            TempData["ErrorMessage"] = $"Error setting profile picture: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Profile));
+    }
+
+    // POST: /Media/User/UseUnsplashProfile
+    [HttpPost("UseUnsplashProfile")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UseUnsplashProfile(string photoId)
+    {
+        if (string.IsNullOrEmpty(photoId))
+        {
+            ModelState.AddModelError(string.Empty, "Unsplash photo ID is required.");
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        try
+        {
+            // Fetch photo details from Unsplash
+            var photo = await _unsplashService.GetPhotoAsync(photoId);
+            if (photo == null)
+            {
+                TempData["ErrorMessage"] = "Failed to retrieve Unsplash photo.";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            // Create media for the Unsplash photo
+            var media = await _unsplashService.CreateUnsplashMediaAsync(photo, userId);
+
+            // Update the media metadata to indicate it's a profile picture
+            if (media != null)
+            {
+                // Update existing metadata to add profile indicator
+                var metadataObj = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(media.StorageMetadata);
+                metadataObj["type"] = "profile";
+                metadataObj["userId"] = userId;
+                media.StorageMetadata = System.Text.Json.JsonSerializer.Serialize(metadataObj);
+
+                // Update the media
+                await _mediaService.UpdateMediaAsync(media);
+
+                // Update user's profile picture URL
+                user.ProfilePictureUrl = $"/Media/{media.Id}";
+
+                // Clear any existing byte array to save space
+                user.ProfilePicture = null;
+
+                // Save user changes
+                await _userManager.UpdateAsync(user);
+
+                TempData["SuccessMessage"] = "Profile picture updated successfully using Unsplash image.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to update profile picture.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting Unsplash profile picture for user {UserId}", userId);
+            TempData["ErrorMessage"] = $"Error setting profile picture: {ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Profile));
+    }
+
+    // POST: /Media/User/MigrateProfilePicture
+    [HttpPost("MigrateProfilePicture")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MigrateProfilePicture()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        // Check if user has a legacy profile picture stored as byte array
+        if (user.ProfilePicture == null || user.ProfilePicture.Length == 0)
+        {
+            TempData["ErrorMessage"] = "No legacy profile picture found to migrate.";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        try
+        {
+            // Convert user's profile picture to Media model
+            var media = await _mediaService.ConvertProfilePictureToMediaAsync(user);
+
+            if (media != null)
+            {
+                // The conversion method already updates the user's ProfilePictureUrl
+                // and clears the ProfilePicture byte array
+
+                TempData["SuccessMessage"] = "Profile picture successfully migrated to media library.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to migrate profile picture.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error migrating profile picture for user {UserId}", userId);
+            TempData["ErrorMessage"] = $"Error migrating profile picture: {ex.Message}";
         }
 
         return RedirectToAction(nameof(Profile));
@@ -125,7 +325,22 @@ public class UserMediaController : Controller
 
         try
         {
-            // Remove profile picture
+            // If user has a ProfilePictureUrl, extract the media ID to delete the associated media
+            if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+            {
+                var urlParts = user.ProfilePictureUrl.Split('/');
+                if (urlParts.Length > 0 && int.TryParse(urlParts[urlParts.Length - 1], out int mediaId))
+                {
+                    // Try to find and delete the media
+                    var media = await _mediaService.GetUserMediaByIdAsync(mediaId, userId);
+                    if (media != null)
+                    {
+                        await _mediaService.DeleteMediaAsync(media);
+                    }
+                }
+            }
+
+            // Remove profile picture references
             user.ProfilePicture = null;
             user.ProfilePictureUrl = null;
             await _userManager.UpdateAsync(user);
