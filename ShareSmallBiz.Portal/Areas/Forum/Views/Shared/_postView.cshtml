@@ -14,10 +14,10 @@
     <div class="card-body">
         <h1 class="card-title">@Model.Title</h1>
         <p class="text-muted">
-            @if (Model?.Author?.ProfilePicture != null)
+            @if (Model?.Author?.ProfilePictureUrl != null)
             {
                 <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
-                     src="data:image/*;base64,@(Convert.ToBase64String(Model.Author.ProfilePicture))" alt="User Profile">
+                     src="@Model?.Author?.ProfilePictureUrl" alt="User Profile">
             }
             else
             {

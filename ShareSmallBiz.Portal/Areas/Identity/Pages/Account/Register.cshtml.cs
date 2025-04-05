@@ -123,7 +123,6 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
                 user.LastName = " ";
                 user.Slug = Input.UserName;
                 user.DisplayName = Input.UserName;
-                user.ProfilePicture = null;
 
                 await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);

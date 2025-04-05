@@ -1,7 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Enums;
 using System;
 using System.Linq;
+using System.Security.Claims;
 
 namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
 {
@@ -11,13 +17,16 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
     {
         private readonly ILogger<ProfileImageFixController> _logger;
         private readonly ShareSmallBizUserContext _context;
+        private readonly FileUploadService _fileUploadService;
 
         public ProfileImageFixController(
             ILogger<ProfileImageFixController> logger,
-            ShareSmallBizUserContext context)
+            ShareSmallBizUserContext context,
+            FileUploadService fileUploadService)
         {
             _logger = logger;
             _context = context;
+            _fileUploadService = fileUploadService;
         }
 
         // GET: Admin/ProfileImageFix
@@ -71,15 +80,10 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 UserName = user.UserName,
                 DisplayName = !string.IsNullOrEmpty(user.DisplayName) ? user.DisplayName : $"{user.FirstName} {user.LastName}",
                 Email = user.Email,
-                HasProfilePicture = user.ProfilePicture != null || !string.IsNullOrEmpty(user.ProfilePictureUrl)
+                HasProfilePicture = !string.IsNullOrEmpty(user.ProfilePictureUrl)
             };
 
-            if (user.ProfilePicture != null)
-            {
-                model.CurrentProfileImageType = "stored";
-                model.ProfilePicturePreview = $"data:image/jpeg;base64,{Convert.ToBase64String(user.ProfilePicture)}";
-            }
-            else if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+            if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
             {
                 model.CurrentProfileImageType = "url";
                 model.ProfilePicturePreview = user.ProfilePictureUrl;
@@ -124,26 +128,33 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Process image with ImageSharp
-                byte[] optimizedImage;
-                using (var memoryStream = new MemoryStream())
+                // Upload the file as a media entity
+                var media = await _fileUploadService.UploadFileAsync(
+                    model.ProfilePictureFile,
+                    model.UserId,
+                    StorageProviderNames.LocalStorage,
+                    "Profile picture",
+                    "Personal"
+                );
+
+                if (media != null)
                 {
-                    await model.ProfilePictureFile.CopyToAsync(memoryStream);
-                    _logger.LogInformation("Image uploaded. Size: {Size} bytes", memoryStream.Length);
-                    optimizedImage = memoryStream.ToArray();
+                    // Update user's profile picture URL to point to the media
+                    user.ProfilePictureUrl = $"/Media/{media.Id}";
+                    user.LastModified = DateTime.UtcNow;
+
+                    // Save changes
+                    await _context.SaveChangesAsync();
+
+                    _logger.LogInformation("Profile picture updated successfully for user {UserId}", model.UserId);
+                    TempData["SuccessMessage"] = "Profile picture updated successfully";
+                    return RedirectToAction(nameof(Success), new { id = model.UserId });
                 }
-
-                // Just update the profile picture and related fields
-                user.ProfilePicture = optimizedImage;
-                user.LastModified = DateTime.UtcNow;
-                user.ProfilePictureUrl = null; // Clear URL if using uploaded image
-
-                _logger.LogInformation("Saving profile picture changes to database for user {UserId}", model.UserId);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Profile picture updated successfully for user {UserId}", model.UserId);
-                TempData["SuccessMessage"] = "Profile picture updated successfully";
-                return RedirectToAction(nameof(Success), new { id = model.UserId });
+                else
+                {
+                    TempData["ErrorMessage"] = "Failed to upload the profile picture";
+                    return RedirectToAction(nameof(Upload), new { id = model.UserId });
+                }
             }
             catch (Exception ex)
             {
@@ -178,15 +189,10 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 UserName = user.UserName,
                 DisplayName = !string.IsNullOrEmpty(user.DisplayName) ? user.DisplayName : $"{user.FirstName} {user.LastName}",
                 Email = user.Email,
-                HasProfilePicture = user.ProfilePicture != null || !string.IsNullOrEmpty(user.ProfilePictureUrl)
+                HasProfilePicture = !string.IsNullOrEmpty(user.ProfilePictureUrl)
             };
 
-            if (user.ProfilePicture != null)
-            {
-                model.CurrentProfileImageType = "stored";
-                model.ProfilePicturePreview = $"data:image/jpeg;base64,{Convert.ToBase64String(user.ProfilePicture)}";
-            }
-            else if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+            if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
             {
                 model.CurrentProfileImageType = "url";
                 model.ProfilePicturePreview = user.ProfilePictureUrl;
@@ -220,8 +226,22 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                // Clear profile picture data
-                user.ProfilePicture = null;
+                // If user has a ProfilePictureUrl, extract the media ID to delete the associated media
+                if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+                {
+                    var urlParts = user.ProfilePictureUrl.Split('/');
+                    if (urlParts.Length > 0 && int.TryParse(urlParts[urlParts.Length - 1], out int mediaId))
+                    {
+                        // Find the media to delete it
+                        var media = await _context.Media.FindAsync(mediaId);
+                        if (media != null)
+                        {
+                            _context.Media.Remove(media);
+                        }
+                    }
+                }
+
+                // Clear profile picture URL
                 user.ProfilePictureUrl = null;
                 user.LastModified = DateTime.UtcNow;
 
@@ -274,7 +294,6 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
 
                 // Set profile picture URL
                 user.ProfilePictureUrl = pictureUrl;
-                user.ProfilePicture = null; // Clear stored image if using URL
                 user.LastModified = DateTime.UtcNow;
 
                 _logger.LogInformation("Setting profile picture URL for user {UserId}", userId);
@@ -321,32 +340,31 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                     return NotFound("User not found");
                 }
 
-                // Process the image with ImageSharp
-                byte[] optimizedImage;
-                using (var memoryStream = new MemoryStream())
+                // Upload the file as a media entity
+                var media = await _fileUploadService.UploadFileAsync(
+                    imageFile,
+                    userId,
+                    StorageProviderNames.LocalStorage,
+                    "Profile picture",
+                    "Personal"
+                );
+
+                if (media != null)
                 {
-                    await imageFile.CopyToAsync(memoryStream);
-                    _logger.LogInformation("Image uploaded. Size: {Size} bytes", memoryStream.Length);
+                    // Update user's profile picture URL to point to the media
+                    user.ProfilePictureUrl = $"/Media/{media.Id}";
+                    user.LastModified = DateTime.UtcNow;
 
-                    optimizedImage = memoryStream.ToArray();
+                    // Save changes
+                    await _context.SaveChangesAsync();
+
+                    _logger.LogInformation("Profile picture updated successfully");
+                    return Ok(new { message = "Profile picture updated successfully" });
                 }
-
-                if (optimizedImage == null)
+                else
                 {
-                    _logger.LogError("Failed to optimize image");
-                    return BadRequest("Failed to process the image");
+                    return BadRequest("Failed to upload profile picture");
                 }
-
-                // Just update the profile picture and last modified date
-                user.ProfilePicture = optimizedImage;
-                user.LastModified = DateTime.UtcNow;
-                user.ProfilePictureUrl = null; // Clear URL if using uploaded image
-
-                _logger.LogInformation("Saving changes to database");
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Profile picture updated successfully");
-                return Ok(new { message = "Profile picture updated successfully" });
             }
             catch (Exception ex)
             {

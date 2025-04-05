@@ -9,10 +9,10 @@
                 <div class="card shadow-sm h-100">
                     <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center">
-                            @if (post?.Author?.ProfilePicture != null)
+                            @if (post?.Author?.ProfilePictureUrl != null)
                             {
                                 <img class="rounded-circle me-2" width="32" height="32"
-                                     src="data:image/*;base64,@(Convert.ToBase64String(post.Author.ProfilePicture))" alt="@post.Author.UserName">
+                                     src="@post?.Author?.ProfilePictureUrl" alt="@post.Author.UserName">
                             }
                             else
                             {

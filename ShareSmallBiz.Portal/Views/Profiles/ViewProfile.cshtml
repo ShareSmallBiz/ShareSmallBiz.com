@@ -7,7 +7,7 @@
 
 <div class="card">
     <div class="card-header text-center">
-        @if (Model.ProfilePicture != null)
+        @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
         {
             <img id="profilePicture" class="img-fluid rounded-circle shadow-lg yp-5"
                  style="width: 200px; height: 200px; object-fit: cover;"

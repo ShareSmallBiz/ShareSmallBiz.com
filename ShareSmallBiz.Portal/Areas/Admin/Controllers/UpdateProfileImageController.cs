@@ -1,8 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Data.Enums;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 using System;
 using System.Linq;
+using System.Security.Claims;
 
 namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
 {
@@ -13,15 +19,21 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
         private readonly ILogger<UpdateProfileImageController> _logger;
         private readonly ShareSmallBizUserContext _context;
         private readonly ShareSmallBizUserManager _userManager;
+        private readonly FileUploadService _fileUploadService;
+        private readonly MediaService _mediaService;
 
         public UpdateProfileImageController(
             ILogger<UpdateProfileImageController> logger,
             ShareSmallBizUserContext context,
-            ShareSmallBizUserManager userManager)
+            ShareSmallBizUserManager userManager,
+            FileUploadService fileUploadService,
+            MediaService mediaService)
         {
             _logger = logger;
             _context = context;
             _userManager = userManager;
+            _fileUploadService = fileUploadService;
+            _mediaService = mediaService;
         }
 
         public async Task<IActionResult> Index()
@@ -74,15 +86,10 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 UserName = user.UserName,
                 DisplayName = user.DisplayName ?? $"{user.FirstName} {user.LastName}",
                 Email = user.Email,
-                HasProfilePicture = user.ProfilePicture != null || !string.IsNullOrEmpty(user.ProfilePictureUrl)
+                HasProfilePicture = !string.IsNullOrEmpty(user.ProfilePictureUrl)
             };
 
-            if (user.ProfilePicture != null)
-            {
-                model.CurrentProfileImageType = "stored";
-                model.ProfilePicturePreview = $"data:image/jpeg;base64,{Convert.ToBase64String(user.ProfilePicture)}";
-            }
-            else if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+            if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
             {
                 model.CurrentProfileImageType = "url";
                 model.ProfilePicturePreview = user.ProfilePictureUrl;
@@ -132,26 +139,55 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                         return View("SelectUser", model);
                     }
 
-                    // Process and optimize the uploaded image
-                    using var memoryStream = new MemoryStream();
-                    await model.ProfilePictureFile.CopyToAsync(memoryStream);
+                    // Remove existing profile picture media if it exists
+                    if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+                    {
+                        await RemoveExistingProfilePictureMedia(user);
+                    }
 
-                    _logger.LogDebug("File copied to memory stream, size: {Size} bytes", memoryStream.Length);
+                    // Upload the file as a media entity
+                    var media = await _fileUploadService.UploadFileAsync(
+                        model.ProfilePictureFile,
+                        model.UserId,
+                        StorageProviderNames.LocalStorage,
+                        "Profile picture",
+                        "Personal"
+                    );
 
-                    // Optimize the image with ImageSharp
-                    byte[] fileBytes = memoryStream.ToArray();
+                    if (media != null)
+                    {
+                        // Add profile metadata to the media
+                        media.StorageMetadata = $"{{\"type\":\"profile\",\"userId\":\"{model.UserId}\"}}";
+                        await _mediaService.UpdateMediaAsync(media);
+
+                        // Update user's profile picture URL
+                        user.ProfilePictureUrl = $"/Media/{media.Id}";
+                        profileUpdated = true;
+                    }
                 }
                 else if (model.ProfilePictureOption == "url" && !string.IsNullOrEmpty(model.ProfilePictureUrl))
                 {
                     _logger.LogInformation("Setting profile picture URL to: {Url}", model.ProfilePictureUrl);
+
+                    // Remove existing profile picture media if it exists
+                    if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+                    {
+                        await RemoveExistingProfilePictureMedia(user);
+                    }
+
                     user.ProfilePictureUrl = model.ProfilePictureUrl;
-                    user.ProfilePicture = null;
                     profileUpdated = true;
                 }
                 else if (model.ProfilePictureOption == "remove")
                 {
                     _logger.LogInformation("Removing profile picture for user {UserId}", model.UserId);
-                    user.ProfilePicture = null;
+
+                    // Remove existing profile picture media if it exists
+                    if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+                    {
+                        await RemoveExistingProfilePictureMedia(user);
+                    }
+
                     user.ProfilePictureUrl = null;
                     profileUpdated = true;
                 }
@@ -215,15 +251,10 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 UserName = user.UserName,
                 DisplayName = user.DisplayName ?? $"{user.FirstName} {user.LastName}",
                 Email = user.Email,
-                HasProfilePicture = user.ProfilePicture != null || !string.IsNullOrEmpty(user.ProfilePictureUrl)
+                HasProfilePicture = !string.IsNullOrEmpty(user.ProfilePictureUrl)
             };
 
-            if (user.ProfilePicture != null)
-            {
-                model.CurrentProfileImageType = "stored";
-                model.ProfilePicturePreview = $"data:image/jpeg;base64,{Convert.ToBase64String(user.ProfilePicture)}";
-            }
-            else if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+            if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
             {
                 model.CurrentProfileImageType = "url";
                 model.ProfilePicturePreview = user.ProfilePictureUrl;
@@ -231,6 +262,25 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
             }
 
             return View(model);
+        }
+
+        private async Task RemoveExistingProfilePictureMedia(ShareSmallBiz.Portal.Data.Entities.ShareSmallBizUser user)
+        {
+            if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+            {
+                var urlParts = user.ProfilePictureUrl.Split('/');
+                if (urlParts.Length > 0 && int.TryParse(urlParts[urlParts.Length - 1], out int mediaId))
+                {
+                    // Find the media in context
+                    var media = await _context.Media.FindAsync(mediaId);
+                    if (media != null)
+                    {
+                        // Delete the media entity 
+                        _context.Media.Remove(media);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
         }
     }
 

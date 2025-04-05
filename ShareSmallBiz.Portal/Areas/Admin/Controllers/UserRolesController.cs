@@ -29,12 +29,7 @@ public class UserRolesController(
         userModel.IsLockedOut = await _userManager.IsLockedOutAsync(user);
 
         // Initialize the profile picture properties
-        if (user.ProfilePicture != null)
-        {
-            userModel.HasProfilePicture = true;
-            userModel.ProfilePicturePreview = $"data:image/jpeg;base64,{Convert.ToBase64String(user.ProfilePicture)}";
-        }
-        else if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+        if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
         {
             userModel.HasProfilePicture = true;
             userModel.ProfilePicturePreview = user.ProfilePictureUrl;

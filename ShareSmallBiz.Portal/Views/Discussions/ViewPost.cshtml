@@ -28,10 +28,10 @@
                 <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end bg-dark bg-opacity-50 p-3 text-white">
                     <h1 class="card-title h4 text-center mb-2" itemprop="headline">@Model.Title</h1>
                     <p class="text-center small mb-2">
-                        @if (Model?.Author?.ProfilePicture != null)
+                        @if (Model?.Author?.ProfilePictureUrl != null)
                         {
                             <img class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;"
-                                 src="data:image/*;base64,@(Convert.ToBase64String(Model.Author.ProfilePicture))" alt="User Profile" />
+                                 src="@Model?.Author?.ProfilePictureUrl" alt="User Profile" />
                         }
                         else
                         {
@@ -61,10 +61,10 @@
             <div class="card-header py-3 ">
                 <h1 class="card-title text-center mb-2" itemprop="headline">@Model.Title</h1>
                 <p class="text-center small mb-2">
-                    @if (Model?.Author?.ProfilePicture != null)
+                    @if (Model?.Author?.ProfilePictureUrl != null)
                     {
                         <img class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;"
-                             src="data:image/*;base64,@(Convert.ToBase64String(Model.Author.ProfilePicture))" alt="User Profile" />
+                             src="@Model?.Author?.ProfilePictureUrl" alt="User Profile" />
                     }
                     else
                     {

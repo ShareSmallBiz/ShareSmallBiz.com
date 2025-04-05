@@ -7,11 +7,11 @@
         <div id="comment-@comment.Id" class="list-group-item border-0 px-0 pb-3">
             <div class="d-flex align-items-start">
                 <div class="flex-shrink-0 m-2">
-                    @if (comment?.Author?.ProfilePicture != null)
+                    @if (!string.IsNullOrEmpty(comment?.Author?.ProfilePictureUrl))
                     {
                         <img class="rounded-circle"
                              style="width: 40px; height: 40px; object-fit: cover;"
-                             src="data:image/*;base64,@(Convert.ToBase64String(comment.Author.ProfilePicture))"
+                             src="@comment?.Author?.ProfilePictureUrl"
                              alt="User Profile" />
                     }
                     else

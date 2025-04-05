@@ -44,8 +44,7 @@ public class PostCommentModel : BaseModel
             Id = user.Id,
             UserName = user.UserName ?? string.Empty,
             DisplayName = user.DisplayName,
-            ProfilePictureUrl = user.ProfilePictureUrl,
-            ProfilePicture = user.ProfilePicture,
+            ProfilePictureUrl = user.ProfilePictureUrl
         };
     }
 
