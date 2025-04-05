@@ -38,8 +38,9 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
             [Display(Name = "Phone number")]
             public string PhoneNumber { get; set; }
 
-            [Display(Name = "Profile Picture")]
-            public byte[] ProfilePicture { get; set; }
+            // Profile picture url property
+            [Display(Name = "Profile Picture URL")]
+            public string ProfilePictureUrl { get; set; }
 
             [Display(Name = "Meta Description")]
             public string MetaDescription { get; set; }
@@ -78,7 +79,7 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
                 Username = userName,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                ProfilePicture = user.ProfilePicture,
+                ProfilePictureUrl = user.ProfilePictureUrl,
                 MetaDescription = user.MetaDescription,
                 Keywords = user.Keywords,
                 Bio = user.Bio,
@@ -199,22 +200,8 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
                 updated = true;
             }
 
-
-
             if (updated)
             {
-                await userManager.UpdateAsync(user);
-            }
-
-            // Handle profile picture upload
-            if (Request.Form.Files.Count > 0)
-            {
-                IFormFile file = Request.Form.Files.FirstOrDefault();
-                using (var dataStream = new MemoryStream())
-                {
-                    await file.CopyToAsync(dataStream);
-                    user.ProfilePicture = dataStream.ToArray();
-                }
                 await userManager.UpdateAsync(user);
             }
 

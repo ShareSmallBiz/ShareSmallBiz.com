@@ -10,10 +10,10 @@
                class="list-group-item list-group-item-action">
                 <div class="row align-items-center">
                     <div class="col-auto">
-                        @if (user.ProfilePicture != null)
+                        @if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
                         {
                             <img class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;"
-                                 src="data:image/*;base64,@(Convert.ToBase64String(user.ProfilePicture))" alt="Profile Picture">
+                                 src="@user.ProfilePictureUrl" alt="Profile Picture">
                         }
                         else
                         {

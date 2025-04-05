@@ -5,10 +5,10 @@
     ViewData["ActivePage"] = ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage.ManageNavPages.Index;
 }
 
-@if (Model.Input.ProfilePicture == null)
+@if (string.IsNullOrEmpty(Model.Input.ProfilePictureUrl))
 {
     <div class="alert alert-info mt-2" role="alert">
-        It looks like you haven't set a profile picture yet. Please upload one.
+        It looks like you haven't set a profile picture yet. Please visit the <a asp-area="Media" asp-controller="UserMedia" asp-action="Profile">Profile Picture</a> page to set one.
     </div>
 }
 
@@ -17,7 +17,7 @@
     <partial name="_StatusMessage" model="Model.StatusMessage" />
     <partial name="_StatusMessage" model="Model.UserNameChangeLimitMessage" />
 
-    <form id="profile-form" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+    <form id="profile-form" method="post" class="needs-validation" novalidate>
         <div class="row row-cols-1 row-cols-md-2 g-4">
             <!-- Left Column (Form Fields) -->
             <div class="col">
@@ -63,13 +63,13 @@
             <!-- Right Column (Profile Picture) -->
             <div class="col d-flex flex-column align-items-center">
                 <div class="mb-3 text-center">
-                    <label asp-for="Input.ProfilePicture" class="form-label fw-bold">Profile Picture</label>
+                    <label class="form-label fw-bold">Profile Picture</label>
                     <div class="position-relative">
-                        @if (Model.Input.ProfilePicture != null)
+                        @if (!string.IsNullOrEmpty(Model.Input.ProfilePictureUrl))
                         {
                             <img id="profilePicture" class="img-fluid rounded-circle shadow-lg"
                                  style="width: 200px; height: 200px; object-fit: cover;"
-                                 src="data:image/*;base64,@(Convert.ToBase64String(Model.Input.ProfilePicture))">
+                                 src="@Model.Input.ProfilePictureUrl">
                         }
                         else
                         {
@@ -78,23 +78,21 @@
                                  src="https://via.placeholder.com/200?text=Profile">
                         }
                     </div>
-                    @if (Model.Input.ProfilePicture == null)
+                    @if (string.IsNullOrEmpty(Model.Input.ProfilePictureUrl))
                     {
                         <div class="alert alert-info mt-2" role="alert">
-                            It looks like you haven't set a profile picture yet. Please upload one.
+                            You haven't set a profile picture yet. Please visit the <a asp-area="Media" asp-controller="UserMedia" asp-action="Profile">Profile Picture</a> page to set one.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mt-2">
+                            <a asp-area="Media" asp-controller="UserMedia" asp-action="Profile" class="btn btn-primary">
+                                <i class="bi bi-pencil me-1"></i> Manage Profile Picture
+                            </a>
                         </div>
                     }
                 </div>
-
-                <div class="input-group">
-                    <input type="file" accept=".png,.jpg,.jpeg,.gif,.tif" asp-for="Input.ProfilePicture"
-                           class="form-control"
-                           onchange="document.getElementById('profilePicture').src = window.URL.createObjectURL(this.files[0])">
-                    <label class="input-group-text btn btn-outline-secondary">
-                        <i class="bi bi-upload"></i> Upload
-                    </label>
-                </div>
-                <span asp-validation-for="Input.ProfilePicture" class="text-danger"></span>
             </div>
         </div>
         <hr />

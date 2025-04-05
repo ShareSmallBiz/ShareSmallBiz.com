@@ -66,9 +66,8 @@ public class UserMediaController : Controller
 
         var viewModel = new ProfileMediaViewModel
         {
-            HasProfilePicture = (user.ProfilePicture != null && user.ProfilePicture.Length > 0) || !string.IsNullOrEmpty(user.ProfilePictureUrl),
+            HasProfilePicture = !string.IsNullOrEmpty(user.ProfilePictureUrl),
             ProfilePictureUrl = user.ProfilePictureUrl,
-            HasLegacyProfilePicture = user.ProfilePicture != null && user.ProfilePicture.Length > 0
         };
 
         return View(viewModel);
@@ -108,9 +107,6 @@ public class UserMediaController : Controller
             {
                 // Update user's profile picture URL
                 user.ProfilePictureUrl = $"/Media/{media.Id}";
-
-                // Clear any existing byte array to save space
-                user.ProfilePicture = null;
 
                 // Update metadata for the media to indicate it's a profile picture
                 media.StorageMetadata = $"{{\"type\":\"profile\",\"userId\":\"{userId}\"}}";
@@ -172,9 +168,6 @@ public class UserMediaController : Controller
             {
                 // Update user's profile picture URL
                 user.ProfilePictureUrl = $"/Media/{media.Id}";
-
-                // Clear any existing byte array to save space
-                user.ProfilePicture = null;
 
                 // Save user changes
                 await _userManager.UpdateAsync(user);
@@ -242,9 +235,6 @@ public class UserMediaController : Controller
                 // Update user's profile picture URL
                 user.ProfilePictureUrl = $"/Media/{media.Id}";
 
-                // Clear any existing byte array to save space
-                user.ProfilePicture = null;
-
                 // Save user changes
                 await _userManager.UpdateAsync(user);
 
@@ -259,52 +249,6 @@ public class UserMediaController : Controller
         {
             _logger.LogError(ex, "Error setting Unsplash profile picture for user {UserId}", userId);
             TempData["ErrorMessage"] = $"Error setting profile picture: {ex.Message}";
-        }
-
-        return RedirectToAction(nameof(Profile));
-    }
-
-    // POST: /Media/User/MigrateProfilePicture
-    [HttpPost("MigrateProfilePicture")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MigrateProfilePicture()
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var user = await _userManager.FindByIdAsync(userId);
-
-        if (user == null)
-        {
-            return NotFound();
-        }
-
-        // Check if user has a legacy profile picture stored as byte array
-        if (user.ProfilePicture == null || user.ProfilePicture.Length == 0)
-        {
-            TempData["ErrorMessage"] = "No legacy profile picture found to migrate.";
-            return RedirectToAction(nameof(Profile));
-        }
-
-        try
-        {
-            // Convert user's profile picture to Media model
-            var media = await _mediaService.ConvertProfilePictureToMediaAsync(user);
-
-            if (media != null)
-            {
-                // The conversion method already updates the user's ProfilePictureUrl
-                // and clears the ProfilePicture byte array
-
-                TempData["SuccessMessage"] = "Profile picture successfully migrated to media library.";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Failed to migrate profile picture.";
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error migrating profile picture for user {UserId}", userId);
-            TempData["ErrorMessage"] = $"Error migrating profile picture: {ex.Message}";
         }
 
         return RedirectToAction(nameof(Profile));
@@ -340,8 +284,7 @@ public class UserMediaController : Controller
                 }
             }
 
-            // Remove profile picture references
-            user.ProfilePicture = null;
+            // Remove profile picture URL
             user.ProfilePictureUrl = null;
             await _userManager.UpdateAsync(user);
 

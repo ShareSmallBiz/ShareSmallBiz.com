@@ -9,10 +9,10 @@
             <a href="@Url.Action("ViewProfile", "Profiles", new { id = user.DisplayName })"
                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
-                    @if ((user.ProfilePicture!=null))
+                    @if (string.IsNullOrEmpty(user.ProfilePictureUrl))
                     {
                         <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
-                             src="data:image/*;base64,@(Convert.ToBase64String(user.ProfilePicture))" alt="User Profile">
+                             src="@user.ProfilePictureUrl" alt="User Profile">
                     }
                     else
                     {

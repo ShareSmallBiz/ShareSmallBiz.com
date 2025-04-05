@@ -129,15 +129,13 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
 
                 _logger.LogWarning("🔹 Forced Sign-In: User.Identity.IsAuthenticated = {IsAuthenticated}", User.Identity?.IsAuthenticated);
 
-
-                // Check if the user has not set a profile picture.
-                // Replace "ProfilePicture" with the actual property name from your user model.
-                if (user.ProfilePicture is null)
+                // Check if the user has a profile picture URL.
+                // If not, redirect them to profile management to set one up.
+                if (string.IsNullOrEmpty(user.ProfilePictureUrl))
                 {
                     _logger.LogWarning("User {UserName} does not have a profile picture. Redirecting to profile management.", user.UserName);
-                    return Redirect("/Identity/Account/Manage");
+                    return Redirect("/Media/User/Profile");
                 }
-
 
                 return LocalRedirect(returnUrl);
             }
@@ -148,6 +146,5 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
                 return Page();
             }
         }
-
     }
 }
