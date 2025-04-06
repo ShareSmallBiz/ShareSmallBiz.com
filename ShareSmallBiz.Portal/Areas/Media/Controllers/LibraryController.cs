@@ -11,9 +11,9 @@ using System.Security.Claims;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
-[Area("Media")]
+[Area("MediaEntity")]
 [Authorize]
-[Route("Media/Library")]
+[Route("MediaEntity/Library")]
 public class LibraryController : Controller
 {
     private readonly ShareSmallBizUserContext _context;
@@ -39,7 +39,7 @@ public class LibraryController : Controller
         _mediaOptions = mediaOptions.Value;
     }
 
-    // GET: /Media/Library
+    // GET: /MediaEntity/Library
     [HttpGet]
     public async Task<IActionResult> Index(string? searchString, int? mediaTypeFilter, int? storageProviderFilter)
     {
@@ -95,7 +95,7 @@ public class LibraryController : Controller
         return View(viewModel);
     }
 
-    // GET: /Media/Library/Details/5
+    // GET: /MediaEntity/Library/Details/5
     [HttpGet("Details/{id:int}")]
     public async Task<IActionResult> Details(int id)
     {
@@ -122,7 +122,7 @@ public class LibraryController : Controller
         return View(vm);
     }
 
-    // GET: /Media/Library/Create
+    // GET: /MediaEntity/Library/Create
     [HttpGet("Create")]
     public IActionResult Create()
     {
@@ -147,7 +147,7 @@ public class LibraryController : Controller
         return View(viewModel);
     }
 
-    // POST: /Media/Library/Create
+    // POST: /MediaEntity/Library/Create
     [HttpPost("Create")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(LibraryMediaViewModel viewModel)
@@ -203,7 +203,7 @@ public class LibraryController : Controller
                     viewModel.Description,
                     viewModel.Attribution);
 
-                TempData["SuccessMessage"] = "Media uploaded successfully.";
+                TempData["SuccessMessage"] = "MediaEntity uploaded successfully.";
                 return RedirectToAction(nameof(Details), new { id = media.Id });
             }
             catch (Exception ex)
@@ -223,7 +223,7 @@ public class LibraryController : Controller
 
 
 
-    // GET: /Media/Library/Edit/5
+    // GET: /MediaEntity/Library/Edit/5
     [HttpGet("Edit/{id:int}")]
     public async Task<IActionResult> Edit(int id)
     {
@@ -262,7 +262,7 @@ public class LibraryController : Controller
         return View(viewModel);
     }
 
-    // POST: /Media/Library/Edit/5
+    // POST: /MediaEntity/Library/Edit/5
     [HttpPost("Edit/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, LibraryMediaViewModel viewModel)
@@ -290,7 +290,7 @@ public class LibraryController : Controller
 
                 if (success)
                 {
-                    TempData["SuccessMessage"] = "Media updated successfully.";
+                    TempData["SuccessMessage"] = "MediaEntity updated successfully.";
                     return RedirectToAction(nameof(Details), new { id });
                 }
                 else
@@ -312,7 +312,7 @@ public class LibraryController : Controller
         return View(viewModel);
     }
 
-    // GET: /Media/Library/Delete/5
+    // GET: /MediaEntity/Library/Delete/5
     [HttpGet("Delete/{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -327,7 +327,7 @@ public class LibraryController : Controller
         return View(media);
     }
 
-    // POST: /Media/Library/Delete/5
+    // POST: /MediaEntity/Library/Delete/5
     [HttpPost("Delete/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -337,7 +337,7 @@ public class LibraryController : Controller
         try
         {
             await _mediaFactoryService.DeleteMediaAsync(id, userId);
-            TempData["SuccessMessage"] = "Media deleted successfully.";
+            TempData["SuccessMessage"] = "MediaEntity deleted successfully.";
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
@@ -347,7 +347,7 @@ public class LibraryController : Controller
         }
     }
 
-    // GET: /Media/Library/Download/5
+    // GET: /MediaEntity/Library/Download/5
     [HttpGet("Download/{id:int}")]
     public async Task<IActionResult> Download(int id)
     {

@@ -255,7 +255,7 @@ public class UnsplashService
     /// </summary>
     /// <param name="photo">Unsplash photo</param>
     /// <param name="userId">User ID</param>
-    /// <returns>Media entity</returns>
+    /// <returns>MediaEntity entity</returns>
     public async Task<MediaModel> CreateUnsplashMediaAsync(
     UnsplashPhoto photo,
     string userId)

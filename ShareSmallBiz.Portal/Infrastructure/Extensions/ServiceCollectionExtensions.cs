@@ -59,7 +59,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddDatabaseContexts(this IServiceCollection services, IConfiguration configuration)
     {
         var adminConnectionString = configuration.GetValue<string>("ShareSmallBizUserContext")
-                                    ?? "Data Source=c:\\websites\\ShareSmallBiz\\ShareSmallBizUser.db";
+                                    ?? "Data Source=c:\\websites\\ShareSmallBiz\\ShareSmallBizUserV2.db";
         services.AddDbContext<ShareSmallBizUserContext>(options =>
         {
             options.UseSqlite(adminConnectionString, dbOptions =>

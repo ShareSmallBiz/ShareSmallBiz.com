@@ -7,9 +7,9 @@ using System.Security.Claims;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
-[Area("Media")]
+[Area("MediaEntity")]
 [Authorize]
-[Route("Media/Unsplash")]
+[Route("MediaEntity/Unsplash")]
 public class UnsplashController : Controller
 {
     private readonly UnsplashService _unsplashService;
@@ -23,7 +23,7 @@ public class UnsplashController : Controller
         _logger = logger;
     }
 
-    // GET: /Media/Unsplash
+    // GET: /MediaEntity/Unsplash
     [HttpGet]
     public IActionResult Index()
     {
@@ -44,7 +44,7 @@ public class UnsplashController : Controller
         return View(viewModel);
     }
 
-    // GET: /Media/Unsplash/Search
+    // GET: /MediaEntity/Unsplash/Search
     [HttpGet("Search")]
     public async Task<IActionResult> Search(string? query = "", int page = 1, int perPage = 9)
     {
@@ -77,7 +77,7 @@ public class UnsplashController : Controller
         return View(viewModel);
     }
 
-    // POST: /Media/Unsplash/Search
+    // POST: /MediaEntity/Unsplash/Search
     [HttpPost("Search")]
     public async Task<IActionResult> Search(UnsplashSearchViewModel viewModel)
     {
@@ -106,7 +106,7 @@ public class UnsplashController : Controller
         return View(viewModel);
     }
 
-    // GET: /Media/Unsplash/UserProfile/{username}
+    // GET: /MediaEntity/Unsplash/UserProfile/{username}
     // Updated route to include page parameter
     [HttpGet("UserProfile/{username}/{page:int?}")]
     public async Task<IActionResult> UserProfile(string username, int page = 1, int perPage = 9)
@@ -143,7 +143,7 @@ public class UnsplashController : Controller
         }
     }
 
-    // GET: /Media/Unsplash/Details/{id}
+    // GET: /MediaEntity/Unsplash/Details/{id}
     [HttpGet("Details/{id}")]
     public async Task<IActionResult> Details(string id)
     {
@@ -170,7 +170,7 @@ public class UnsplashController : Controller
         }
     }
 
-    // POST: /Media/Unsplash/Save
+    // POST: /MediaEntity/Unsplash/Save
     [HttpPost("Save")]
     public async Task<IActionResult> Save(string photoId, string? returnUrl = null)
     {

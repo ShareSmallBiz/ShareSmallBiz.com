@@ -40,8 +40,8 @@ namespace ShareSmallBiz.Portal.Areas.Media.Models
         [Display(Name = "File Name")]
         public string FileName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Media type is required")]
-        [Display(Name = "Media Type")]
+        [Required(ErrorMessage = "MediaEntity type is required")]
+        [Display(Name = "MediaEntity Type")]
         public int MediaType { get; set; }
 
         public List<SelectListItem>? MediaTypes { get; set; } = [];

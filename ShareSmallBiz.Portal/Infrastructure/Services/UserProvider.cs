@@ -289,7 +289,7 @@ public class UserProvider(
     {
         var followers = await context.UserFollows
             .Where(uf => uf.FollowingId == userId)
-            .Select(uf => uf.Follower)
+            .Select(uf => uf.Creator)
             .AsNoTracking()
             .ToListAsync();
 

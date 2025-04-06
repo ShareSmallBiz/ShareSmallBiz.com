@@ -25,7 +25,7 @@ public class PostCommentModel : BaseModel
         LikeCount = comment.Likes?.Count ?? 0;
 
         // Map User
-        Author = GetAuthor(comment.Author);
+        Author = GetAuthor(comment.Creator);
 
         // Map Likes
         Likes = comment.Likes != null ?

@@ -93,7 +93,7 @@ public class DiscussionProvider(
             PostId = id,
             Content = comment,
             CreatedDate = DateTime.UtcNow,
-            Author = user // Or store user.Id separately if you prefer
+            CreatedID = user.Id
         };
 
         context.PostComments.Add(postComment);
@@ -128,8 +128,7 @@ public class DiscussionProvider(
             CreatedID = user.Id,
             CreatedDate = DateTime.UtcNow,
             ModifiedID = user.Id,
-            ModifiedDate = DateTime.UtcNow,
-            TargetId = discussionModel.TargetId
+            ModifiedDate = DateTime.UtcNow
         };
 
         context.Posts.Add(discussion);
@@ -158,7 +157,7 @@ public class DiscussionProvider(
         var posts = await context.Posts
             .Where(p => !onlyPublic || p.IsPublic)
             .Where(p => p.CreatedID == userId)
-            .Include(p => p.Author)
+            .Include(p => p.Creator)
             .Include(p => p.PostCategories)
             .ToListAsync();
 
@@ -170,7 +169,7 @@ public class DiscussionProvider(
         logger.LogInformation("Retrieving all discussions. Only public: {OnlyPublic}", onlyPublic);
         var posts = await context.Posts
             .Where(p => !onlyPublic || p.IsPublic)
-            .Include(p => p.Author)
+            .Include(p => p.Creator)
             .Include(p => p.PostCategories)
             .ToListAsync();
 
@@ -183,10 +182,10 @@ public class DiscussionProvider(
 
         // Fetch the discussion with all related data
         var post = await context.Posts
-            .Include(p => p.Author)
+            .Include(p => p.Creator)
             .Include(p => p.PostCategories)
-            .Include(p => p.Likes).ThenInclude(l => l.User)
-            .Include(p => p.Comments).ThenInclude(c => c.Author)
+            .Include(p => p.Likes).ThenInclude(l => l.Creator)
+            .Include(p => p.Comments).ThenInclude(c => c.Creator)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (post == null)
@@ -244,7 +243,7 @@ public class DiscussionProvider(
         if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
 
-        IQueryable<Post> query = context.Posts.Include(i => i.Author).Where(p => p.IsPublic);
+        IQueryable<Post> query = context.Posts.Include(i => i.Creator).Where(p => p.IsPublic);
 
         switch (sortType)
         {
@@ -328,8 +327,8 @@ public class DiscussionProvider(
     {
         logger.LogInformation("Retrieving {Count} featured posts", count);
         var posts = await context.Posts
-            .Include(p => p.Author)
-            .Include(p => p.Comments).ThenInclude(c => c.Author)
+            .Include(p => p.Creator)
+            .Include(p => p.Comments).ThenInclude(c => c.Creator)
             .Where(p => p.IsPublic)
             .Where(p => p.IsFeatured)
             .OrderByDescending(p => p.Comments.Count)
@@ -345,8 +344,8 @@ public class DiscussionProvider(
     {
         logger.LogInformation("Retrieving {Count} most commented posts", count);
         var posts = await context.Posts
-            .Include(p => p.Author)
-            .Include(p => p.Comments).ThenInclude(c => c.Author)
+            .Include(p => p.Creator)
+            .Include(p => p.Comments).ThenInclude(c => c.Creator)
             .Where(p => p.IsPublic)
             .OrderByDescending(p => p.Comments.Count)
             .Take(count)
@@ -361,8 +360,8 @@ public class DiscussionProvider(
     {
         logger.LogInformation("Retrieving {Count} most popular posts", count);
         var posts = await context.Posts
-            .Include(p => p.Author)
-            .Include(p => p.Comments).ThenInclude(c => c.Author)
+            .Include(p => p.Creator)
+            .Include(p => p.Comments).ThenInclude(c => c.Creator)
             .Where(p => p.IsPublic)
             .OrderByDescending(p => p.PostViews)
             .Take(count)
@@ -377,8 +376,8 @@ public class DiscussionProvider(
     {
         logger.LogInformation("Retrieving {Count} most recent posts", count);
         var posts = await context.Posts
-            .Include(p => p.Author)
-            .Include(p => p.Comments).ThenInclude(c => c.Author)
+            .Include(p => p.Creator)
+            .Include(p => p.Comments).ThenInclude(c => c.Creator)
             .Where(p => p.IsPublic)
             .OrderByDescending(p => p.Published)
             .Take(count)
@@ -508,7 +507,7 @@ public class DiscussionProvider(
             return false;
         }
 
-        if (string.Compare(comment.Author.Id, user.Id, StringComparison.Ordinal) != 0)
+        if (string.Compare(comment.CreatedID, user.Id, StringComparison.Ordinal) != 0)
         {
             logger.LogWarning("User {CreatedID} attempted to delete a comment they do not own.", user.Id);
             return false;
@@ -524,7 +523,7 @@ public class DiscussionProvider(
         logger.LogInformation("Retrieving posts by tag: {Tag}", id);
         var posts = await context.Posts
             .Where(p => !onlyPublic || p.IsPublic)
-            .Include(p => p.Author)
+            .Include(p => p.Creator)
             .Include(p => p.PostCategories)
             .Where(p => p.IsPublic)
             .Where(p => p.PostCategories.Any(c => c.Name == id))

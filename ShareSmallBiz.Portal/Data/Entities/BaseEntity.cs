@@ -1,4 +1,5 @@
-﻿namespace ShareSmallBiz.Portal.Data.Entities;
+﻿using ShareSmallBiz.Portal.Data.Entities;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public abstract class BaseEntity
 {
@@ -8,5 +9,8 @@ public abstract class BaseEntity
     public DateTime ModifiedDate { get; set; } = DateTime.UtcNow;
     public string? ModifiedID { get; set; }
     public string? CreatedID { get; set; }
-}
 
+    // Navigation property
+    [ForeignKey("CreatedID")]
+    public virtual ShareSmallBizUser? Creator { get; set; }
+}

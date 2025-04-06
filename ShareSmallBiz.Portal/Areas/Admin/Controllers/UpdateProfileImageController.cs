@@ -161,7 +161,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                         await _mediaService.UpdateMediaAsync(media);
 
                         // Update user's profile picture URL
-                        user.ProfilePictureUrl = $"/Media/{media.Id}";
+                        user.ProfilePictureUrl = $"/MediaEntity/{media.Id}";
                         profileUpdated = true;
                     }
                 }

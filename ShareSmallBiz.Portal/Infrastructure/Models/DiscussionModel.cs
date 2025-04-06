@@ -41,9 +41,7 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
         CreatedID = post.CreatedID;
         Comments = post.Comments?.Select(comment => new PostCommentModel(comment)).ToList() ?? new List<PostCommentModel>();
         Likes = post.Likes?.Select(like => new PostLikeModel(like)).ToList() ?? new List<PostLikeModel>();
-        Author = new UserModel(post.Author);
-        Target = post.Target is null ? null : new UserModel(post.Target);
-        TargetId = post.TargetId;
+        Author = new UserModel(post.Creator);
         Tags = post.PostCategories?.Select(x => x.Name).ToList() ?? new List<string>();
     }
 

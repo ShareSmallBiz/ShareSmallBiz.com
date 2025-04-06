@@ -9,9 +9,9 @@ using System.Security.Claims;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
-[Area("Media")]
+[Area("MediaEntity")]
 [Authorize]
-[Route("Media/User")]
+[Route("MediaEntity/User")]
 public class UserMediaController : Controller
 {
     private readonly MediaService _mediaService;
@@ -37,7 +37,7 @@ public class UserMediaController : Controller
         _logger = logger;
     }
 
-    // GET: /Media/User
+    // GET: /MediaEntity/User
     [HttpGet]
     public async Task<IActionResult> Index()
     {
@@ -52,7 +52,7 @@ public class UserMediaController : Controller
         return View(viewModel);
     }
 
-    // GET: /Media/User/Profile
+    // GET: /MediaEntity/User/Profile
     [HttpGet("Profile")]
     public async Task<IActionResult> Profile()
     {
@@ -73,7 +73,7 @@ public class UserMediaController : Controller
         return View(viewModel);
     }
 
-    // POST: /Media/User/UploadProfile
+    // POST: /MediaEntity/User/UploadProfile
     [HttpPost("UploadProfile")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UploadProfile(IFormFile profilePicture)
@@ -106,7 +106,7 @@ public class UserMediaController : Controller
             if (media != null)
             {
                 // Update user's profile picture URL
-                user.ProfilePictureUrl = $"/Media/{media.Id}";
+                user.ProfilePictureUrl = $"/MediaEntity/{media.Id}";
 
                 // Update metadata for the media to indicate it's a profile picture
                 media.StorageMetadata = $"{{\"type\":\"profile\",\"userId\":\"{userId}\"}}";
@@ -131,7 +131,7 @@ public class UserMediaController : Controller
         return RedirectToAction(nameof(Profile));
     }
 
-    // POST: /Media/User/UseExternalProfile
+    // POST: /MediaEntity/User/UseExternalProfile
     [HttpPost("UseExternalProfile")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UseExternalProfile(string externalUrl, string description = "Profile picture")
@@ -167,7 +167,7 @@ public class UserMediaController : Controller
             if (media != null)
             {
                 // Update user's profile picture URL
-                user.ProfilePictureUrl = $"/Media/{media.Id}";
+                user.ProfilePictureUrl = $"/MediaEntity/{media.Id}";
 
                 // Save user changes
                 await _userManager.UpdateAsync(user);
@@ -188,7 +188,7 @@ public class UserMediaController : Controller
         return RedirectToAction(nameof(Profile));
     }
 
-    // POST: /Media/User/UseUnsplashProfile
+    // POST: /MediaEntity/User/UseUnsplashProfile
     [HttpPost("UseUnsplashProfile")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UseUnsplashProfile(string photoId)
@@ -233,7 +233,7 @@ public class UserMediaController : Controller
                 await _mediaService.UpdateMediaAsync(media);
 
                 // Update user's profile picture URL
-                user.ProfilePictureUrl = $"/Media/{media.Id}";
+                user.ProfilePictureUrl = $"/MediaEntity/{media.Id}";
 
                 // Save user changes
                 await _userManager.UpdateAsync(user);
@@ -254,7 +254,7 @@ public class UserMediaController : Controller
         return RedirectToAction(nameof(Profile));
     }
 
-    // POST: /Media/User/RemoveProfile
+    // POST: /MediaEntity/User/RemoveProfile
     [HttpPost("RemoveProfile")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RemoveProfile()

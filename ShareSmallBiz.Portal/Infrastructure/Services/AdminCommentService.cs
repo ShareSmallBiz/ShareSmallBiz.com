@@ -52,7 +52,7 @@ public class AdminCommentService
             CreatedDate = DateTime.UtcNow,
             ModifiedDate = DateTime.UtcNow,
             // Here we mimic the pattern in your provided code; adjust as necessary.
-            Author = new ShareSmallBizUser(adminUser)
+            CreatedID = adminUser.Id
         };
 
         _context.PostComments.Add(comment);
@@ -67,7 +67,7 @@ public class AdminCommentService
     public async Task<PostCommentModel?> GetCommentByIdAsync(int commentId)
     {
         var comment = await _context.PostComments
-            .Include(c => c.Author)
+            .Include(c => c.Creator)
             .Include(c => c.Likes)
             .FirstOrDefaultAsync(c => c.Id == commentId);
 
@@ -86,7 +86,7 @@ public class AdminCommentService
     public async Task<List<PostCommentModel>> GetAllCommentsAsync()
     {
         var comments = await _context.PostComments
-            .Include(c => c.Author)
+            .Include(c => c.Creator)
             .Include(c => c.Likes)
             .OrderByDescending(c => c.CreatedDate)
             .ToListAsync();

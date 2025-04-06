@@ -134,7 +134,7 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
                 if (string.IsNullOrEmpty(user.ProfilePictureUrl))
                 {
                     _logger.LogWarning("User {UserName} does not have a profile picture. Redirecting to profile management.", user.UserName);
-                    return Redirect("/Media/User/Profile");
+                    return Redirect("/MediaEntity/User/Profile");
                 }
 
                 return LocalRedirect(returnUrl);

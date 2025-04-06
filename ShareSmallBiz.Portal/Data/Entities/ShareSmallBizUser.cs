@@ -64,13 +64,18 @@ public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUs
     // ---- SOCIAL INTERACTIONS ----
     public ICollection<UserFollow> Followers { get; set; }
     public ICollection<UserFollow> Following { get; set; }
-    public virtual ICollection<PostLike> LikedPosts { get; set; }
-    public virtual ICollection<PostCommentLike> LikedPostComments { get; set; }
-    public virtual ICollection<Post> Posts { get; set; }
     public string? WebsiteUrl { get; set; }
     public DateTime LastModified { get; set; } = DateTime.Now;
-    public ICollection<Post> ReceivedPosts { get; set; } = [];
-    public virtual ICollection<Media> Media { get; set; } = [];
+    
+    public virtual ICollection<Post> Posts { get; set; } = []; // Posts created by this user
+    public virtual ICollection<PostComment> PostComments { get; set; } = []; // Post Comments created by this user
+    public virtual ICollection<PostLike> LikedPosts { get; set; } = []; // Via CreatedID
+    public virtual ICollection<PostCommentLike> LikedPostComments { get; set; } = []; // Via CreatedID
+    public virtual ICollection<MediaEntity> Media { get; set; } = []; // Via CreatedID
+    public virtual ICollection<Keyword> KeywordsCreated { get; set; } = []; // Via CreatedID
+
+
+
 
     public Task<bool> IsConfirmedAsync(UserManager<ShareSmallBizUser> manager, ShareSmallBizUser user)
     {

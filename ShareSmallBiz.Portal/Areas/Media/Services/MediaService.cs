@@ -30,8 +30,8 @@ public class MediaService
         _storageProviderService = storageProviderService;
     }
 
-    // Helper method to map from Media entity to MediaModel.
-    private MediaModel MapToModel(ShareSmallBiz.Portal.Data.Entities.Media entity)
+    // Helper method to map from MediaEntity entity to MediaModel.
+    private MediaModel MapToModel(MediaEntity entity)
     {
         if (entity == null)
         {
@@ -57,14 +57,14 @@ public class MediaService
         };
     }
 
-    // Helper method to map from MediaModel to Media entity.
-    private ShareSmallBiz.Portal.Data.Entities.Media MapToEntity(MediaModel model)
+    // Helper method to map from MediaModel to MediaEntity entity.
+    private MediaEntity MapToEntity(MediaModel model)
     {
         if (model == null)
         {
             return null;
         }
-        return new ShareSmallBiz.Portal.Data.Entities.Media
+        return new MediaEntity
         {
             Id = model.Id,
             FileName = model.FileName,
@@ -101,7 +101,7 @@ public class MediaService
     public async Task<MediaModel> GetMediaByIdAsync(int id)
     {
         var entity = await _context.Media
-            .Include(m => m.User)
+            .Include(m => m.Creator)
             .FirstOrDefaultAsync(m => m.Id == id);
         return MapToModel(entity);
     }
@@ -112,7 +112,7 @@ public class MediaService
     public async Task<MediaModel> GetUserMediaByIdAsync(int id, string userId)
     {
         var entity = await _context.Media
-            .Include(m => m.User)
+            .Include(m => m.Creator)
             .FirstOrDefaultAsync(m => m.Id == id && m.CreatedID == userId);
         return MapToModel(entity);
     }
@@ -188,7 +188,7 @@ public class MediaService
             var entity = await _context.Media.FindAsync(mediaModel.Id);
             if (entity == null)
             {
-                throw new Exception($"Media with ID {mediaModel.Id} not found.");
+                throw new Exception($"MediaEntity with ID {mediaModel.Id} not found.");
             }
 
             // First, delete any files associated with the media.
@@ -215,7 +215,7 @@ public class MediaService
         {
             return mediaModel.Url;
         }
-        return $"/Media/{mediaModel.Id}";
+        return $"/MediaEntity/{mediaModel.Id}";
     }
 
     /// <summary>
@@ -228,7 +228,7 @@ public class MediaService
             // Return appropriate icon URL based on media type.
             return $"/images/{mediaModel.MediaType.ToString().ToLower()}-icon.png";
         }
-        return $"/Media/Thumbnail/{mediaModel.Id}";
+        return $"/MediaEntity/Thumbnail/{mediaModel.Id}";
     }
 
     /// <summary>

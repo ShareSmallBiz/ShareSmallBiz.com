@@ -83,12 +83,12 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
                 }
 
                 // Process cover image if it exists and is a valid URL
-                if (!string.IsNullOrEmpty(discussionModel.Cover) && !discussionModel.Cover.StartsWith("/Media/"))
+                if (!string.IsNullOrEmpty(discussionModel.Cover) && !discussionModel.Cover.StartsWith("/MediaEntity/"))
                 {
                     var mediaId = await ProcessCoverImage(discussionModel.Cover, user.Id, discussionModel.Title);
                     if (mediaId > 0)
                     {
-                        discussionModel.Cover = $"/Media/{mediaId}";
+                        discussionModel.Cover = $"/MediaEntity/{mediaId}";
                     }
                 }
 
@@ -150,15 +150,15 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
                 // Get the existing post to check if cover image has changed
                 var existingPost = await _postService.GetPostByIdAsync(discussionModel.Id);
 
-                // Process cover image if it has changed and is a valid URL, but not already a Media URL
+                // Process cover image if it has changed and is a valid URL, but not already a MediaEntity URL
                 if (!string.IsNullOrEmpty(discussionModel.Cover) &&
                     discussionModel.Cover != existingPost.Cover &&
-                    !discussionModel.Cover.StartsWith("/Media/"))
+                    !discussionModel.Cover.StartsWith("/MediaEntity/"))
                 {
                     var mediaId = await ProcessCoverImage(discussionModel.Cover, user.Id, discussionModel.Title);
                     if (mediaId > 0)
                     {
-                        discussionModel.Cover = $"/Media/{mediaId}";
+                        discussionModel.Cover = $"/MediaEntity/{mediaId}";
                     }
                 }
 
@@ -200,7 +200,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
             {
                 // Get the post to check if it has a cover image that needs to be cleaned up
                 var post = await _postService.GetPostByIdAsync(id);
-                if (post != null && !string.IsNullOrEmpty(post.Cover) && post.Cover.StartsWith("/Media/"))
+                if (post != null && !string.IsNullOrEmpty(post.Cover) && post.Cover.StartsWith("/MediaEntity/"))
                 {
                     // We don't actually delete the media here as it might be used elsewhere
                     // But in a real implementation, you could track usage and delete if not referenced elsewhere

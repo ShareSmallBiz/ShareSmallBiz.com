@@ -8,7 +8,7 @@ using System.Text.Json;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
-[Area("Media")]
+[Area("MediaEntity")]
 [Route("[controller]")]
 public class MediaController : Controller
 {
@@ -38,7 +38,7 @@ public class MediaController : Controller
         _mediaOptions = mediaOptions.Value;
     }
 
-    // GET: /Media/{id}
+    // GET: /MediaEntity/{id}
     [HttpGet("{id:int}")]
     [ResponseCache(Duration = 86400)] // Cache for 24 hours
     public async Task<IActionResult> Index(int id)
@@ -49,7 +49,7 @@ public class MediaController : Controller
 
             if (media == null)
             {
-                _logger.LogWarning("Media with ID {MediaId} not found", id);
+                _logger.LogWarning("MediaEntity with ID {MediaId} not found", id);
                 return NotFound();
             }
 
@@ -92,7 +92,7 @@ public class MediaController : Controller
         }
     }
 
-    // GET: /Media/Thumbnail/{id}
+    // GET: /MediaEntity/Thumbnail/{id}
     [HttpGet("thumbnail/{id:int}")]
     [ResponseCache(Duration = 86400)] // Cache for 24 hours
     public async Task<IActionResult> Thumbnail(int id, string size = "sm")

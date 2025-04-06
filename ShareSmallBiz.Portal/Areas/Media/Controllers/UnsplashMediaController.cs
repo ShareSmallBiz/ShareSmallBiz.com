@@ -3,7 +3,7 @@ using ShareSmallBiz.Portal.Areas.Media.Services;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
-[Area("Media")]
+[Area("MediaEntity")]
 [Route("unsplash/api")]
 [ApiController]
 public class UnsplashMediaController : ControllerBase

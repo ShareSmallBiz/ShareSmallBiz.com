@@ -31,7 +31,7 @@ public class CommentProvider(
             PostId = postId,
             Content = content,
             CreatedDate = DateTime.UtcNow,
-            Author = new(user)
+            CreatedID = user.Id
         };
 
         context.PostComments.Add(postComment);
@@ -55,7 +55,7 @@ public class CommentProvider(
             return false;
         }
 
-        if (comment.Author.Id != user.Id)
+        if (comment.CreatedID != user.Id)
         {
             logger.LogWarning("User {CreatedID} attempted to update a comment they do not own.", user.Id);
             return false;
@@ -85,7 +85,7 @@ public class CommentProvider(
             return false;
         }
 
-        if (comment.Author.Id != user.Id)
+        if (comment.CreatedID != user.Id)
         {
             logger.LogWarning("User {CreatedID} attempted to delete a comment they do not own.", user.Id);
             return false;
@@ -100,7 +100,7 @@ public class CommentProvider(
     {
         return await context.PostComments
             .Where(c => c.PostId == postId)
-            .Include(c => c.Author)
+            .Include(c => c.Creator)
             .OrderByDescending(c => c.CreatedDate)
             .ToListAsync();
     }

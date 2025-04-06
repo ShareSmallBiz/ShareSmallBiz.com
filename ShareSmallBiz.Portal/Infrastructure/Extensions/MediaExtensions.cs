@@ -33,7 +33,7 @@ public static class MediaExtensions
         }
 
         // For local media, return the thumbnail URL
-        return urlHelper.Action("Thumbnail", "Media", new { id = media.Id, size = size });
+        return urlHelper.Action("Thumbnail", "MediaEntity", new { id = media.Id, size = size });
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ public static class MediaExtensions
         }
 
         // For local media, return the media URL
-        return urlHelper.Action("Index", "Media", new { id = media.Id });
+        return urlHelper.Action("Index", "MediaEntity", new { id = media.Id });
     }
 
     /// <summary>

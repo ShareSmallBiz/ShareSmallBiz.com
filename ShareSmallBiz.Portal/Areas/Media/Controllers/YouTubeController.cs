@@ -10,9 +10,9 @@ using ShareSmallBiz.Portal.Areas.Media.Models;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
 
-[Area("Media")]
+[Area("MediaEntity")]
 [Authorize]
-[Route("Media/YouTube")]
+[Route("MediaEntity/YouTube")]
 public class YouTubeController : Controller
 {
     private readonly ShareSmallBizUserContext _context;
@@ -38,7 +38,7 @@ public class YouTubeController : Controller
         _youTubeService = youTubeService;
     }
 
-    // GET: /Media/YouTube
+    // GET: /MediaEntity/YouTube
     [HttpGet]
     public async Task<IActionResult> Index()
     {
@@ -120,7 +120,7 @@ public class YouTubeController : Controller
         return View(viewModel);
     }
 
-    // GET: /Media/YouTube/Search
+    // GET: /MediaEntity/YouTube/Search
     [HttpGet("Search")]
     public async Task<IActionResult> Search(string? query = "", int pageNumber = 1, int maxResults = 12)
     {
@@ -151,7 +151,7 @@ public class YouTubeController : Controller
         return View(viewModel);
     }
 
-    // POST: /Media/YouTube/Search
+    // POST: /MediaEntity/YouTube/Search
     [HttpPost("Search")]
     public async Task<IActionResult> Search(YouTubeSearchViewModel viewModel)
     {
@@ -178,7 +178,7 @@ public class YouTubeController : Controller
         return View(viewModel);
     }
 
-    // POST: /Media/YouTube/Save
+    // POST: /MediaEntity/YouTube/Save
     [HttpPost("Save")]
     public async Task<IActionResult> Save(YouTubeVideoViewModel viewModel)
     {
@@ -218,7 +218,7 @@ public class YouTubeController : Controller
         }
     }
 
-    // GET: /Media/YouTube/Video/{videoId}
+    // GET: /MediaEntity/YouTube/Video/{videoId}
     [HttpGet("Video/{videoId}")]
     public async Task<IActionResult> Video(string videoId)
     {
@@ -258,7 +258,7 @@ public class YouTubeController : Controller
         }
     }
 
-    // GET: /Media/YouTube/Channel/{channelId}
+    // GET: /MediaEntity/YouTube/Channel/{channelId}
     [HttpGet("Channel/{channelId}")]
     public async Task<IActionResult> Channel(string channelId, int pageNumber = 1, int pageSize = 12)
     {
@@ -299,7 +299,7 @@ public class YouTubeController : Controller
         }
     }
 
-    // POST: /Media/YouTube/SaveChannel
+    // POST: /MediaEntity/YouTube/SaveChannel
     [HttpPost("SaveChannel")]
     public async Task<IActionResult> SaveChannel(string channelId, string channelTitle, string channelDescription)
     {

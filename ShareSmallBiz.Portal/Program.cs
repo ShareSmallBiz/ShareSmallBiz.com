@@ -74,7 +74,7 @@ builder.Services.AddSingleton(new JsonSerializerOptions
 builder.Services.AddHttpContextAccessor();
 
 // ========================
-// Media Area Services
+// MediaEntity Area Services
 // ========================
 builder.Services.AddMediaServices(builder.Configuration);
 

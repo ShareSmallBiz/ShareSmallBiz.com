@@ -207,7 +207,7 @@ public class DashboardController(
     private async Task<List<PostCommentModel>> GetRecentCommentsAsync(int count)
     {
         var recentComments = await _context.PostComments
-            .Include(c => c.Author)
+            .Include(c => c.Creator)
             .Include(c => c.Post)
             .OrderByDescending(c => c.CreatedDate)
             .Take(count)

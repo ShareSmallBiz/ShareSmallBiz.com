@@ -70,7 +70,7 @@ public class MediaTagHelper(
         if (media == null)
         {
             output.TagName = "div";
-            output.Content.SetHtmlContent("<span class=\"text-danger\">Media not found</span>");
+            output.Content.SetHtmlContent("<span class=\"text-danger\">MediaEntity not found</span>");
             return;
         }
 

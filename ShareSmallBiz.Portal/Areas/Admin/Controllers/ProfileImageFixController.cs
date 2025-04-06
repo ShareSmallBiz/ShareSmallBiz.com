@@ -140,7 +140,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 if (media != null)
                 {
                     // Update user's profile picture URL to point to the media
-                    user.ProfilePictureUrl = $"/Media/{media.Id}";
+                    user.ProfilePictureUrl = $"/MediaEntity/{media.Id}";
                     user.LastModified = DateTime.UtcNow;
 
                     // Save changes
@@ -352,7 +352,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 if (media != null)
                 {
                     // Update user's profile picture URL to point to the media
-                    user.ProfilePictureUrl = $"/Media/{media.Id}";
+                    user.ProfilePictureUrl = $"/MediaEntity/{media.Id}";
                     user.LastModified = DateTime.UtcNow;
 
                     // Save changes

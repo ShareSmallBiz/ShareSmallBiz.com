@@ -68,7 +68,7 @@ public class UserModel
         PostCount = postCount;
         LikeCount = likeCount;
     }
-    public UserModel(ShareSmallBizUser author)
+    public UserModel(ShareSmallBizUser? author)
     {
         if (author == null)
             return;
@@ -125,17 +125,17 @@ public class UserModel
                 CreatedDate = post.CreatedDate,
                 ModifiedDate = post.ModifiedDate,
                 Comments = post.Comments?.Select(comment => new PostCommentModel(comment)).ToList() ?? new List<PostCommentModel>(),
-                Tags = post.PostCategories?.Select(x => x.Name).ToList() ?? new List<string>(),
+                Tags = post.PostCategories?.Select(x => x.Name).ToList() ?? [],
                 Author = new UserModel()
                 {
-                    Id = post.Author.Id,
-                    Email = post.Author.Email,
-                    UserName = post.Author.UserName,
-                    DisplayName = post.Author.DisplayName,
-                    FirstName = post.Author.FirstName,
-                    LastName = post.Author.LastName,
-                    Bio = post.Author.Bio,
-                    ProfilePictureUrl = post.Author.ProfilePictureUrl
+                    Id = post.Creator.Id,
+                    Email = post.Creator.Email,
+                    UserName = post.Creator.UserName,
+                    DisplayName = post.Creator.DisplayName,
+                    FirstName = post.Creator.FirstName,
+                    LastName = post.Creator.LastName,
+                    Bio = post.Creator.Bio,
+                    ProfilePictureUrl = post.Creator.ProfilePictureUrl
                 }
             }
             );
