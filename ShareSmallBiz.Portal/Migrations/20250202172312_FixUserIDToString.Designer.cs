@@ -111,13 +111,13 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.Property<string>("ClaimValue")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
+                    b.Property<string>("CreatedID")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("CreatedID");
 
                     b.ToTable("AspNetUserClaims", (string)null);
                 });
@@ -133,26 +133,26 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
+                    b.Property<string>("CreatedID")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("CreatedID");
 
                     b.ToTable("AspNetUserLogins", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
-                    b.Property<string>("UserId")
+                    b.Property<string>("CreatedID")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("RoleId")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("UserId", "RoleId");
+                    b.HasKey("CreatedID", "RoleId");
 
                     b.HasIndex("RoleId");
 
@@ -161,7 +161,7 @@ namespace ShareSmallBiz.Portal.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.Property<string>("UserId")
+                    b.Property<string>("CreatedID")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("LoginProvider")
@@ -173,7 +173,7 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.Property<string>("Value")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("UserId", "LoginProvider", "Name");
+                    b.HasKey("CreatedID", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
@@ -333,7 +333,7 @@ namespace ShareSmallBiz.Portal.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("AuthorId")
+                    b.Property<string>("CreatedID")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -395,7 +395,7 @@ namespace ShareSmallBiz.Portal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AuthorId");
+                    b.HasIndex("CreatedID");
 
                     b.ToTable("Posts");
                 });
@@ -421,7 +421,7 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.Property<int>("PostId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("UserId")
+                    b.Property<string>("CreatedID")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -429,7 +429,7 @@ namespace ShareSmallBiz.Portal.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("CreatedID");
 
                     b.ToTable("PostLikes");
                 });
@@ -531,7 +531,7 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.Property<string>("CreatedID")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("FollowerId")
+                    b.Property<string>("CreatedID")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -547,7 +547,7 @@ namespace ShareSmallBiz.Portal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FollowerId");
+                    b.HasIndex("CreatedID");
 
                     b.HasIndex("FollowingId");
 
@@ -673,7 +673,7 @@ namespace ShareSmallBiz.Portal.Migrations
                 {
                     b.HasOne("ShareSmallBiz.Portal.Data.ShareSmallBizUser", null)
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("CreatedID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -682,7 +682,7 @@ namespace ShareSmallBiz.Portal.Migrations
                 {
                     b.HasOne("ShareSmallBiz.Portal.Data.ShareSmallBizUser", null)
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("CreatedID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -697,7 +697,7 @@ namespace ShareSmallBiz.Portal.Migrations
 
                     b.HasOne("ShareSmallBiz.Portal.Data.ShareSmallBizUser", null)
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("CreatedID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -706,7 +706,7 @@ namespace ShareSmallBiz.Portal.Migrations
                 {
                     b.HasOne("ShareSmallBiz.Portal.Data.ShareSmallBizUser", null)
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("CreatedID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -741,7 +741,7 @@ namespace ShareSmallBiz.Portal.Migrations
                 {
                     b.HasOne("ShareSmallBiz.Portal.Data.ShareSmallBizUser", "Author")
                         .WithMany()
-                        .HasForeignKey("AuthorId")
+                        .HasForeignKey("CreatedID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -758,7 +758,7 @@ namespace ShareSmallBiz.Portal.Migrations
 
                     b.HasOne("ShareSmallBiz.Portal.Data.ShareSmallBizUser", "User")
                         .WithMany("LikedPosts")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("CreatedID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -771,7 +771,7 @@ namespace ShareSmallBiz.Portal.Migrations
                 {
                     b.HasOne("ShareSmallBiz.Portal.Data.ShareSmallBizUser", "Follower")
                         .WithMany("Following")
-                        .HasForeignKey("FollowerId")
+                        .HasForeignKey("CreatedID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

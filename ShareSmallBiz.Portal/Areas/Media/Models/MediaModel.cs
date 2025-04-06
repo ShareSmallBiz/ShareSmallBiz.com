@@ -42,12 +42,9 @@ public class MediaModel
     public string Description { get; set; }
     public string StorageMetadata { get; set; }
     public string Attribution { get; set; }
-    public string UserId { get; set; }
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-    public DateTime ModifiedDate { get; set; } = DateTime.UtcNow;
-    public int? PostId { get; set; }
-    public int? CommentId { get; set; }
     public string CreatedID { get;  set; }
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public string ModifiedID { get; set; }
+    public DateTime ModifiedDate { get; set; } = DateTime.UtcNow;
 }
 

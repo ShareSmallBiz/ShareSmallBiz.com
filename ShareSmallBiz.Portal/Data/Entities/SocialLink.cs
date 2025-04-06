@@ -1,6 +1,6 @@
 ﻿namespace ShareSmallBiz.Portal.Data.Entities;
 
-public class SocialLink
+public class SocialLink : BaseEntity
 {
     [Key]
     public int Id { get; set; }
@@ -11,7 +11,6 @@ public class SocialLink
     [Required]
     public string Url { get; set; } = string.Empty;
 
-    public string? UserId { get; set; }
     public virtual ShareSmallBizUser? User { get; set; } = null!;
 }
 
