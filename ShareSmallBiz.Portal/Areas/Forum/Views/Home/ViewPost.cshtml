@@ -30,22 +30,22 @@
 
             <!-- Author & Metadata -->
             <p class="text-muted text-center">
-                @if (Model?.Author?.ProfilePictureUrl != null)
+                @if (Model?.Creator?.ProfilePictureUrl != null)
                 {
                     <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
-                         src="@Model?.Author?.ProfilePictureUrl" alt="User Profile">
+                         src="@Model?.Creator?.ProfilePictureUrl" alt="User Profile">
                 }
                 else
                 {
                     <i class="bi bi-person-circle"></i>
                 }
-                <strong>@(Model?.Author?.UserName ?? "Unknown Author")</strong>
+                <strong>@(Model?.Creator?.UserName ?? "Unknown Creator")</strong>
                 | <i class="bi bi-eye"></i> @Model.PostViews views
                 | <i class="bi bi-calendar"></i> @Model.Published.ToString("MMM d, yyyy")
             </p>
 
             <!-- Edit Post Link (Only for Author) -->
-            @if (SignInManager.IsSignedIn(User) && Model.Author.Id == currentUserId)
+            @if (SignInManager.IsSignedIn(User) && Model.Creator.Id == currentUserId)
             {
                 <div class="text-end">
                     <a href="/Forum/Post/Edit/@Model.Id" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Edit Post</a>

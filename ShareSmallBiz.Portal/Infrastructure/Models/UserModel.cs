@@ -126,7 +126,7 @@ public class UserModel
                 ModifiedDate = post.ModifiedDate,
                 Comments = post.Comments?.Select(comment => new PostCommentModel(comment)).ToList() ?? new List<PostCommentModel>(),
                 Tags = post.PostCategories?.Select(x => x.Name).ToList() ?? new List<string>(),
-                Author = new UserModel()
+                Creator = new UserModel()
                 {
                     Id = post.Author.Id,
                     Email = post.Author.Email,

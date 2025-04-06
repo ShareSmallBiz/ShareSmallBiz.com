@@ -90,7 +90,7 @@ public class AdminDiscussionController(
 
         if (!User.IsInRole("Admin"))
         {
-            if (discussionModel.Author.Id != user.Id)
+            if (discussionModel.Creator.Id != user.Id)
             {
                 return RedirectToAction("Index");
             }
@@ -118,12 +118,10 @@ public class AdminDiscussionController(
             CreatedID = discussionModel.CreatedID,
             ModifiedID = discussionModel.ModifiedID,
             Tags = discussionModel.Tags,
-            Author = discussionModel.Author,
-            Target = discussionModel.Target,
-            TargetId = discussionModel.TargetId,
+            Creator = discussionModel.Creator,
 
             // Set AuthorId explicitly 
-            AuthorId = discussionModel.Author?.Id,
+            AuthorId = discussionModel.Creator?.Id,
 
             // Pass cached keyword names and all users to the view
             Keywords = await GetCachedKeywordNamesAsync(),
@@ -161,11 +159,11 @@ public class AdminDiscussionController(
                 var author = await userManager.FindByIdAsync(discussionModel.AuthorId);
                 if (author == null)
                 {
-                    logger.LogWarning("Author not found when updating discussionModel.");
+                    logger.LogWarning("Creator not found when updating discussionModel.");
                     return Unauthorized();
                 }
                 discussionModel.CreatedID = discussionModel.AuthorId;
-                discussionModel.Author = new UserModel(author);
+                discussionModel.Creator = new UserModel(author);
             }
 
             var success = await postService.UpdatePostAsync(discussionModel, currentUser);

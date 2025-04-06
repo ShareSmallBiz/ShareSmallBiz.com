@@ -1,4 +1,5 @@
-﻿using ShareSmallBiz.Portal.Data.Entities;
+﻿using ShareSmallBiz.Portal.Areas.Media.Models;
+using ShareSmallBiz.Portal.Data.Entities;
 using ShareSmallBiz.Portal.Data.Enums;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Models;
@@ -34,17 +35,15 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
         Rating = post.Rating;
         Selected = post.Selected;
         Slug = post.Slug;
-        CreatedID = post.CreatedID;
-        ModifiedID = post.ModifiedID;
+        CreatedID = post.CreatedID ?? post.AuthorId;
+        ModifiedID = post.ModifiedID ?? post.CreatedID?? post.AuthorId;
         CreatedDate = post.CreatedDate;
         ModifiedDate = post.ModifiedDate;
-        CreatedID = post.AuthorId;
-        Comments = post.Comments?.Select(comment => new PostCommentModel(comment)).ToList() ?? new List<PostCommentModel>();
-        Likes = post.Likes?.Select(like => new PostLikeModel(like)).ToList() ?? new List<PostLikeModel>();
-        Author = new UserModel(post.Author);
-        Target = post.Target is null ? null : new UserModel(post.Target);
-        TargetId = post.TargetId;
-        Tags = post.PostCategories?.Select(x => x.Name).ToList() ?? new List<string>();
+        Comments = post.Comments?.Select(comment => new PostCommentModel(comment)).ToList() ?? [];
+        Likes = post.Likes?.Select(like => new PostLikeModel(like)).ToList() ?? [];
+        Creator = new UserModel(post.Author);
+        Tags = post.PostCategories?.Select(x => x.Name).ToList() ?? [];
+        Media = post.Media?.Select(media => new MediaModel(media)).ToList() ?? [];
     }
 
     public bool Equals(DiscussionModel other)
@@ -64,20 +63,15 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
         return Id.GetHashCode();
     }
 
-    public UserModel Author { get; set; } = new();
     public List<PostCommentModel> Comments { get; set; } = [];
     public List<PostLikeModel> Likes { get; set; } = [];
     public string Content { get; set; } = string.Empty;
     public string Cover { get; set; } = "https://sharesmallbiz.com/";
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-    public string? CreatedID { get; set; }
     public string Description { get; set; } = string.Empty;
     public int Id { get; set; }
     public bool IsFeatured { get; set; } = false;
     public bool IsPublic { get; set; } = true;
     public List<string> Keywords { get; set; } = [];
-    public DateTime ModifiedDate { get; set; } = DateTime.UtcNow;
-    public string? ModifiedID { get; set; }
     public PostType PostType { get; set; } = PostType.Post;
     public int PostViews { get; set; } = 0;
     public DateTime Published { get; set; } = DateTime.UtcNow;
@@ -85,7 +79,6 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
     public bool Selected { get; set; } = false;
     public string Slug { get; set; } = string.Empty;
     public List<string> Tags { get; set; } = [];
-    public UserModel? Target { get; set; }
-    public string? TargetId { get; set; }
     public string Title { get; set; } = string.Empty;
+    public List<MediaModel> Media { get; set; } = [];
 }

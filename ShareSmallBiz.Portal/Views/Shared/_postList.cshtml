@@ -9,10 +9,10 @@
                 <div class="card shadow-sm h-100">
                     <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center">
-                            @if (post?.Author?.ProfilePictureUrl != null)
+                            @if (post?.Creator?.ProfilePictureUrl != null)
                             {
                                 <img class="rounded-circle me-2" width="32" height="32"
-                                     src="@post?.Author?.ProfilePictureUrl" alt="@post.Author.UserName">
+                                     src="@post?.Creator?.ProfilePictureUrl" alt="@post.Creator.UserName">
                             }
                             else
                             {
@@ -20,9 +20,9 @@
                             }
                             <div>
                                 <strong>
-                                    @if (!string.IsNullOrEmpty(post?.Author?.UserName))
+                                    @if (!string.IsNullOrEmpty(post?.Creator?.UserName))
                                     {
-                                        <a href="/profiles/@post.Author.UserName" class="text-decoration-none">@post.Author.UserName</a>
+                                        <a href="/profiles/@post.Creator.UserName" class="text-decoration-none">@post.Creator.UserName</a>
                                     }
                                     else
                                     {

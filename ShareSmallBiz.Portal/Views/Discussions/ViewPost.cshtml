@@ -28,22 +28,22 @@
                 <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-end bg-dark bg-opacity-50 p-3 text-white">
                     <h1 class="card-title h4 text-center mb-2" itemprop="headline">@Model.Title</h1>
                     <p class="text-center small mb-2">
-                        @if (Model?.Author?.ProfilePictureUrl != null)
+                        @if (Model?.Creator?.ProfilePictureUrl != null)
                         {
                             <img class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;"
-                                 src="@Model?.Author?.ProfilePictureUrl" alt="User Profile" />
+                                 src="@Model?.Creator?.ProfilePictureUrl" alt="User Profile" />
                         }
                         else
                         {
                             <i class="bi bi-person-circle"></i>
                         }
                         <span itemprop="author" itemscope itemtype="http://schema.org/Person">
-                            <meta itemprop="name" content="@(Model?.Author?.UserName ?? "Unknown Author")" />
+                            <meta itemprop="name" content="@(Model?.Creator?.UserName ?? "Unknown Creator")" />
                             <strong>
-                                @if (!string.IsNullOrEmpty(Model?.Author?.UserName))
+                                @if (!string.IsNullOrEmpty(Model?.Creator?.UserName))
                                 {
-                                    <a href="/profiles/@Model.Author.UserName" itemprop="url" class="text-white text-decoration-underline">
-                                        @(Model.Author.UserName)
+                                    <a href="/profiles/@Model.Creator.UserName" itemprop="url" class="text-white text-decoration-underline">
+                                        @(Model.Creator.UserName)
                                     </a>
                                 }
                                 else
@@ -61,22 +61,22 @@
             <div class="card-header py-3 ">
                 <h1 class="card-title text-center mb-2" itemprop="headline">@Model.Title</h1>
                 <p class="text-center small mb-2">
-                    @if (Model?.Author?.ProfilePictureUrl != null)
+                    @if (Model?.Creator?.ProfilePictureUrl != null)
                     {
                         <img class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;"
-                             src="@Model?.Author?.ProfilePictureUrl" alt="User Profile" />
+                             src="@Model?.Creator?.ProfilePictureUrl" alt="User Profile" />
                     }
                     else
                     {
                         <i class="bi bi-person-circle"></i>
                     }
                     <span itemprop="author" itemscope itemtype="http://schema.org/Person">
-                        <meta itemprop="name" content="@(Model?.Author?.UserName ?? "Unknown Author")" />
+                        <meta itemprop="name" content="@(Model?.Creator?.UserName ?? "Unknown Creator")" />
                         <strong>
-                            @if (!string.IsNullOrEmpty(Model?.Author?.UserName))
+                            @if (!string.IsNullOrEmpty(Model?.Creator?.UserName))
                             {
-                                <a href="/profiles/@Model.Author.UserName" itemprop="url" class="text-decoration-underline">
-                                    @(Model.Author.UserName)
+                                <a href="/profiles/@Model.Creator.UserName" itemprop="url" class="text-decoration-underline">
+                                    @(Model.Creator.UserName)
                                 </a>
                             }
                             else
@@ -105,7 +105,7 @@
                 }
             </div>
             <!-- Edit Post Link (Only for Author) -->
-            @if (SignInManager.IsSignedIn(User) && Model.Author.Id == currentUserId)
+            @if (SignInManager.IsSignedIn(User) && Model.Creator.Id == currentUserId)
             {
                 <div class="text-end">
                     <a href="/Forum/Post/Edit/@Model.Id" class="btn btn-outline-secondary">

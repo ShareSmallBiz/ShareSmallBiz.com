@@ -86,7 +86,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
 
             if (!User.IsInRole("Admin"))
             {
-                if (discussionModel.Author.Id != user.Id)
+                if (discussionModel.Creator.Id != user.Id)
                 {
                     return RedirectToAction("Index");
                 }

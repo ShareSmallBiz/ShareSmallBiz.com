@@ -130,7 +130,6 @@ public class DiscussionProvider(
             CreatedID = user.Id,
             ModifiedID = user.Id,
             AuthorId = user.Id,
-            TargetId = discussionModel.TargetId
         };
 
         context.Posts.Add(discussion);
@@ -411,19 +410,19 @@ public class DiscussionProvider(
             if (existingPost == null)
                 return false;
 
-            if (string.IsNullOrEmpty(discussionModel?.Author?.Id))
+            if (string.IsNullOrEmpty(discussionModel?.Creator?.Id))
             {
-                discussionModel.Author = new UserModel(user);
-                existingPost.AuthorId = discussionModel.Author.Id;
+                discussionModel.Creator = new UserModel(user);
+                existingPost.AuthorId = discussionModel.Creator.Id;
             }
 
-            if (discussionModel.Author != null && string.IsNullOrEmpty(discussionModel.Author.Id))
+            if (discussionModel.Creator != null && string.IsNullOrEmpty(discussionModel.Creator.Id))
             {
-                discussionModel.Author.Id = user.Id;
+                discussionModel.Creator.Id = user.Id;
             }
             else
             {
-                existingPost.AuthorId = discussionModel.Author?.Id ?? user.Id;
+                existingPost.AuthorId = discussionModel.Creator?.Id ?? user.Id;
             }
             if (discussionModel.CreatedID == null || string.IsNullOrEmpty(discussionModel.CreatedID))
             {

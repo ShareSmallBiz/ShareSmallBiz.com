@@ -13,16 +13,16 @@
                 <a href="/post/@post.Id/@post.Slug" class="text-decoration-none flex-grow-1">
                     <h5 class="mb-1">@post.Title</h5>
                     <p class="mb-1 text-muted">
-                        @if (post?.Author?.ProfilePictureUrl != null)
+                        @if (post?.Creator?.ProfilePictureUrl != null)
                         {
                             <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
-                                 src="@post?.Author?.ProfilePictureUrl" alt="User Profile">
+                                 src="@post?.Creator?.ProfilePictureUrl" alt="User Profile">
                         }
                         else
                         {
                             <i class="bi bi-person-circle"></i>
                         }
-                        <strong>@(post?.Author?.UserName ?? "Unknown")</strong>
+                        <strong>@(post?.Creator?.UserName ?? "Unknown")</strong>
                         • @(post.PostViews) views
                         • @(post.Comments.Count) comments
                     </p>
@@ -31,7 +31,7 @@
                     </small>
                 </a>
 
-                @if (user != null && user.IsAuthenticated && post.Author.Id == userId)
+                @if (user != null && user.IsAuthenticated && post.Creator.Id == userId)
                 {
                     <a href="/Forum/Post/Edit/@post.Id" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-pencil-square"></i> Edit

@@ -4,6 +4,34 @@ namespace ShareSmallBiz.Portal.Areas.Media.Models;
 
 public class MediaModel
 {
+    public MediaModel()
+    {
+        
+    }
+
+    public MediaModel(ShareSmallBiz.Portal.Data.Entities.Media media)
+    {
+        Id = media.Id;
+        FileName = media.FileName;
+        MediaType = media.MediaType;
+        StorageProvider = media.StorageProvider;
+        Url = media.Url;
+        ContentType = media.ContentType;
+        FileSize = media.FileSize;
+        Description = media.Description;
+        StorageMetadata = media.StorageMetadata;
+        Attribution = media.Attribution;
+        UserId = media.UserId;
+        CreatedDate = media.CreatedDate;
+        ModifiedDate = media.ModifiedDate;
+        PostId = media.PostId;
+        CommentId = media.CommentId;
+        CreatedID = media.CreatedID;
+        ModifiedID = media.ModifiedID;
+        UserId = media.CreatedID;
+    }
+
+
     public int Id { get; set; }
     public string FileName { get; set; }
     public MediaType MediaType { get; set; }

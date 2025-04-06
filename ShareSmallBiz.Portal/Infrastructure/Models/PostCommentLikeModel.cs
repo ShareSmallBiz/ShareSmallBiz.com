@@ -21,7 +21,7 @@ public class PostLikeModel : BaseModel
         CreatedDate = like.CreatedDate;
         ModifiedID = like.ModifiedID;
         ModifiedDate = like.ModifiedDate;
-        CreatedUser = new UserModel(like.User);
+        Creator = new UserModel(like.User);
     }
 
     public int PostId { get; set; }

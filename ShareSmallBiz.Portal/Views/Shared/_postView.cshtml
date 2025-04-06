@@ -35,22 +35,22 @@
         <div class="col-lg-10 col-xl-8 mx-auto">
             <div class="d-flex flex-wrap align-items-center justify-content-center mb-3">
                 <div class="d-flex align-items-center me-3 mb-2 mb-md-0">
-                    @if (Model?.Author?.ProfilePictureUrl != null)
+                    @if (Model?.Creator?.ProfilePictureUrl != null)
                     {
                         <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
-                             src="@Model?.Author?.ProfilePictureUrl" alt="@Model.Author.UserName's profile" />
+                             src="@Model?.Creator?.ProfilePictureUrl" alt="@Model.Creator.UserName's profile" />
                     }
                     else
                     {
                         <i class="bi bi-person-circle fs-4 me-2"></i>
                     }
                     <span itemprop="author" itemscope itemtype="http://schema.org/Person">
-                        <meta itemprop="name" content="@(Model?.Author?.UserName ?? "Unknown Author")" />
+                        <meta itemprop="name" content="@(Model?.Creator?.UserName ?? "Unknown Creator")" />
                         <strong>
-                            @if (!string.IsNullOrEmpty(Model?.Author?.UserName))
+                            @if (!string.IsNullOrEmpty(Model?.Creator?.UserName))
                             {
-                                <a href="/profiles/@Model.Author.UserName" class="text-decoration-none" itemprop="url">
-                                    @(Model.Author.UserName)
+                                <a href="/profiles/@Model.Creator.UserName" class="text-decoration-none" itemprop="url">
+                                    @(Model.Creator.UserName)
                                 </a>
                             }
                             else
@@ -79,7 +79,7 @@
             </div>
 
             <!-- Edit Post Link (Only for Author) -->
-            @if (SignInManager.IsSignedIn(User) && Model.Author.Id == currentUserId)
+            @if (SignInManager.IsSignedIn(User) && Model.Creator.Id == currentUserId)
             {
                 <div class="text-end mb-3">
                     <a href="/Forum/Post/Edit/@Model.Id" class="btn btn-outline-secondary btn-sm">

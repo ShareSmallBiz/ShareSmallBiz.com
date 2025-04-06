@@ -203,7 +203,7 @@
                                             <a asp-controller="AdminDiscussion" asp-action="Edit" asp-route-id="@discussion.Id">@discussion.Title</a>
                                             <div class="small text-muted">@discussion.Published.ToString("MMM dd, yyyy")</div>
                                         </td>
-                                        <td>@discussion.Author.DisplayName</td>
+                                        <td>@discussion.Creator.DisplayName</td>
                                     </tr>
                                 }
                             </tbody>

@@ -9,6 +9,6 @@
         public string? ModifiedID { get; set; }
 
         // Automatically ties entity to the user who created it
-        public UserModel? CreatedUser { get; set; }
+        public UserModel? Creator { get; set; }
     }
 }

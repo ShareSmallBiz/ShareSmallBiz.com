@@ -14,16 +14,16 @@
     <div class="card-body">
         <h1 class="card-title">@Model.Title</h1>
         <p class="text-muted">
-            @if (Model?.Author?.ProfilePictureUrl != null)
+            @if (Model?.Creator?.ProfilePictureUrl != null)
             {
                 <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
-                     src="@Model?.Author?.ProfilePictureUrl" alt="User Profile">
+                     src="@Model?.Creator?.ProfilePictureUrl" alt="User Profile">
             }
             else
             {
                 <i class="bi bi-person-circle"></i>
             }
-             <strong>@(Model?.Author?.UserName ?? "Unknown Author")</strong>
+             <strong>@(Model?.Creator?.UserName ?? "Unknown Creator")</strong>
             | <i class="bi bi-eye"></i> @Model.PostViews Views
             | <i class="bi bi-calendar"></i> @Model.Published.ToString("MMM d, yyyy")
         </p>

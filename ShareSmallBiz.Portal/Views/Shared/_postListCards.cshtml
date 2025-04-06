@@ -23,10 +23,10 @@
                 </p>
                 <footer class="mt-auto">
                     <div class="text-center mb-3">
-                        @if (post?.Author?.ProfilePictureUrl != null)
+                        @if (post?.Creator?.ProfilePictureUrl != null)
                         {
                             <img class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;"
-                                 src="@post?.Author?.ProfilePictureUrl" alt="Profile of @post.Author.UserName">
+                                 src="@post?.Creator?.ProfilePictureUrl" alt="Profile of @post.Creator.UserName">
                         }
                         else
                         {
@@ -34,10 +34,10 @@
                         }
                         <div>
                             <strong>
-                                @if (!string.IsNullOrEmpty(post?.Author?.UserName))
+                                @if (!string.IsNullOrEmpty(post?.Creator?.UserName))
                                 {
-                                    <a href="/profiles/@post.Author.UserName" class="text-decoration-none">
-                                        @post.Author.UserName
+                                    <a href="/profiles/@post.Creator.UserName" class="text-decoration-none">
+                                        @post.Creator.UserName
                                     </a>
                                 }
                                 else
