@@ -99,7 +99,7 @@ public class MediaFactoryService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating media for user {CreatedID}", userId);
+            _logger.LogError(ex, "Error creating media for user {UserId}", userId);
             throw;
         }
     }
@@ -191,7 +191,7 @@ public class MediaFactoryService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating media {MediaId} for user {CreatedID}", id, userId);
+            _logger.LogError(ex, "Error updating media {MediaId} for user {UserId}", id, userId);
             return false;
         }
     }

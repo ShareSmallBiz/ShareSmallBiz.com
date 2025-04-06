@@ -49,11 +49,11 @@ public class MediaService
             Description = entity.Description,
             StorageMetadata = entity.StorageMetadata,
             Attribution = entity.Attribution,
-            CreatedID = entity.CreatedID,
+            UserId = entity.UserId,
             CreatedDate = entity.CreatedDate,
             ModifiedDate = entity.ModifiedDate,
-            ModifiedID = entity.ModifiedID,
-
+            PostId = entity.PostId,
+            CommentId = entity.CommentId
         };
     }
 
@@ -76,10 +76,13 @@ public class MediaService
             Description = model.Description,
             StorageMetadata = model.StorageMetadata,
             Attribution = model.Attribution,
+            UserId = model.UserId,
             CreatedDate = model.CreatedDate,
             CreatedID = model.CreatedID,
             ModifiedDate = model.ModifiedDate,
-            ModifiedID = model.ModifiedID
+            ModifiedID = model.ModifiedID,
+            PostId = model.PostId,
+            CommentId = model.CommentId
         };
     }
 
@@ -89,7 +92,7 @@ public class MediaService
     public async Task<IEnumerable<MediaModel>> GetUserMediaAsync(string userId)
     {
         var entities = await _context.Media
-            .Where(m => m.CreatedID == userId)
+            .Where(m => m.UserId == userId)
             .OrderByDescending(m => m.CreatedDate)
             .ToListAsync();
         return entities.Select(MapToModel);
@@ -113,7 +116,7 @@ public class MediaService
     {
         var entity = await _context.Media
             .Include(m => m.User)
-            .FirstOrDefaultAsync(m => m.Id == id && m.CreatedID == userId);
+            .FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
         return MapToModel(entity);
     }
 
@@ -158,8 +161,10 @@ public class MediaService
             entity.Description = mediaModel.Description;
             entity.StorageMetadata = mediaModel.StorageMetadata;
             entity.Attribution = mediaModel.Attribution;
+            entity.UserId = mediaModel.UserId;
+            entity.PostId = mediaModel.PostId;
+            entity.CommentId = mediaModel.CommentId;
             entity.ModifiedDate = DateTime.UtcNow;
-            entity.ModifiedID = mediaModel.ModifiedID;
 
             _context.Update(entity);
             await _context.SaveChangesAsync();
@@ -245,7 +250,7 @@ public class MediaService
     public async Task<IEnumerable<MediaModel>> GetMediaByTypeAsync(string userId, MediaType mediaType)
     {
         var entities = await _context.Media
-            .Where(m => m.CreatedID == userId && m.MediaType == mediaType)
+            .Where(m => m.UserId == userId && m.MediaType == mediaType)
             .OrderByDescending(m => m.CreatedDate)
             .ToListAsync();
         return entities.Select(MapToModel);
@@ -257,7 +262,7 @@ public class MediaService
     public async Task<IEnumerable<MediaModel>> GetMediaByStorageProviderAsync(string userId, StorageProviderNames storageProvider)
     {
         var entities = await _context.Media
-            .Where(m => m.CreatedID == userId && m.StorageProvider == storageProvider)
+            .Where(m => m.UserId == userId && m.StorageProvider == storageProvider)
             .OrderByDescending(m => m.CreatedDate)
             .ToListAsync();
         return entities.Select(MapToModel);
@@ -269,7 +274,7 @@ public class MediaService
     public async Task<IEnumerable<MediaModel>> SearchMediaAsync(string userId, string searchTerm)
     {
         var entities = await _context.Media
-            .Where(m => m.CreatedID == userId &&
+            .Where(m => m.UserId == userId &&
                   (m.FileName.Contains(searchTerm) ||
                    m.Description.Contains(searchTerm) ||
                    m.Attribution.Contains(searchTerm)))

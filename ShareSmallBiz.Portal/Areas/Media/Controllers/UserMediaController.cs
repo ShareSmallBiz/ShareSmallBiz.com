@@ -124,7 +124,7 @@ public class UserMediaController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error uploading profile picture for user {CreatedID}", userId);
+            _logger.LogError(ex, "Error uploading profile picture for user {UserId}", userId);
             TempData["ErrorMessage"] = $"Error uploading profile picture: {ex.Message}";
         }
 
@@ -181,7 +181,7 @@ public class UserMediaController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error setting external profile picture for user {CreatedID}", userId);
+            _logger.LogError(ex, "Error setting external profile picture for user {UserId}", userId);
             TempData["ErrorMessage"] = $"Error setting profile picture: {ex.Message}";
         }
 
@@ -247,7 +247,7 @@ public class UserMediaController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error setting Unsplash profile picture for user {CreatedID}", userId);
+            _logger.LogError(ex, "Error setting Unsplash profile picture for user {UserId}", userId);
             TempData["ErrorMessage"] = $"Error setting profile picture: {ex.Message}";
         }
 
@@ -299,7 +299,7 @@ public class UserMediaController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing profile picture for user {CreatedID}", userId);
+            _logger.LogError(ex, "Error removing profile picture for user {UserId}", userId);
             TempData["ErrorMessage"] = $"Error removing profile picture: {ex.Message}";
         }
 

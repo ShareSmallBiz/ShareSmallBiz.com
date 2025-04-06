@@ -38,7 +38,16 @@ public class Media : BaseEntity
     [StringLength(255)]
     public string Attribution { get; set; }
 
+    // Relationship with the user who uploaded or linked the media
+    public string UserId { get; set; }
     public virtual ShareSmallBizUser User { get; set; }
 
+    // Optional parent Post relationship
+    public int? PostId { get; set; }
+    public virtual Post Post { get; set; }
+
+    // Optional parent Comment relationship
+    public int? CommentId { get; set; }
+    public virtual PostComment Comment { get; set; }
 }
 

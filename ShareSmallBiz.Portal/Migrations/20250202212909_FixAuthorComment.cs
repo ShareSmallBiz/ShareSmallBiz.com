@@ -11,7 +11,7 @@ namespace ShareSmallBiz.Portal.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "CreatedID",
+                name: "AuthorId",
                 table: "PostComments",
                 type: "TEXT",
                 nullable: true);
@@ -19,12 +19,12 @@ namespace ShareSmallBiz.Portal.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_PostComments_AuthorId",
                 table: "PostComments",
-                column: "CreatedID");
+                column: "AuthorId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_PostComments_AspNetUsers_AuthorId",
                 table: "PostComments",
-                column: "CreatedID",
+                column: "AuthorId",
                 principalTable: "AspNetUsers",
                 principalColumn: "Id");
         }
@@ -41,7 +41,7 @@ namespace ShareSmallBiz.Portal.Migrations
                 table: "PostComments");
 
             migrationBuilder.DropColumn(
-                name: "CreatedID",
+                name: "AuthorId",
                 table: "PostComments");
         }
     }

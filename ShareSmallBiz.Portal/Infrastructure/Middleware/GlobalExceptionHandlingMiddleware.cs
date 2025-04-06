@@ -44,7 +44,7 @@ public class GlobalExceptionHandlingMiddleware
             // Log the exception with context details
             _logger.LogError(
                 ex,
-                "Unhandled exception for User: {CreatedID}, Method: {Method}, Path: {Path}, Query: {QueryString}",
+                "Unhandled exception for User: {UserId}, Method: {Method}, Path: {Path}, Query: {QueryString}",
                 userId,
                 requestMethod,
                 path,

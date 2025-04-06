@@ -68,7 +68,7 @@ namespace ShareSmallBiz.Portal.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Media_UserId",
                 table: "Media",
-                column: "CreatedID");
+                column: "UserId");
         }
 
         /// <inheritdoc />

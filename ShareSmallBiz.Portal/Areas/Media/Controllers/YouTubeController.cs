@@ -67,7 +67,7 @@ public class YouTubeController : Controller
         try
         {
             var popularChannels = await _context.Media
-                .Where(m => m.CreatedID == userId && m.StorageProvider == StorageProviderNames.YouTube)
+                .Where(m => m.UserId == userId && m.StorageProvider == StorageProviderNames.YouTube)
                 .Where(m => !string.IsNullOrEmpty(m.StorageMetadata))
                 .OrderByDescending(m => m.CreatedDate)
                 .Take(20)
@@ -239,7 +239,7 @@ public class YouTubeController : Controller
             // Check if user already has this video in their library
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var existingMedia = await _context.Media
-                .Where(m => m.CreatedID == userId && m.StorageProvider == StorageProviderNames.YouTube)
+                .Where(m => m.UserId == userId && m.StorageProvider == StorageProviderNames.YouTube)
                 .Where(m => m.StorageMetadata.Contains(videoId))
                 .FirstOrDefaultAsync();
 
