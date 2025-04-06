@@ -19,7 +19,7 @@ public class UsersController(UserProvider userService, ILogger<UsersController> 
     [HttpGet("{userId}")]
     public async Task<IActionResult> GetUserById(string userId)
     {
-        logger.LogInformation("Received request to get user by ID {UserId}", userId);
+        logger.LogInformation("Received request to get user by ID {CreatedID}", userId);
         var user = await userService.GetUserByIdAsync(userId);
         return user != null ? Ok(user) : NotFound($"User with ID {userId} not found");
     }
@@ -43,7 +43,7 @@ public class UsersController(UserProvider userService, ILogger<UsersController> 
     [HttpPut("{userId}")]
     public async Task<IActionResult> UpdateUser(string userId, [FromBody] UserModel model)
     {
-        logger.LogInformation("Received request to update user {UserId}", userId);
+        logger.LogInformation("Received request to update user {CreatedID}", userId);
         var result = await userService.UpdateUserAsync(userId, model);
         return result ? Ok("User updated successfully") : NotFound($"User with ID {userId} not found");
     }
@@ -51,7 +51,7 @@ public class UsersController(UserProvider userService, ILogger<UsersController> 
     [HttpDelete("{userId}")]
     public async Task<IActionResult> DeleteUser(string userId)
     {
-        logger.LogInformation("Received request to delete user {UserId}", userId);
+        logger.LogInformation("Received request to delete user {CreatedID}", userId);
         var result = await userService.DeleteUserAsync(userId);
         return result ? Ok("User deleted successfully") : NotFound($"User with ID {userId} not found");
     }
@@ -59,7 +59,7 @@ public class UsersController(UserProvider userService, ILogger<UsersController> 
     [HttpPost("{followerId}/follow/{followingId}")]
     public async Task<IActionResult> FollowUser(string followerId, string followingId)
     {
-        logger.LogInformation("Received request for user {FollowerId} to follow {FollowingId}", followerId, followingId);
+        logger.LogInformation("Received request for user {CreatedID} to follow {FollowingId}", followerId, followingId);
         var result = await userService.FollowUserAsync(followerId, followingId);
         return result ? Ok("User followed successfully") : BadRequest("Follow request failed");
     }
@@ -67,7 +67,7 @@ public class UsersController(UserProvider userService, ILogger<UsersController> 
     [HttpPost("{followerId}/unfollow/{followingId}")]
     public async Task<IActionResult> UnfollowUser(string followerId, string followingId)
     {
-        logger.LogInformation("Received request for user {FollowerId} to unfollow {FollowingId}", followerId, followingId);
+        logger.LogInformation("Received request for user {CreatedID} to unfollow {FollowingId}", followerId, followingId);
         var result = await userService.UnfollowUserAsync(followerId, followingId);
         return result ? Ok("User unfollowed successfully") : BadRequest("Unfollow request failed");
     }
@@ -75,7 +75,7 @@ public class UsersController(UserProvider userService, ILogger<UsersController> 
     [HttpGet("{userId}/followers")]
     public async Task<IActionResult> GetFollowers(string userId)
     {
-        logger.LogInformation("Received request to get followers of user {UserId}", userId);
+        logger.LogInformation("Received request to get followers of user {CreatedID}", userId);
         var followers = await userService.GetFollowersAsync(userId);
         return Ok(followers);
     }
@@ -83,7 +83,7 @@ public class UsersController(UserProvider userService, ILogger<UsersController> 
     [HttpGet("{userId}/following")]
     public async Task<IActionResult> GetFollowing(string userId)
     {
-        logger.LogInformation("Received request to get following users of {UserId}", userId);
+        logger.LogInformation("Received request to get following users of {CreatedID}", userId);
         var following = await userService.GetFollowingAsync(userId);
         return Ok(following);
     }

@@ -474,3 +474,91 @@ public class StorageProviderService
 
     #endregion
 }
+
+
+
+
+public static class StorageProviderServiceExtensions
+{
+    /// <summary>
+    /// Creates a media entity for an external image URL specifically for post covers
+    /// </summary>
+    /// <param name="service">The StorageProviderService instance</param>
+    /// <param name="externalUrl">URL to the external image</param>
+    /// <param name="fileName">File name to use for the media</param>
+    /// <param name="mediaType">Type of media (usually Image for covers)</param>
+    /// <param name="userId">User ID who is creating the post</param>
+    /// <param name="attribution">Attribution for the image</param>
+    /// <param name="description">Description for the media item</param>
+    /// <param name="storageMetadata">Additional metadata in JSON format</param>
+    /// <returns>The created MediaModel or null if creation failed</returns>
+    public static async Task<MediaModel> CreateExternalMediaAsync(
+        this StorageProviderService service,
+        string externalUrl,
+        string fileName,
+        MediaType mediaType,
+        string userId,
+        string attribution = "",
+        string description = "",
+        string storageMetadata = "")
+    {
+        if (string.IsNullOrEmpty(externalUrl))
+        {
+            throw new ArgumentException("External URL cannot be null or empty", nameof(externalUrl));
+        }
+
+        // Determine content type
+        string contentType = service.DetermineContentType(externalUrl, mediaType);
+
+        // Create media entity
+        MediaModel media = new()
+        {
+            FileName = fileName,
+            ContentType = contentType,
+            StorageProvider = StorageProviderNames.External,
+            MediaType = mediaType,
+            StorageMetadata = storageMetadata,
+            Url = externalUrl,
+            CreatedID = userId,
+            CreatedDate = DateTime.UtcNow,
+            ModifiedID = userId,
+            ModifiedDate = DateTime.UtcNow,
+            Attribution = attribution,
+            Description = description,
+            FileSize = 0 // No actual file size for external links
+        };
+
+        // Get MediaService to save to database
+        var serviceProvider = service.GetServiceProvider();
+        var mediaService = serviceProvider.GetRequiredService<MediaService>();
+
+        // Save to database
+        return await mediaService.CreateMediaAsync(media);
+    }
+
+    // Add extension method to get the service provider
+    private static IServiceProvider GetServiceProvider(this StorageProviderService service)
+    {
+        // Use reflection to get access to the service provider
+        var field = typeof(StorageProviderService).GetField("_serviceProvider",
+            System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance);
+
+        if (field != null)
+        {
+            return (IServiceProvider)field.GetValue(service);
+        }
+
+        // Fallback: Try to get from the environment
+        var serviceProviderProp = typeof(StorageProviderService).GetProperty("RequestServices",
+            System.Reflection.BindingFlags.NonPublic |
+            System.Reflection.BindingFlags.Instance);
+
+        if (serviceProviderProp != null)
+        {
+            return (IServiceProvider)serviceProviderProp.GetValue(service);
+        }
+
+        throw new InvalidOperationException("Cannot access the service provider from StorageProviderService");
+    }
+}

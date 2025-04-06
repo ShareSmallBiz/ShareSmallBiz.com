@@ -38,7 +38,7 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
         ModifiedID = post.ModifiedID;
         CreatedDate = post.CreatedDate;
         ModifiedDate = post.ModifiedDate;
-        CreatedID = post.AuthorId;
+        CreatedID = post.CreatedID;
         Comments = post.Comments?.Select(comment => new PostCommentModel(comment)).ToList() ?? new List<PostCommentModel>();
         Likes = post.Likes?.Select(like => new PostLikeModel(like)).ToList() ?? new List<PostLikeModel>();
         Author = new UserModel(post.Author);

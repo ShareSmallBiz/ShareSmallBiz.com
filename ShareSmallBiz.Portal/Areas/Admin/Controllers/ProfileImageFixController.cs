@@ -64,12 +64,12 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            _logger.LogInformation("Upload page accessed for user {UserId}", id);
+            _logger.LogInformation("Upload page accessed for user {CreatedID}", id);
 
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                _logger.LogWarning("User not found: {UserId}", id);
+                _logger.LogWarning("User not found: {CreatedID}", id);
                 TempData["ErrorMessage"] = "User not found";
                 return RedirectToAction(nameof(Index));
             }
@@ -89,7 +89,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 model.ProfilePicturePreview = user.ProfilePictureUrl;
             }
 
-            _logger.LogInformation("User {UserId} loaded successfully for upload. Has profile picture: {HasProfilePicture}",
+            _logger.LogInformation("User {CreatedID} loaded successfully for upload. Has profile picture: {HasProfilePicture}",
                 id, model.HasProfilePicture);
 
             return View(model);
@@ -101,7 +101,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
         [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB
         public async Task<IActionResult> ProcessUpload(ProfileImageUploadViewModel model)
         {
-            _logger.LogInformation("ProcessUpload action started for user {UserId}", model.UserId);
+            _logger.LogInformation("ProcessUpload action started for user {CreatedID}", model.UserId);
 
             if (string.IsNullOrEmpty(model.UserId))
             {
@@ -112,7 +112,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
 
             if (model.ProfilePictureFile == null || model.ProfilePictureFile.Length == 0)
             {
-                _logger.LogWarning("No file was uploaded for user {UserId}", model.UserId);
+                _logger.LogWarning("No file was uploaded for user {CreatedID}", model.UserId);
                 TempData["ErrorMessage"] = "Please select an image file";
                 return RedirectToAction(nameof(Upload), new { id = model.UserId });
             }
@@ -123,7 +123,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 var user = await _context.Users.FindAsync(model.UserId);
                 if (user == null)
                 {
-                    _logger.LogWarning("User not found: {UserId}", model.UserId);
+                    _logger.LogWarning("User not found: {CreatedID}", model.UserId);
                     TempData["ErrorMessage"] = "User not found";
                     return RedirectToAction(nameof(Index));
                 }
@@ -146,7 +146,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                     // Save changes
                     await _context.SaveChangesAsync();
 
-                    _logger.LogInformation("Profile picture updated successfully for user {UserId}", model.UserId);
+                    _logger.LogInformation("Profile picture updated successfully for user {CreatedID}", model.UserId);
                     TempData["SuccessMessage"] = "Profile picture updated successfully";
                     return RedirectToAction(nameof(Success), new { id = model.UserId });
                 }
@@ -158,7 +158,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing image upload for user {UserId}", model.UserId);
+                _logger.LogError(ex, "Error processing image upload for user {CreatedID}", model.UserId);
                 TempData["ErrorMessage"] = "An error occurred: " + ex.Message;
                 return RedirectToAction(nameof(Upload), new { id = model.UserId });
             }
@@ -173,12 +173,12 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            _logger.LogInformation("Success page accessed for user {UserId}", id);
+            _logger.LogInformation("Success page accessed for user {CreatedID}", id);
 
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                _logger.LogWarning("User not found: {UserId}", id);
+                _logger.LogWarning("User not found: {CreatedID}", id);
                 TempData["ErrorMessage"] = "User not found";
                 return RedirectToAction(nameof(Index));
             }
@@ -206,7 +206,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveProfilePicture(string userId)
         {
-            _logger.LogInformation("RemoveProfilePicture action started for user {UserId}", userId);
+            _logger.LogInformation("RemoveProfilePicture action started for user {CreatedID}", userId);
 
             if (string.IsNullOrEmpty(userId))
             {
@@ -221,7 +221,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 var user = await _context.Users.FindAsync(userId);
                 if (user == null)
                 {
-                    _logger.LogWarning("User not found: {UserId}", userId);
+                    _logger.LogWarning("User not found: {CreatedID}", userId);
                     TempData["ErrorMessage"] = "User not found";
                     return RedirectToAction(nameof(Index));
                 }
@@ -245,16 +245,16 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 user.ProfilePictureUrl = null;
                 user.LastModified = DateTime.UtcNow;
 
-                _logger.LogInformation("Removing profile picture for user {UserId}", userId);
+                _logger.LogInformation("Removing profile picture for user {CreatedID}", userId);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Profile picture removed successfully for user {UserId}", userId);
+                _logger.LogInformation("Profile picture removed successfully for user {CreatedID}", userId);
                 TempData["SuccessMessage"] = "Profile picture removed successfully";
                 return RedirectToAction(nameof(Success), new { id = userId });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error removing profile picture for user {UserId}", userId);
+                _logger.LogError(ex, "Error removing profile picture for user {CreatedID}", userId);
                 TempData["ErrorMessage"] = "An error occurred: " + ex.Message;
                 return RedirectToAction(nameof(Upload), new { id = userId });
             }
@@ -265,7 +265,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetProfilePictureUrl(string userId, string pictureUrl)
         {
-            _logger.LogInformation("SetProfilePictureUrl action started for user {UserId}", userId);
+            _logger.LogInformation("SetProfilePictureUrl action started for user {CreatedID}", userId);
 
             if (string.IsNullOrEmpty(userId))
             {
@@ -276,7 +276,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
 
             if (string.IsNullOrEmpty(pictureUrl))
             {
-                _logger.LogWarning("No URL provided for user {UserId}", userId);
+                _logger.LogWarning("No URL provided for user {CreatedID}", userId);
                 TempData["ErrorMessage"] = "Picture URL is required";
                 return RedirectToAction(nameof(Upload), new { id = userId });
             }
@@ -287,7 +287,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 var user = await _context.Users.FindAsync(userId);
                 if (user == null)
                 {
-                    _logger.LogWarning("User not found: {UserId}", userId);
+                    _logger.LogWarning("User not found: {CreatedID}", userId);
                     TempData["ErrorMessage"] = "User not found";
                     return RedirectToAction(nameof(Index));
                 }
@@ -296,16 +296,16 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 user.ProfilePictureUrl = pictureUrl;
                 user.LastModified = DateTime.UtcNow;
 
-                _logger.LogInformation("Setting profile picture URL for user {UserId}", userId);
+                _logger.LogInformation("Setting profile picture URL for user {CreatedID}", userId);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Profile picture URL set successfully for user {UserId}", userId);
+                _logger.LogInformation("Profile picture URL set successfully for user {CreatedID}", userId);
                 TempData["SuccessMessage"] = "Profile picture URL set successfully";
                 return RedirectToAction(nameof(Success), new { id = userId });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error setting profile picture URL for user {UserId}", userId);
+                _logger.LogError(ex, "Error setting profile picture URL for user {CreatedID}", userId);
                 TempData["ErrorMessage"] = "An error occurred: " + ex.Message;
                 return RedirectToAction(nameof(Upload), new { id = userId });
             }
@@ -318,7 +318,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
         {
             try
             {
-                _logger.LogInformation("API: UpdateProfilePicture called for user {UserId}", userId);
+                _logger.LogInformation("API: UpdateProfilePicture called for user {CreatedID}", userId);
 
                 if (string.IsNullOrEmpty(userId))
                 {
@@ -336,7 +336,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 var user = await _context.Users.FindAsync(userId);
                 if (user == null)
                 {
-                    _logger.LogWarning("User not found: {UserId}", userId);
+                    _logger.LogWarning("User not found: {CreatedID}", userId);
                     return NotFound("User not found");
                 }
 

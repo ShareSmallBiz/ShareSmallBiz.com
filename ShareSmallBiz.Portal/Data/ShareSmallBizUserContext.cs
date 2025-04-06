@@ -43,7 +43,7 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
         builder.Entity<PostLike>()
             .HasOne(pl => pl.User)
             .WithMany(u => u.LikedPosts)
-            .HasForeignKey(pl => pl.UserId);
+            .HasForeignKey(pl => pl.CreatedID);
 
         builder.Entity<PostLike>()
             .HasOne(pl => pl.Post)
@@ -65,7 +65,7 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
         builder.Entity<UserFollow>()
             .HasOne(uf => uf.Follower)
             .WithMany(u => u.Following)
-            .HasForeignKey(uf => uf.FollowerId);
+            .HasForeignKey(uf => uf.CreatedID);
 
         builder.Entity<UserFollow>()
             .HasOne(uf => uf.Following)
@@ -82,19 +82,8 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
         builder.Entity<Media>()
             .HasOne(m => m.User)
             .WithMany(u => u.Media)
-            .HasForeignKey(m => m.UserId);
+            .HasForeignKey(m => m.CreatedID);
 
-        builder.Entity<Media>()
-            .HasOne(m => m.Post)
-            .WithMany(p => p.Media)
-            .HasForeignKey(m => m.PostId)
-            .IsRequired(false);
-
-        builder.Entity<Media>()
-            .HasOne(m => m.Comment)
-            .WithMany(c => c.Media)
-            .HasForeignKey(m => m.CommentId)
-            .IsRequired(false);
     }
     private void UpdateDateTrackingFields()
     {

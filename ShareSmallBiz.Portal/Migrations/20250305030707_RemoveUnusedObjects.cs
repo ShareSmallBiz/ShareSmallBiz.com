@@ -129,7 +129,7 @@ namespace ShareSmallBiz.Portal.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Testimonials_UserId",
                 table: "Testimonials",
-                column: "UserId");
+                column: "CreatedID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserCollaborations_ShareSmallBizUserId",
@@ -149,12 +149,12 @@ namespace ShareSmallBiz.Portal.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_UserContentContributions_UserId",
                 table: "UserContentContributions",
-                column: "UserId");
+                column: "CreatedID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserServices_UserId",
                 table: "UserServices",
-                column: "UserId");
+                column: "CreatedID");
         }
     }
 }

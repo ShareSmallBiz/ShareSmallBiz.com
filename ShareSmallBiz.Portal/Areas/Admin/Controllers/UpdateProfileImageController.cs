@@ -70,12 +70,12 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 return RedirectToAction("Index");
             }
 
-            _logger.LogInformation("Loading user {UserId} for profile image update", userId);
+            _logger.LogInformation("Loading user {CreatedID} for profile image update", userId);
 
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                _logger.LogWarning("User not found: {UserId}", userId);
+                _logger.LogWarning("User not found: {CreatedID}", userId);
                 TempData["ErrorMessage"] = "User not found";
                 return RedirectToAction("Index");
             }
@@ -96,7 +96,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 model.ProfilePictureUrl = user.ProfilePictureUrl;
             }
 
-            _logger.LogInformation("User {UserId} loaded successfully. Has profile picture: {HasProfilePicture}",
+            _logger.LogInformation("User {CreatedID} loaded successfully. Has profile picture: {HasProfilePicture}",
                 userId, model.HasProfilePicture);
 
             return View(model);
@@ -107,7 +107,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
         [RequestFormLimits(MultipartBodyLengthLimit = 10 * 1024 * 1024)]
         public async Task<IActionResult> UpdateImage(ProfileImageUpdateModel model)
         {
-            _logger.LogInformation("UpdateImage POST started for user {UserId}", model.UserId);
+            _logger.LogInformation("UpdateImage POST started for user {CreatedID}", model.UserId);
 
             if (!ModelState.IsValid)
             {
@@ -118,7 +118,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
             var user = await _userManager.FindByIdAsync(model.UserId);
             if (user == null)
             {
-                _logger.LogWarning("User not found: {UserId}", model.UserId);
+                _logger.LogWarning("User not found: {CreatedID}", model.UserId);
                 TempData["ErrorMessage"] = "User not found";
                 return RedirectToAction("Index");
             }
@@ -130,7 +130,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 // Handle profile picture update based on selected option
                 if (model.ProfilePictureOption == "upload" && model.ProfilePictureFile != null)
                 {
-                    _logger.LogInformation("Processing profile picture upload for user {UserId}", model.UserId);
+                    _logger.LogInformation("Processing profile picture upload for user {CreatedID}", model.UserId);
 
                     if (model.ProfilePictureFile.Length > 2097152) // 2MB
                     {
@@ -180,7 +180,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
                 }
                 else if (model.ProfilePictureOption == "remove")
                 {
-                    _logger.LogInformation("Removing profile picture for user {UserId}", model.UserId);
+                    _logger.LogInformation("Removing profile picture for user {CreatedID}", model.UserId);
 
                     // Remove existing profile picture media if it exists
                     if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
@@ -199,7 +199,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
 
                     if (result.Succeeded)
                     {
-                        _logger.LogInformation("Profile picture updated successfully for user {UserId}", model.UserId);
+                        _logger.LogInformation("Profile picture updated successfully for user {CreatedID}", model.UserId);
                         TempData["SuccessMessage"] = "Profile picture updated successfully.";
                         return RedirectToAction("Success", new { userId = model.UserId });
                     }
@@ -225,7 +225,7 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating profile picture for user {UserId}", model.UserId);
+                _logger.LogError(ex, "Error updating profile picture for user {CreatedID}", model.UserId);
                 ModelState.AddModelError(string.Empty, "An error occurred: " + ex.Message);
                 return View("SelectUser", model);
             }

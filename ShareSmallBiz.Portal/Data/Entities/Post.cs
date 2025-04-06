@@ -6,7 +6,6 @@ public class Post : BaseEntity
     public ShareSmallBizUser Author { get; set; }
     public ShareSmallBizUser? Target { get; set; }
     public string? TargetId { get; set; }
-    public string AuthorId { get; set; }
     [Required]
     public string Content { get; set; } = string.Empty;
     public string Cover { get; set; }

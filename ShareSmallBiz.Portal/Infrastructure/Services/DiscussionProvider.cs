@@ -78,7 +78,7 @@ public class DiscussionProvider(
             return false;
         }
 
-        logger.LogInformation("User {UserId} adding comment to discussion with ID: {id}", user.Id, id);
+        logger.LogInformation("User {CreatedID} adding comment to discussion with ID: {id}", user.Id, id);
 
         var post = await context.Posts.FindAsync(id);
         if (post == null)
@@ -125,11 +125,10 @@ public class DiscussionProvider(
             Rating = discussionModel.Rating,
             Selected = discussionModel.Selected,
             Slug = GenerateSlug(discussionModel.Title),
-            CreatedDate = DateTime.UtcNow,
-            ModifiedDate = DateTime.UtcNow,
             CreatedID = user.Id,
+            CreatedDate = DateTime.UtcNow,
             ModifiedID = user.Id,
-            AuthorId = user.Id,
+            ModifiedDate = DateTime.UtcNow,
             TargetId = discussionModel.TargetId
         };
 
@@ -158,7 +157,7 @@ public class DiscussionProvider(
         logger.LogInformation("Retrieving all posts. Only public: {OnlyPublic}", onlyPublic);
         var posts = await context.Posts
             .Where(p => !onlyPublic || p.IsPublic)
-            .Where(p => p.AuthorId == userId)
+            .Where(p => p.CreatedID == userId)
             .Include(p => p.Author)
             .Include(p => p.PostCategories)
             .ToListAsync();
@@ -294,7 +293,7 @@ public class DiscussionProvider(
             return false;
         }
 
-        logger.LogInformation("User {UserId} is liking discussion with ID: {PostId}", user.Id, postId);
+        logger.LogInformation("User {CreatedID} is liking discussion with ID: {PostId}", user.Id, postId);
 
         var post = await context.Posts.FindAsync(postId);
         if (post == null)
@@ -305,11 +304,11 @@ public class DiscussionProvider(
 
         // Check if user already liked the discussion
         var postLike = await context.PostLikes
-            .FirstOrDefaultAsync(pl => pl.PostId == postId && pl.UserId == user.Id);
+            .FirstOrDefaultAsync(pl => pl.PostId == postId && pl.CreatedID == user.Id);
 
         if (postLike != null)
         {
-            logger.LogInformation("User {UserId} has already liked discussion {PostId}.", user.Id, postId);
+            logger.LogInformation("User {CreatedID} has already liked discussion {PostId}.", user.Id, postId);
             return false;
         }
 
@@ -317,7 +316,7 @@ public class DiscussionProvider(
         postLike = new PostLike
         {
             PostId = postId,
-            UserId = user.Id
+            CreatedID = user.Id
         };
 
         context.PostLikes.Add(postLike);
@@ -414,7 +413,7 @@ public class DiscussionProvider(
             if (string.IsNullOrEmpty(discussionModel?.Author?.Id))
             {
                 discussionModel.Author = new UserModel(user);
-                existingPost.AuthorId = discussionModel.Author.Id;
+                existingPost.CreatedID = discussionModel.Author.Id;
             }
 
             if (discussionModel.Author != null && string.IsNullOrEmpty(discussionModel.Author.Id))
@@ -423,7 +422,7 @@ public class DiscussionProvider(
             }
             else
             {
-                existingPost.AuthorId = discussionModel.Author?.Id ?? user.Id;
+                existingPost.CreatedID = discussionModel.Author?.Id ?? user.Id;
             }
             if (discussionModel.CreatedID == null || string.IsNullOrEmpty(discussionModel.CreatedID))
             {
@@ -497,7 +496,7 @@ public class DiscussionProvider(
             return false;
         }
 
-        logger.LogInformation("User {UserId} attempting to delete comment with ID: {CommentId} from discussion with ID: {PostId}", user.Id, commentId, postId);
+        logger.LogInformation("User {CreatedID} attempting to delete comment with ID: {CommentId} from discussion with ID: {PostId}", user.Id, commentId, postId);
 
         var comment = await context.PostComments
             .Include(c => c.Post)
@@ -511,7 +510,7 @@ public class DiscussionProvider(
 
         if (string.Compare(comment.Author.Id, user.Id, StringComparison.Ordinal) != 0)
         {
-            logger.LogWarning("User {UserId} attempted to delete a comment they do not own.", user.Id);
+            logger.LogWarning("User {CreatedID} attempted to delete a comment they do not own.", user.Id);
             return false;
         }
 
