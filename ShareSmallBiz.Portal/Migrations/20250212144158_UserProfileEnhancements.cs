@@ -319,7 +319,7 @@ namespace ShareSmallBiz.Portal.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_SocialLinks_UserId",
                 table: "SocialLinks",
-                column: "CreatedID");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Testimonials_BusinessId",
@@ -329,7 +329,7 @@ namespace ShareSmallBiz.Portal.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Testimonials_UserId",
                 table: "Testimonials",
-                column: "CreatedID");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserCollaborations_BusinessId1",
@@ -369,7 +369,7 @@ namespace ShareSmallBiz.Portal.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_UserContentContributions_UserId",
                 table: "UserContentContributions",
-                column: "CreatedID");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserServices_BusinessId",
@@ -379,7 +379,7 @@ namespace ShareSmallBiz.Portal.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_UserServices_UserId",
                 table: "UserServices",
-                column: "CreatedID");
+                column: "UserId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_AspNetUsers_BusinessProfiles_BusinessId",
@@ -501,7 +501,7 @@ namespace ShareSmallBiz.Portal.Migrations
             migrationBuilder.AddPrimaryKey(
                 name: "PK_PostLikes",
                 table: "PostLikes",
-                columns: new[] { "PostId", "CreatedID" });
+                columns: new[] { "PostId", "UserId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_WebSites_DomainUrl",

@@ -59,7 +59,7 @@ public class AdminDiscussionController(
             }
             discussionModel.CreatedID = user.Id;
 
-            // If CreatedID is provided, use it instead of the current user's ID
+            // If AuthorId is provided, use it instead of the current user's ID
             if (!string.IsNullOrEmpty(discussionModel.AuthorId))
             {
                 discussionModel.CreatedID = discussionModel.AuthorId;
@@ -122,7 +122,7 @@ public class AdminDiscussionController(
             Target = discussionModel.Target,
             TargetId = discussionModel.TargetId,
 
-            // Set CreatedID explicitly 
+            // Set AuthorId explicitly 
             AuthorId = discussionModel.Author?.Id,
 
             // Pass cached keyword names and all users to the view
@@ -155,7 +155,7 @@ public class AdminDiscussionController(
 
             discussionModel.ModifiedID = user.Id;
 
-            // If an CreatedID is specified and user is Admin, allow changing the author
+            // If an AuthorId is specified and user is Admin, allow changing the author
             if (User.IsInRole("Admin") && !string.IsNullOrEmpty(discussionModel.AuthorId))
             {
                 var author = await userManager.FindByIdAsync(discussionModel.AuthorId);

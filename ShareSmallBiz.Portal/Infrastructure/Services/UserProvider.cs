@@ -48,12 +48,12 @@ public class ShareSmallBizUserManager(
     public async Task<List<SocialLink>> GetUserSocialLinksAsync(string userId, CancellationToken ct = default)
     {
         var socialLinks = await context.SocialLinks
-            .Where(sl => sl.CreatedID == userId)
+            .Where(sl => sl.UserId == userId)
             .AsNoTracking()
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
-        logger.LogInformation("Retrieved {Count} social links for user {CreatedID}.",
+        logger.LogInformation("Retrieved {Count} social links for user {UserId}.",
                               socialLinks.Count, userId);
         return socialLinks ?? [];
     }
@@ -198,7 +198,7 @@ public class UserProvider(
         var user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            logger.LogWarning("User with ID {CreatedID} not found.", userId);
+            logger.LogWarning("User with ID {UserId} not found.", userId);
             return false;
         }
 
@@ -220,23 +220,23 @@ public class UserProvider(
     {
         if (followerId == followingId)
         {
-            logger.LogWarning("User {CreatedID} cannot follow themselves.", followerId);
+            logger.LogWarning("User {UserId} cannot follow themselves.", followerId);
             return false;
         }
 
         // Check if the follow relationship already exists
         bool alreadyFollowing = await context.UserFollows
-            .AnyAsync(uf => uf.CreatedID == followerId && uf.FollowingId == followingId);
+            .AnyAsync(uf => uf.FollowerId == followerId && uf.FollowingId == followingId);
 
         if (!alreadyFollowing)
         {
-            context.UserFollows.Add(new UserFollow { CreatedID = followerId, FollowingId = followingId });
+            context.UserFollows.Add(new UserFollow { FollowerId = followerId, FollowingId = followingId });
             await context.SaveChangesAsync();
-            logger.LogInformation("User {CreatedID} followed user {FollowingId}.", followerId, followingId);
+            logger.LogInformation("User {FollowerId} followed user {FollowingId}.", followerId, followingId);
             return true;
         }
 
-        logger.LogWarning("User {CreatedID} is already following user {FollowingId}.", followerId, followingId);
+        logger.LogWarning("User {FollowerId} is already following user {FollowingId}.", followerId, followingId);
         return false;
     }
 
@@ -293,7 +293,7 @@ public class UserProvider(
             .AsNoTracking()
             .ToListAsync();
 
-        logger.LogInformation("User {CreatedID} has {FollowerCount} followers.", userId, followers.Count);
+        logger.LogInformation("User {UserId} has {FollowerCount} followers.", userId, followers.Count);
         return followers.Select(MapToUserModel).ToList();
     }
 
@@ -301,12 +301,12 @@ public class UserProvider(
     public async Task<List<UserModel>> GetFollowingAsync(string userId)
     {
         var following = await context.UserFollows
-            .Where(uf => uf.CreatedID == userId)
+            .Where(uf => uf.FollowerId == userId)
             .Select(uf => uf.Following)
             .AsNoTracking()
             .ToListAsync();
 
-        logger.LogInformation("User {CreatedID} is following {FollowingCount} users.", userId, following.Count);
+        logger.LogInformation("User {UserId} is following {FollowingCount} users.", userId, following.Count);
         return following.Select(MapToUserModel).ToList();
     }
 
@@ -320,7 +320,7 @@ public class UserProvider(
 
         if (user == null)
         {
-            logger.LogWarning("User with ID {CreatedID} not found.", userId);
+            logger.LogWarning("User with ID {UserId} not found.", userId);
             return null;
         }
 
@@ -429,7 +429,7 @@ public class UserProvider(
 
         if (model == null)
         {
-            logger.LogWarning("Invalid model: null value provided for userId {CreatedID}", userId);
+            logger.LogWarning("Invalid model: null value provided for userId {UserId}", userId);
             return false;
         }
 
@@ -437,7 +437,7 @@ public class UserProvider(
         var user = await context.Users.FindAsync(userId);
         if (user == null)
         {
-            logger.LogWarning("User with ID {CreatedID} not found", userId);
+            logger.LogWarning("User with ID {UserId} not found", userId);
             return false;
         }
 
@@ -488,7 +488,7 @@ public class UserProvider(
         // Only update if something actually changed
         if (changedProperties.Count == 0)
         {
-            logger.LogInformation("No changes detected for user {UserName} ({CreatedID})", user.UserName, userId);
+            logger.LogInformation("No changes detected for user {UserName} ({UserId})", user.UserName, userId);
             return true; // Return true as the request was successful, even though no changes were made
         }
 
@@ -500,14 +500,14 @@ public class UserProvider(
 
         if (result.Succeeded)
         {
-            logger.LogInformation("User {UserName} ({CreatedID}) updated successfully. Changed properties: {Properties}",
+            logger.LogInformation("User {UserName} ({UserId}) updated successfully. Changed properties: {Properties}",
                 user.UserName, userId, string.Join(", ", changedProperties));
             return true;
         }
         else
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            logger.LogError("Failed to update user {UserName} ({CreatedID}). Errors: {Errors}",
+            logger.LogError("Failed to update user {UserName} ({UserId}). Errors: {Errors}",
                 user.UserName, userId, errors);
             return false;
         }
@@ -524,7 +524,7 @@ public class UserProvider(
 
         if (followerId == followingId)
         {
-            logger.LogWarning("Invalid operation: User {CreatedID} cannot unfollow themselves", followerId);
+            logger.LogWarning("Invalid operation: User {UserId} cannot unfollow themselves", followerId);
             return false;
         }
 
@@ -532,16 +532,16 @@ public class UserProvider(
         {
             // Use ExecuteDeleteAsync for better performance when supported (.NET 7+)
             int deletedCount = await context.UserFollows
-                .Where(uf => uf.CreatedID == followerId && uf.FollowingId == followingId)
+                .Where(uf => uf.FollowerId == followerId && uf.FollowingId == followingId)
                 .ExecuteDeleteAsync();
 
             if (deletedCount > 0)
             {
-                logger.LogInformation("User {CreatedID} unfollowed user {FollowingId}", followerId, followingId);
+                logger.LogInformation("User {FollowerId} unfollowed user {FollowingId}", followerId, followingId);
                 return true;
             }
 
-            logger.LogInformation("User {CreatedID} is not following user {FollowingId}", followerId, followingId);
+            logger.LogInformation("User {FollowerId} is not following user {FollowingId}", followerId, followingId);
             return false;
         }
         catch (Exception ex)
@@ -549,24 +549,24 @@ public class UserProvider(
             // Fallback for older EF Core versions or if ExecuteDeleteAsync fails
             if (ex is not InvalidOperationException)
             {
-                logger.LogError(ex, "Error unfollowing user {FollowingId} by {CreatedID}", followingId, followerId);
+                logger.LogError(ex, "Error unfollowing user {FollowingId} by {FollowerId}", followingId, followerId);
                 throw;
             }
 
             // Traditional approach as fallback
             var follow = await context.UserFollows
-                .Where(uf => uf.CreatedID == followerId && uf.FollowingId == followingId)
+                .Where(uf => uf.FollowerId == followerId && uf.FollowingId == followingId)
                 .FirstOrDefaultAsync();
 
             if (follow != null)
             {
                 context.UserFollows.Remove(follow);
                 await context.SaveChangesAsync();
-                logger.LogInformation("User {CreatedID} unfollowed user {FollowingId}", followerId, followingId);
+                logger.LogInformation("User {FollowerId} unfollowed user {FollowingId}", followerId, followingId);
                 return true;
             }
 
-            logger.LogInformation("User {CreatedID} is not following user {FollowingId}", followerId, followingId);
+            logger.LogInformation("User {FollowerId} is not following user {FollowingId}", followerId, followingId);
             return false;
         }
     }

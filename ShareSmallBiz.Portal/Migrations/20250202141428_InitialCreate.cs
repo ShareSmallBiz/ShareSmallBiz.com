@@ -251,12 +251,12 @@ namespace ShareSmallBiz.Portal.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserClaims_UserId",
                 table: "AspNetUserClaims",
-                column: "CreatedID");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserLogins_UserId",
                 table: "AspNetUserLogins",
-                column: "CreatedID");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserRoles_RoleId",
@@ -282,17 +282,17 @@ namespace ShareSmallBiz.Portal.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_PostLikes_UserId",
                 table: "PostLikes",
-                column: "CreatedID");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Posts_AuthorId",
                 table: "Posts",
-                column: "CreatedID");
+                column: "AuthorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserFollows_FollowerId",
                 table: "UserFollows",
-                column: "CreatedID");
+                column: "FollowerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserFollows_FollowingId",

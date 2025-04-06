@@ -62,7 +62,7 @@ public class FileUploadService
             { "MediaType", mediaType.ToString() },
             { "Description", description },
             { "Attribution", attribution },
-            { "CreatedID", userId },
+            { "UserId", userId },
             { "CreatedDate", DateTime.UtcNow.ToString("o") },
             { "ModifiedDate", DateTime.UtcNow.ToString("o") }
         };
@@ -80,10 +80,9 @@ public class FileUploadService
             Description = description,
             Attribution = attribution,
             Url = fileUrl,
+            UserId = userId,
             StorageMetadata = metaDataJson,
-            CreatedID = userId,
             CreatedDate = DateTime.UtcNow,
-            ModifiedID = userId,
             ModifiedDate = DateTime.UtcNow
         };
 
@@ -126,10 +125,9 @@ public class FileUploadService
             MediaType = mediaType,
             StorageMetadata = storageMetaData,
             Url = externalUrl,
-            CreatedID = userId,
+            UserId = userId,
             CreatedDate = DateTime.UtcNow,
             ModifiedDate = DateTime.UtcNow,
-            ModifiedID = userId,
             Attribution = attribution,
             Description = description,
             FileSize = 0 // No actual file size for external links

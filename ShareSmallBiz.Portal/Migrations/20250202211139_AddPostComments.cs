@@ -43,7 +43,7 @@ namespace ShareSmallBiz.Portal.Migrations
             migrationBuilder.AddPrimaryKey(
                 name: "PK_PostLikes",
                 table: "PostLikes",
-                columns: new[] { "PostId", "CreatedID" });
+                columns: new[] { "PostId", "UserId" });
 
             migrationBuilder.CreateTable(
                 name: "KeywordPost",

@@ -82,7 +82,7 @@ public class UserRolesController(
     [HttpPost]
     public async Task<IActionResult> Edit(UserModel model)
     {
-        _logger.LogInformation("Edit POST method called for user ID: {CreatedID}", model?.Id ?? "null");
+        _logger.LogInformation("Edit POST method called for user ID: {UserId}", model?.Id ?? "null");
 
         if (model == null)
         {
@@ -97,7 +97,7 @@ public class UserRolesController(
             var user = await _userManager.FindByIdAsync(model.Id);
             if (user == null)
             {
-                _logger.LogWarning("User with ID {CreatedID} not found", model.Id);
+                _logger.LogWarning("User with ID {UserId} not found", model.Id);
                 return NotFound();
             }
 
@@ -171,7 +171,7 @@ public class UserRolesController(
 
                     if (!result.Succeeded)
                     {
-                        _logger.LogWarning("Failed to update user {CreatedID}. Errors: {Errors}",
+                        _logger.LogWarning("Failed to update user {UserId}. Errors: {Errors}",
                             model.Id, string.Join(", ", result.Errors.Select(e => e.Description)));
 
                         foreach (var error in result.Errors)
@@ -188,12 +188,12 @@ public class UserRolesController(
                         return View(model);
                     }
 
-                    _logger.LogInformation("User {CreatedID} updated successfully", model.Id);
+                    _logger.LogInformation("User {UserId} updated successfully", model.Id);
                     TempData["SuccessMessage"] = "User updated successfully.";
                 }
                 catch (Exception updateEx)
                 {
-                    _logger.LogError(updateEx, "Error calling UpdateAsync for user {CreatedID}", model.Id);
+                    _logger.LogError(updateEx, "Error calling UpdateAsync for user {UserId}", model.Id);
                     ModelState.AddModelError(string.Empty, "An error occurred while saving changes: " + updateEx.Message);
 
                     // Re-populate AvailableRoles for the view
@@ -207,7 +207,7 @@ public class UserRolesController(
             }
             else
             {
-                _logger.LogInformation("No changes detected for user {CreatedID}", model.Id);
+                _logger.LogInformation("No changes detected for user {UserId}", model.Id);
                 TempData["SuccessMessage"] = "No changes were made.";
             }
 
@@ -215,7 +215,7 @@ public class UserRolesController(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception in Edit POST for user {CreatedID}", model.Id);
+            _logger.LogError(ex, "Unhandled exception in Edit POST for user {UserId}", model.Id);
             TempData["ErrorMessage"] = "An unexpected error occurred: " + ex.Message;
 
             try

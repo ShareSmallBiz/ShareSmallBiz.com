@@ -57,7 +57,7 @@ public class CommentProvider(
 
         if (comment.Author.Id != user.Id)
         {
-            logger.LogWarning("User {CreatedID} attempted to update a comment they do not own.", user.Id);
+            logger.LogWarning("User {UserId} attempted to update a comment they do not own.", user.Id);
             return false;
         }
 
@@ -87,7 +87,7 @@ public class CommentProvider(
 
         if (comment.Author.Id != user.Id)
         {
-            logger.LogWarning("User {CreatedID} attempted to delete a comment they do not own.", user.Id);
+            logger.LogWarning("User {UserId} attempted to delete a comment they do not own.", user.Id);
             return false;
         }
 

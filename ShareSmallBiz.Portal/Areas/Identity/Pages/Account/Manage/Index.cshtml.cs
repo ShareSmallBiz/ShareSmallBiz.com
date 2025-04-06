@@ -217,7 +217,7 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
             {
                 if (existingLink == null)
                 {
-                    socialLinks.Add(new SocialLink { CreatedID = userId, Platform = platform, Url = newUrl });
+                    socialLinks.Add(new SocialLink { UserId = userId, Platform = platform, Url = newUrl });
                 }
                 else if (string.Compare(existingLink.Url, newUrl) != 0)
                 {

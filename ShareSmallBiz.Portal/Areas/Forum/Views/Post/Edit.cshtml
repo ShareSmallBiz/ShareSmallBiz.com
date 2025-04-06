@@ -75,11 +75,6 @@
                     <i class="bi bi-search"></i> Lookup
                 </button>
             </div>
-            <div class="form-text mt-1">
-                <i class="bi bi-info-circle me-1"></i>
-                You can enter an image URL or use the Lookup button to search Unsplash for free images.
-                The image will be automatically stored in the media library.
-            </div>
             <img id="coverPreview" class="cover-preview" src="@Model.Cover" alt="Cover Image Preview" style="display: @(string.IsNullOrEmpty(Model.Cover) ? "none" : "block");" />
         </div>
 
@@ -254,12 +249,9 @@
                    let imageUrl = $(this).data('url');
                    let photographer = $(this).data('attribution');
                    let profileLink = $(this).data('profile');
-
-                   // Store the selected image URL directly (will be processed by the controller)
                    $('#coverUrl').val(imageUrl);
                    $('#coverPreview').attr('src', imageUrl).show();
                    $('#unsplashModal').modal('hide');
-
                    // Append attribution to content
                    let attributionText = `<p style="font-size: 12px; text-align: right;">
                        <em>Photo by <a href="${profileLink}" target="_blank">${photographer}</a> on <a href="https://unsplash.com" target="_blank">Unsplash</a></em>
@@ -272,12 +264,7 @@
                $('#coverUrl').on('input', function () {
                    const imageUrl = $(this).val();
                    if (imageUrl) {
-                       // Check if URL is already in Media/{id} format
-                       if (imageUrl.startsWith('/Media/')) {
-                           $('#coverPreview').attr('src', imageUrl).show();
-                       } else {
-                           $('#coverPreview').attr('src', imageUrl).show();
-                       }
+                       $('#coverPreview').attr('src', imageUrl).show();
                    } else {
                        $('#coverPreview').hide();
                    }
