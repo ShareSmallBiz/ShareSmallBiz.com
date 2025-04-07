@@ -1,0 +1,175 @@
+﻿@model AdminDiscussionModel
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">
+            <i class="bi bi-images me-2"></i>
+            Media Manager
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- Current Media -->
+            <div class="col-md-6">
+                <h6 class="mb-3">Attached Media</h6>
+                @if (Model.Media != null && Model.Media.Any())
+                {
+                    <div class="row row-cols-1 row-cols-md-2 g-3">
+                        @foreach (var media in Model.Media)
+                        {
+                            <div class="col">
+                                <div class="card h-100 @(Model.Cover == $"/Media/{media.Id}" ? "border-primary" : "")">
+                                    @if (media.MediaType == ShareSmallBiz.Portal.Data.Enums.MediaType.Image)
+                                    {
+                                        <img src="/Media/Thumbnail/@media.Id" class="card-img-top" alt="@media.FileName" style="height: 120px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 120px;">
+                                            @switch (media.MediaType)
+                                            {
+                                                case ShareSmallBiz.Portal.Data.Enums.MediaType.Video:
+                                                    <i class="bi bi-film text-primary fs-1"></i>
+                                                    break;
+                                                case ShareSmallBiz.Portal.Data.Enums.MediaType.Audio:
+                                                    <i class="bi bi-file-earmark-music text-primary fs-1"></i>
+                                                    break;
+                                                case ShareSmallBiz.Portal.Data.Enums.MediaType.Document:
+                                                    <i class="bi bi-file-earmark-text text-primary fs-1"></i>
+                                                    break;
+                                                default:
+                                                    <i class="bi bi-file-earmark text-primary fs-1"></i>
+                                                    break;
+                                            }
+                                        </div>
+                                    }
+                                    <div class="card-body">
+                                        <h6 class="card-title text-truncate" title="@media.FileName">@media.FileName</h6>
+                                        <p class="card-text small text-muted">@media.MediaType</p>
+                                        <div class="d-flex justify-content-between gap-1">
+                                            <form asp-action="SetCover" method="post" class="me-1">
+                                                <input type="hidden" name="discussionId" value="@Model.Id" />
+                                                <input type="hidden" name="mediaId" value="@media.Id" />
+                                                <button type="submit" class="btn btn-sm @(Model.Cover == $"/Media/{media.Id}" ? "btn-primary" : "btn-outline-primary")" title="Set as cover image">
+                                                    <i class="bi bi-card-image"></i>
+                                                </button>
+                                            </form>
+                                            <form asp-action="RemoveMedia" method="post">
+                                                <input type="hidden" name="discussionId" value="@Model.Id" />
+                                                <input type="hidden" name="mediaId" value="@media.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove media">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No media attached to this post yet. Select from available media to attach.
+                    </div>
+                }
+            </div>
+
+            <!-- Available Media -->
+            <div class="col-md-6">
+                <h6 class="mb-3">Available Media</h6>
+                @if (Model.AvailableMedia != null && Model.AvailableMedia.Any())
+                {
+                    <div class="input-group mb-3">
+                        <input type="text" id="mediaSearch" class="form-control" placeholder="Search media...">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    </div>
+
+                    <div class="row row-cols-1 row-cols-md-2 g-3" id="availableMediaGrid">
+                        @foreach (var media in Model.AvailableMedia.Where(m => !Model.Media.Any(mm => mm.Id == m.Id)))
+                        {
+                            <div class="col media-item">
+                                <div class="card h-100">
+                                    @if (media.MediaType == ShareSmallBiz.Portal.Data.Enums.MediaType.Image)
+                                    {
+                                        <img src="/Media/Thumbnail/@media.Id" class="card-img-top" alt="@media.FileName" style="height: 120px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 120px;">
+                                            @switch (media.MediaType)
+                                            {
+                                                case ShareSmallBiz.Portal.Data.Enums.MediaType.Video:
+                                                    <i class="bi bi-film text-primary fs-1"></i>
+                                                    break;
+                                                case ShareSmallBiz.Portal.Data.Enums.MediaType.Audio:
+                                                    <i class="bi bi-file-earmark-music text-primary fs-1"></i>
+                                                    break;
+                                                case ShareSmallBiz.Portal.Data.Enums.MediaType.Document:
+                                                    <i class="bi bi-file-earmark-text text-primary fs-1"></i>
+                                                    break;
+                                                default:
+                                                    <i class="bi bi-file-earmark text-primary fs-1"></i>
+                                                    break;
+                                            }
+                                        </div>
+                                    }
+                                    <div class="card-body">
+                                        <h6 class="card-title text-truncate" title="@media.FileName">@media.FileName</h6>
+                                        <p class="card-text small text-muted">@media.MediaType</p>
+                                        <form asp-action="AddMedia" method="post">
+                                            <input type="hidden" name="discussionId" value="@Model.Id" />
+                                            <input type="hidden" name="mediaId" value="@media.Id" />
+                                            <button type="submit" class="btn btn-sm btn-primary w-100">
+                                                <i class="bi bi-plus-circle me-1"></i> Add to Post
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    @if (!Model.AvailableMedia.Any(m => !Model.Media.Any(mm => mm.Id == m.Id)))
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            All your media is already attached to this post or you don't have any media yet.
+                            <a asp-area="Media" asp-controller="Library" asp-action="Create" class="alert-link">Upload media</a> to add to this post.
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        You don't have any media yet. <a asp-area="Media" asp-controller="Library" asp-action="Create" class="alert-link">Upload media</a> to add to this post.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('mediaSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const mediaItems = document.querySelectorAll('.media-item');
+
+                mediaItems.forEach(item => {
+                    const itemText = item.textContent.toLowerCase();
+                    if (itemText.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>

@@ -89,6 +89,14 @@
             <img id="coverPreview" class="cover-preview" src="@Model.Cover" alt="Cover Image Preview" style="display: @(string.IsNullOrEmpty(Model.Cover) ? "none" : "block");" />
         </div>
 
+        <div class="mb-3">
+            @if (Model.Id > 0) // Only show media manager for existing posts
+            {
+                <partial name="_MediaManager" model="Model" />
+            }
+        </div>
+
+
         <div class="mb-3 form-check">
             <input asp-for="IsPublic" class="form-check-input" />
             <label asp-for="IsPublic" class="form-check-label">Public Post</label>
