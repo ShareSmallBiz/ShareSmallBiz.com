@@ -27,6 +27,28 @@
             font-weight: bold;
             padding: 10px 20px;
         }
+
+        /* Media selection styling */
+        .selected-media {
+            border: 2px solid #007bff;
+            position: relative;
+        }
+
+            .selected-media::after {
+                content: '✓';
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                background-color: #007bff;
+                color: white;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+            }
     </style>
 }
 
@@ -72,10 +94,22 @@
             <div class="input-group">
                 <input asp-for="Cover" id="coverUrl" class="form-control" placeholder="Enter cover image URL" />
                 <button type="button" class="btn btn-outline-secondary" id="browseImages">
-                    <i class="bi bi-search"></i> Lookup
+                    <i class="bi bi-search"></i> Find Image
                 </button>
             </div>
-            <img id="coverPreview" class="cover-preview" src="@Model.Cover" alt="Cover Image Preview" style="display: @(string.IsNullOrEmpty(Model.Cover) ? "none" : "block");" />
+            <div class="form-text">Use the "Find Image" button to search for free images from Unsplash.</div>
+
+            <!-- Cover Preview -->
+            <div class="mt-2">
+                @if (!string.IsNullOrEmpty(Model.Cover))
+                {
+                    <img id="coverPreview" class="cover-preview" src="@Model.Cover" alt="Cover Image Preview" />
+                }
+                else
+                {
+                    <img id="coverPreview" class="cover-preview" style="display: none;" alt="Cover Image Preview" />
+                }
+            </div>
         </div>
 
         <div class="mb-3 form-check">
@@ -129,6 +163,49 @@
                 </div>
             </div>
         </div>
+
+        <!-- Media Library Section -->
+        <div class="mb-3">
+            <label class="form-label">Media Library</label>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="form-text">Add media from your library to this post.</div>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="browseMediaLibrary">
+                    <i class="bi bi-images me-1"></i> Browse Media Library
+                </button>
+            </div>
+
+            <!-- Selected Media List -->
+            <div id="selectedMedia" class="row row-cols-2 row-cols-md-4 g-3 mb-3">
+                @if (Model.Media != null && Model.Media.Any())
+                {
+                    @foreach (var media in Model.Media)
+                    {
+                        <div class="col">
+                            <div class="card h-100 selected-media" data-media-id="@media.Id">
+                                @if (media.MediaType == ShareSmallBiz.Portal.Data.Enums.MediaType.Image)
+                                {
+                                    <img src="/Media/Thumbnail/@media.Id" class="card-img-top" style="height: 120px; object-fit: cover;" alt="@media.FileName">
+                                }
+                                else
+                                {
+                                    <div class="card-img-top bg-light text-center pt-4" style="height: 120px;">
+                                        <i class="bi bi-file-earmark fs-1 text-secondary"></i>
+                                    </div>
+                                }
+                                <div class="card-body p-2">
+                                    <p class="card-text small text-truncate">@media.FileName</p>
+                                    <input type="hidden" name="MediaIds" value="@media.Id">
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-1 remove-media">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
         <!-- Save Button at the Bottom -->
         <div class="text-end">
             <button type="submit" class="btn btn-success">
@@ -147,7 +224,77 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="unsplashImages" class="row g-3"></div>
+                <div class="input-group mb-3">
+                    <input type="text" id="unsplashSearch" class="form-control" placeholder="Search for images...">
+                    <button class="btn btn-outline-primary" type="button" id="searchUnsplashBtn">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+                <div id="unsplashResults" class="row row-cols-1 row-cols-md-3 g-3">
+                    <!-- Search results will be populated here -->
+                    <div class="col-12 text-center text-muted">
+                        <p>Enter a search term to find images</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="selectUnsplashImage" disabled>
+                    <i class="bi bi-check-circle me-1"></i> Select Image
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Media Library Modal -->
+<div class="modal fade" id="mediaLibraryModal" tabindex="-1" aria-labelledby="mediaLibraryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Select Media from Library</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" id="mediaSearch" class="form-control" placeholder="Search your media...">
+                            <button class="btn btn-outline-primary" type="button" id="searchMediaBtn">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select id="mediaTypeFilter" class="form-select">
+                            <option value="">All Media Types</option>
+                            <option value="0">Images</option>
+                            <option value="1">Videos</option>
+                            <option value="2">Audio</option>
+                            <option value="3">Documents</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" id="loadMediaBtn">
+                            <i class="bi bi-arrow-repeat me-1"></i> Load Media
+                        </button>
+                    </div>
+                </div>
+
+                <div id="mediaResults" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+                    <!-- Media results will be loaded here -->
+                    <div class="col-12 text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="addSelectedMedia">
+                    <i class="bi bi-plus-circle me-1"></i> Add Selected Media
+                </button>
             </div>
         </div>
     </div>
@@ -184,11 +331,11 @@
                    semantic: true,
                    allowedTags: [
                        'p', 'br', 'ul', 'ol', 'li', 'a', 'strong', 'em', 'u', 'strike',
-                       'iframe' // Allowing iframe for video embeds
+                       'iframe', 'img' // Allowing iframe for video embeds and images
                    ],
                    allowedAttributes: [
-                       'href', 'title', 'target',
-                       'src', 'width', 'height', 'allow', 'frameborder', 'allowfullscreen'
+                       'href', 'title', 'target', 'alt', 'src',
+                       'width', 'height', 'allow', 'frameborder', 'allowfullscreen'
                    ]
                });
 
@@ -203,72 +350,216 @@
                    }, 10);
                });
 
-               $('#coverUpload').change(function () {
-                   const file = this.files[0];
-                   if (file) {
-                       const reader = new FileReader();
-                       reader.onload = function (e) {
-                           $('#coverPreview').attr('src', e.target.result).show();
-                           $('#coverUrl').val(e.target.result);
-                       };
-                       reader.readAsDataURL(file);
+               $('#coverUrl').change(function () {
+                   const url = $(this).val();
+                   if (url) {
+                       $('#coverPreview').attr('src', url).show();
+                   } else {
+                       $('#coverPreview').hide();
                    }
                });
 
                // Handle Unsplash Image Search & Modal
                $('#browseImages').click(function () {
-                   let query = prompt("Enter a search term for an image (e.g., nature, city):");
+                   $('#unsplashModal').modal('show');
+               });
+
+               // Handle Image Selection from Modal
+               let selectedUnsplashImage = null;
+
+               $('#searchUnsplashBtn').click(function() {
+                   const query = $('#unsplashSearch').val();
                    if (!query) return;
-                   $.getJSON(`/api/unsplash/search?query=${query}`, function (data) {
-                       let imagesContainer = $('#unsplashImages');
+
+                   // Show loading state
+                   $('#unsplashResults').html('<div class="col-12 text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+
+                   // Fetch images from Unsplash
+                   $.getJSON(`/Media/Unsplash/api/search?query=${encodeURIComponent(query)}`, function(data) {
+                       let imagesContainer = $('#unsplashResults');
                        imagesContainer.empty();
+
                        if (data.results && data.results.length > 0) {
                            data.results.forEach(image => {
                                let imageCard = `
-                                   <div class="col-md-3">
-                                       <div class="card shadow-sm">
-                                           <img src="${image.urls.small}" class="card-img-top select-unsplash" data-url="${image.urls.regular}" data-attribution="${image.user.name}" data-profile="${image.user.links.html}">
-                                           <div class="card-body text-center">
-                                               <small>By <a href="${image.user.links.html}" target="_blank">${image.user.name}</a></small>
+                                   <div class="col">
+                                       <div class="card h-100 image-card" data-image-url="${image.urls.regular}" data-attribution="${image.user.name}" data-profile="${image.user.links.html}">
+                                           <img src="${image.urls.small}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="${image.alt_description || 'Unsplash image'}">
+                                           <div class="card-body p-2">
+                                               <small class="text-muted">Photo by ${image.user.name}</small>
                                            </div>
                                        </div>
                                    </div>`;
                                imagesContainer.append(imageCard);
                            });
-                           $('#unsplashModal').modal('show');
+
+                           // Add click event to select image
+                           $('.image-card').click(function() {
+                               $('.image-card').removeClass('border-primary');
+                               $(this).addClass('border-primary');
+                               selectedUnsplashImage = {
+                                   url: $(this).data('image-url'),
+                                   attribution: $(this).data('attribution'),
+                                   profile: $(this).data('profile')
+                               };
+                               $('#selectUnsplashImage').prop('disabled', false);
+                           });
                        } else {
-                           alert("No images found.");
+                           imagesContainer.html('<div class="col-12 text-center text-muted"><p>No images found. Try a different search term.</p></div>');
                        }
-                   }).fail(function () {
-                       alert("Error fetching images from Unsplash.");
+                   }).fail(function() {
+                       $('#unsplashResults').html('<div class="col-12 text-center text-danger"><p>Error loading images. Please try again.</p></div>');
                    });
                });
 
-               // Handle Image Selection from Modal
-               $(document).on('click', '.select-unsplash', function () {
-                   let imageUrl = $(this).data('url');
-                   let photographer = $(this).data('attribution');
-                   let profileLink = $(this).data('profile');
-                   $('#coverUrl').val(imageUrl);
-                   $('#coverPreview').attr('src', imageUrl).show();
-                   $('#unsplashModal').modal('hide');
-                   // Append attribution to content
-                   let attributionText = `<p style="font-size: 12px; text-align: right;">
-                       <em>Photo by <a href="${profileLink}" target="_blank">${photographer}</a> on <a href="https://unsplash.com" target="_blank">Unsplash</a></em>
-                   </p>`;
-                   let currentContent = $('#contentEditor').trumbowyg('html');
-                   $('#contentEditor').trumbowyg('html', currentContent + attributionText);
-               });
+               // Handle selecting image
+               $('#selectUnsplashImage').click(function() {
+                   if (selectedUnsplashImage) {
+                       $('#coverUrl').val(selectedUnsplashImage.url);
+                       $('#coverPreview').attr('src', selectedUnsplashImage.url).show();
 
-               // Auto-preview when pasting an image URL
-               $('#coverUrl').on('input', function () {
-                   const imageUrl = $(this).val();
-                   if (imageUrl) {
-                       $('#coverPreview').attr('src', imageUrl).show();
-                   } else {
-                       $('#coverPreview').hide();
+                       // Add attribution if not already present in the content
+                       const attributionText = `<p style="font-size: 12px; text-align: right;"><em>Photo by <a href="${selectedUnsplashImage.profile}" target="_blank">${selectedUnsplashImage.attribution}</a> on <a href="https://unsplash.com" target="_blank">Unsplash</a></em></p>`;
+
+                       let content = $('#contentEditor').trumbowyg('html');
+                       // Check if the attribution is already there
+                       if (!content.includes(selectedUnsplashImage.attribution) || !content.includes('Unsplash')) {
+                           $('#contentEditor').trumbowyg('html', content + attributionText);
+                       }
+
+                       $('#unsplashModal').modal('hide');
                    }
                });
+
+               // Handle triggering search on enter
+               $('#unsplashSearch').keypress(function(e) {
+                   if (e.which === 13) {
+                       $('#searchUnsplashBtn').click();
+                       return false;
+                   }
+               });
+
+               // Media Library Modal
+               $('#browseMediaLibrary').click(function() {
+                   $('#mediaLibraryModal').modal('show');
+                   loadMediaLibrary();
+               });
+
+               // Load Media Library
+               function loadMediaLibrary(searchTerm = '', mediaType = '') {
+                   $('#mediaResults').html('<div class="col-12 text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+
+                   // Fetch media from user's library
+                   $.getJSON(`/api/Media/UserMedia?searchTerm=${encodeURIComponent(searchTerm)}&mediaType=${mediaType}`, function(data) {
+                       let mediaContainer = $('#mediaResults');
+                       mediaContainer.empty();
+
+                       if (data && data.length > 0) {
+                           data.forEach(media => {
+                               // Skip media that's already selected
+                               const alreadySelected = $(`#selectedMedia input[value="${media.id}"]`).length > 0;
+                               const selectedClass = alreadySelected ? 'selected-media' : '';
+
+                               let mediaCard = `
+                                   <div class="col">
+                                       <div class="card h-100 media-card ${selectedClass}" data-media-id="${media.id}" data-media-name="${media.fileName}">`;
+
+                               if (media.mediaType === 0) { // Image
+                                   mediaCard += `<img src="/Media/Thumbnail/${media.id}" class="card-img-top" style="height: 120px; object-fit: cover;" alt="${media.fileName}">`;
+                               } else {
+                                   mediaCard += `<div class="card-img-top bg-light text-center pt-4" style="height: 120px;">
+                                               <i class="bi bi-file-earmark fs-1 text-secondary"></i>
+                                           </div>`;
+                               }
+
+                               mediaCard += `
+                                           <div class="card-body p-2">
+                                               <p class="card-text small text-truncate">${media.fileName}</p>
+                                           </div>
+                                       </div>
+                                   </div>`;
+
+                               mediaContainer.append(mediaCard);
+                           });
+
+                           // Add click event to select media
+                           $('.media-card').click(function() {
+                               $(this).toggleClass('selected-media');
+                           });
+                       } else {
+                           mediaContainer.html('<div class="col-12 text-center text-muted"><p>No media found. Try uploading media to your library first.</p></div>');
+                       }
+                   }).fail(function() {
+                       $('#mediaResults').html('<div class="col-12 text-center text-danger"><p>Error loading media. Please try again.</p></div>');
+                   });
+               }
+
+               // Handle media search
+               $('#searchMediaBtn').click(function() {
+                   const searchTerm = $('#mediaSearch').val();
+                   const mediaType = $('#mediaTypeFilter').val();
+                   loadMediaLibrary(searchTerm, mediaType);
+               });
+
+               // Handle reload media button
+               $('#loadMediaBtn').click(function() {
+                   loadMediaLibrary();
+               });
+
+               // Handle media type filter
+               $('#mediaTypeFilter').change(function() {
+                   const searchTerm = $('#mediaSearch').val();
+                   const mediaType = $(this).val();
+                   loadMediaLibrary(searchTerm, mediaType);
+               });
+
+               // Handle adding selected media
+               $('#addSelectedMedia').click(function() {
+                   const selectedMedia = $('.media-card.selected-media');
+
+                   selectedMedia.each(function() {
+                       const mediaId = $(this).data('media-id');
+                       const mediaName = $(this).data('media-name');
+
+                       // Skip if already added
+                       if ($(`#selectedMedia input[value="${mediaId}"]`).length > 0) {
+                           return;
+                       }
+
+                       // Clone the card for the selected media section
+                       const mediaHtml = `
+                           <div class="col">
+                               <div class="card h-100 selected-media" data-media-id="${mediaId}">
+                                   ${$(this).find('.card-img-top').prop('outerHTML') ||
+                                     $(this).find('.card-img-top').html()}
+                                   <div class="card-body p-2">
+                                       <p class="card-text small text-truncate">${mediaName}</p>
+                                       <input type="hidden" name="MediaIds" value="${mediaId}">
+                                   </div>
+                                   <button type="button" class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-1 remove-media">
+                                       <i class="bi bi-x"></i>
+                                   </button>
+                               </div>
+                           </div>`;
+
+                       $('#selectedMedia').append(mediaHtml);
+                   });
+
+                   // Add event listener for remove buttons
+                   addRemoveMediaEvents();
+
+                   $('#mediaLibraryModal').modal('hide');
+               });
+
+               // Add event listeners for remove media buttons
+               function addRemoveMediaEvents() {
+                   $('.remove-media').off('click').on('click', function() {
+                       $(this).closest('.col').remove();
+                   });
+               }
+
+               // Initialize remove media events
+               addRemoveMediaEvents();
 
                // Tag search functionality
                $("#tagSearch").on("input", function() {

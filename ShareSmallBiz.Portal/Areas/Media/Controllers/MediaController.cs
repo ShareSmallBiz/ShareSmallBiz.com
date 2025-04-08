@@ -4,6 +4,7 @@ using ShareSmallBiz.Portal.Areas.Media.Models;
 using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Data.Enums;
 using ShareSmallBiz.Portal.Infrastructure.Configuration;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace ShareSmallBiz.Portal.Areas.Media.Controllers;
@@ -237,4 +238,159 @@ public class MediaController : Controller
 
         return NotFound();
     }
+
+
+    /// <summary>
+    /// Get the user's media library
+    /// </summary>
+    [HttpGet("UserMedia")]
+    public async Task<ActionResult<IEnumerable<MediaModel>>> GetUserMedia(string? searchTerm = null, string? mediaType = null)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User not authenticated");
+            }
+
+            // Get all media for user
+            var allMedia = await _mediaService.GetUserMediaAsync(userId);
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                allMedia = allMedia.Where(m =>
+                    m.FileName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    (m.Description != null && m.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            // Apply media type filter
+            if (!string.IsNullOrEmpty(mediaType) && int.TryParse(mediaType, out int mediaTypeInt))
+            {
+                var mediaTypeEnum = (MediaType)mediaTypeInt;
+                allMedia = allMedia.Where(m => m.MediaType == mediaTypeEnum);
+            }
+
+            // Order by most recently added
+            return Ok(allMedia.OrderByDescending(m => m.CreatedDate));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving user media");
+            return StatusCode(500, "An error occurred while retrieving media");
+        }
+    }
+
+    /// <summary>
+    /// Get media by ID
+    /// </summary>
+    [HttpGet("{id}")]
+    public async Task<ActionResult<MediaModel>> GetMedia(int id)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User not authenticated");
+            }
+
+            var media = await _mediaService.GetUserMediaByIdAsync(id, userId);
+            if (media == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(media);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving media {Id}", id);
+            return StatusCode(500, "An error occurred while retrieving media");
+        }
+    }
+
+    /// <summary>
+    /// Link media to a post
+    /// </summary>
+    [HttpPost("LinkToPost")]
+    public async Task<IActionResult> LinkMediaToPost([FromBody] LinkMediaRequest request)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User not authenticated");
+            }
+
+            if (request.MediaId <= 0 || request.PostId <= 0)
+            {
+                return BadRequest("Invalid media or post ID");
+            }
+
+            var result = await _mediaService.LinkMediaToPostAsync(request.MediaId, request.PostId, userId);
+            if (!result)
+            {
+                return BadRequest("Failed to link media to post");
+            }
+
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error linking media {MediaId} to post {PostId}",
+                request?.MediaId, request?.PostId);
+            return StatusCode(500, "An error occurred while linking media to post");
+        }
+    }
+
+    /// <summary>
+    /// Unlink media from a post
+    /// </summary>
+    [HttpPost("UnlinkFromPost")]
+    public async Task<IActionResult> UnlinkMediaFromPost([FromBody] LinkMediaRequest request)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User not authenticated");
+            }
+
+            if (request.MediaId <= 0 || request.PostId <= 0)
+            {
+                return BadRequest("Invalid media or post ID");
+            }
+
+            var result = await _mediaService.UnlinkMediaFromPostAsync(request.MediaId, request.PostId, userId);
+            if (!result)
+            {
+                return BadRequest("Failed to unlink media from post");
+            }
+
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error unlinking media {MediaId} from post {PostId}",
+                request?.MediaId, request?.PostId);
+            return StatusCode(500, "An error occurred while unlinking media from post");
+        }
+    }
+
+
+}
+
+
+
+/// <summary>
+/// Request model for linking media to posts
+/// </summary>
+public class LinkMediaRequest
+{
+    public int MediaId { get; set; }
+    public int PostId { get; set; }
 }
