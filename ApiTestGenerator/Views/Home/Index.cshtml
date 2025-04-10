@@ -1,0 +1,53 @@
+﻿@model ApiTestGenerator.Models.ApiTestViewModel
+
+@{
+    ViewData["Title"] = "OpenAPI Test Generator";
+}
+
+<div class="text-center">
+    <h1 class="display-4">OpenAPI Test Generator</h1>
+    <p>Upload an OpenAPI JSON file to generate a test form</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Upload OpenAPI JSON</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="UploadOpenApi" enctype="multipart/form-data" method="post">
+                    <div class="form-group mb-3">
+                        <label for="openApiFile">Select OpenAPI JSON file:</label>
+                        <input type="file" class="form-control" id="openApiFile" name="openApiFile" accept=".json">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload and Generate Test Form</button>
+                </form>
+            </div>
+        </div>
+
+        @if (Model.SavedTests.Any())
+        {
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>Saved Tests</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        @foreach (var test in Model.SavedTests)
+                        {
+                            <a href="@Url.Action("LoadTest", new { id = test.Id })" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">@test.Name</h5>
+                                    <small>@test.Method</small>
+                                </div>
+                                <p class="mb-1">@test.BaseUrl@test.Path</p>
+                                <small>Created: @test.CreatedAt.ToString("g")</small>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
