@@ -1,0 +1,87 @@
+﻿@model ApiTestGenerator.Models.ApiDefinition
+
+@{
+    ViewData["Title"] = "Manage API Servers";
+}
+
+<h1>Manage API Servers</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Current Servers</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Servers != null && Model.Servers.Any())
+                {
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>URL</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var server in Model.Servers)
+                            {
+                                <tr>
+                                    <td>@server.Key</td>
+                                    <td>@server.Value.Url</td>
+                                    <td>@server.Value.Description</td>
+                                    <td>
+                                        <form asp-action="RemoveServer" method="post" style="display: inline;">
+                                            <input type="hidden" name="serverKey" value="@server.Key" />
+                                            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p>No servers defined. Add a server below.</p>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>Add New Server</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="AddServer" method="post">
+                    <div class="form-group mb-3">
+                        <label for="serverKey">Server Key</label>
+                        <input type="text" class="form-control" id="serverKey" name="serverKey" required placeholder="e.g., production, staging, dev" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="url">Server URL</label>
+                        <input type="text" class="form-control" id="url" name="url" required placeholder="e.g., https://api.example.com/v1" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="description">Description</label>
+                        <input type="text" class="form-control" id="description" name="description" placeholder="e.g., Production Server" />
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Server</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Actions</h5>
+            </div>
+            <div class="card-body">
+                <a asp-action="TestForm" class="btn btn-outline-primary w-100 mb-2">Return to Test Form</a>
+                <a asp-action="Index" class="btn btn-outline-secondary w-100">Return to Home</a>
+            </div>
+        </div>
+    </div>
+</div>

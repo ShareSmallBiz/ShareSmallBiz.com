@@ -13,6 +13,23 @@
     </p>
 }
 
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        <p><strong>Error Details:</strong> @Model.ErrorMessage</p>
+
+        @if (!string.IsNullOrEmpty(Model.FileName))
+        {
+            <p><strong>File Name:</strong> @Model.FileName</p>
+        }
+
+        @if (Model.FileSize.HasValue)
+        {
+            <p><strong>File Size:</strong> @Model.FileSize bytes</p>
+        }
+    </div>
+}
+
 <h3>Development Mode</h3>
 <p>
     Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.

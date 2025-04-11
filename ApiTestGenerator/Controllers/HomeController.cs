@@ -11,17 +11,20 @@ public class HomeController : Controller
     private readonly IOpenApiParser _openApiParser;
     private readonly IApiTestService _apiTestService;
     private readonly ITestDataService _testDataService;
+    private readonly ITemporaryStorageService _tempStorage;
     private readonly ILogger<HomeController> _logger;
 
     public HomeController(
         IOpenApiParser openApiParser,
         IApiTestService apiTestService,
         ITestDataService testDataService,
+        ITemporaryStorageService tempStorage,
         ILogger<HomeController> logger)
     {
         _openApiParser = openApiParser;
         _apiTestService = apiTestService;
         _testDataService = testDataService;
+        _tempStorage = tempStorage;
         _logger = logger;
     }
 
@@ -36,7 +39,9 @@ public class HomeController : Controller
     }
 
     [HttpPost]
-    public IActionResult UploadOpenApi(IFormFile openApiFile)
+    [RequestFormLimits(MultipartBodyLengthLimit = 52428800)] // 50MB
+    [RequestSizeLimit(52428800)] // 50MB
+    public async Task<IActionResult> UploadOpenApi(IFormFile openApiFile)
     {
         if (openApiFile == null || openApiFile.Length == 0)
         {
@@ -45,33 +50,74 @@ public class HomeController : Controller
 
         try
         {
-            using (var streamReader = new StreamReader(openApiFile.OpenReadStream()))
+            _logger.LogInformation("Processing OpenAPI file: {FileName}, Size: {FileSize} bytes",
+                openApiFile.FileName, openApiFile.Length);
+
+            ApiDefinition apiDefinition;
+            using (var stream = openApiFile.OpenReadStream())
             {
-                var json = streamReader.ReadToEnd();
-                var apiDefinition = _openApiParser.ParseOpenApiJson(json);
-
-                TempData["ApiDefinition"] = JsonSerializer.Serialize(apiDefinition);
-
-                return RedirectToAction("TestForm");
+                apiDefinition = await _openApiParser.ParseOpenApiStreamAsync(stream);
             }
+
+            // Initialize Servers collection if it's null
+            if (apiDefinition.Servers == null)
+            {
+                apiDefinition.Servers = new Dictionary<string, ServerObject>();
+            }
+
+            // Add or update servers programmatically
+            apiDefinition.Servers["production"] = new ServerObject
+            {
+                Url = "https://sharesmallbiz.com/",
+                Description = "Production Server"
+            };
+
+            // Store in session instead of TempData for large objects
+            _tempStorage.StoreObject("ApiDefinition", apiDefinition);
+
+            return RedirectToAction("TestForm");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error uploading OpenAPI file");
-            return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            var errorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+            _logger.LogError(ex, "Error uploading OpenAPI file: {ErrorMessage}", errorMessage);
+
+            // Add file info to the log
+            _logger.LogError("File information: Name={FileName}, Size={FileSize}",
+                openApiFile.FileName,
+                openApiFile.Length);
+
+            ModelState.AddModelError("", $"Failed to process OpenAPI file: {errorMessage}");
+            return View("Index", new ApiTestViewModel
+            {
+                SavedTests = _testDataService.GetAllTestRequests()
+            });
         }
     }
 
     public IActionResult TestForm()
     {
-        var apiDefinitionJson = TempData["ApiDefinition"] as string;
+        ApiDefinition? apiDefinition = null;
 
-        if (string.IsNullOrEmpty(apiDefinitionJson))
+        // Try getting from session first
+        if (_tempStorage.HasObject("ApiDefinition"))
+        {
+            apiDefinition = _tempStorage.RetrieveObject<ApiDefinition>("ApiDefinition");
+        }
+        // Fall back to TempData for backward compatibility
+        else
+        {
+            var apiDefinitionJson = TempData["ApiDefinition"] as string;
+            if (!string.IsNullOrEmpty(apiDefinitionJson))
+            {
+                apiDefinition = JsonSerializer.Deserialize<ApiDefinition>(apiDefinitionJson);
+            }
+        }
+
+        if (apiDefinition == null)
         {
             return RedirectToAction("Index");
         }
-
-        var apiDefinition = JsonSerializer.Deserialize<ApiDefinition>(apiDefinitionJson);
 
         var viewModel = new ApiTestViewModel
         {
@@ -93,13 +139,27 @@ public class HomeController : Controller
             viewModel.ApiResponseStatus = status;
             viewModel.SavedTests = _testDataService.GetAllTestRequests();
 
-            // Get the API definition from TempData
-            var apiDefinitionJson = TempData["ApiDefinition"] as string;
-            TempData.Keep("ApiDefinition"); // Keep for the next request
+            // Get the API definition from session first, then fall back to TempData
+            ApiDefinition? apiDefinition = null;
 
-            if (!string.IsNullOrEmpty(apiDefinitionJson))
+            if (_tempStorage.HasObject("ApiDefinition"))
             {
-                viewModel.ApiDefinition = JsonSerializer.Deserialize<ApiDefinition>(apiDefinitionJson);
+                apiDefinition = _tempStorage.RetrieveObject<ApiDefinition>("ApiDefinition");
+            }
+            else
+            {
+                var apiDefinitionJson = TempData["ApiDefinition"] as string;
+                TempData.Keep("ApiDefinition");
+
+                if (!string.IsNullOrEmpty(apiDefinitionJson))
+                {
+                    apiDefinition = JsonSerializer.Deserialize<ApiDefinition>(apiDefinitionJson);
+                }
+            }
+
+            if (apiDefinition != null)
+            {
+                viewModel.ApiDefinition = apiDefinition;
             }
 
             return View("TestForm", viewModel);
@@ -107,7 +167,11 @@ public class HomeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing API test");
-            return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View("Error", new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                ErrorMessage = ex.Message
+            });
         }
     }
 
@@ -129,7 +193,11 @@ public class HomeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving test request");
-            return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View("Error", new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                ErrorMessage = ex.Message
+            });
         }
     }
 
@@ -145,8 +213,23 @@ public class HomeController : Controller
                 return NotFound();
             }
 
-            var apiDefinitionJson = TempData["ApiDefinition"] as string;
-            TempData.Keep("ApiDefinition");
+            // Get API definition from session first, then TempData
+            ApiDefinition? apiDefinition = null;
+
+            if (_tempStorage.HasObject("ApiDefinition"))
+            {
+                apiDefinition = _tempStorage.RetrieveObject<ApiDefinition>("ApiDefinition");
+            }
+            else
+            {
+                var apiDefinitionJson = TempData["ApiDefinition"] as string;
+                TempData.Keep("ApiDefinition");
+
+                if (!string.IsNullOrEmpty(apiDefinitionJson))
+                {
+                    apiDefinition = JsonSerializer.Deserialize<ApiDefinition>(apiDefinitionJson);
+                }
+            }
 
             var viewModel = new ApiTestViewModel
             {
@@ -161,9 +244,9 @@ public class HomeController : Controller
                 SavedTests = _testDataService.GetAllTestRequests()
             };
 
-            if (!string.IsNullOrEmpty(apiDefinitionJson))
+            if (apiDefinition != null)
             {
-                viewModel.ApiDefinition = JsonSerializer.Deserialize<ApiDefinition>(apiDefinitionJson);
+                viewModel.ApiDefinition = apiDefinition;
             }
 
             return View("TestForm", viewModel);
@@ -171,7 +254,11 @@ public class HomeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading test request");
-            return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View("Error", new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                ErrorMessage = ex.Message
+            });
         }
     }
 
@@ -186,7 +273,115 @@ public class HomeController : Controller
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting test request");
-            return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View("Error", new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+                ErrorMessage = ex.Message
+            });
         }
     }
+
+    public IActionResult ManageServers()
+    {
+        ApiDefinition? apiDefinition = null;
+
+        // Try getting from session first
+        if (_tempStorage.HasObject("ApiDefinition"))
+        {
+            apiDefinition = _tempStorage.RetrieveObject<ApiDefinition>("ApiDefinition");
+        }
+        else
+        {
+            var apiDefinitionJson = TempData["ApiDefinition"] as string;
+            if (!string.IsNullOrEmpty(apiDefinitionJson))
+            {
+                apiDefinition = JsonSerializer.Deserialize<ApiDefinition>(apiDefinitionJson);
+            }
+        }
+
+        if (apiDefinition == null)
+        {
+            return RedirectToAction("Index");
+        }
+
+        return View(apiDefinition);
+    }
+
+    [HttpPost]
+    public IActionResult AddServer(string serverKey, string url, string description)
+    {
+        ApiDefinition? apiDefinition = null;
+
+        if (_tempStorage.HasObject("ApiDefinition"))
+        {
+            apiDefinition = _tempStorage.RetrieveObject<ApiDefinition>("ApiDefinition");
+        }
+        else
+        {
+            var apiDefinitionJson = TempData["ApiDefinition"] as string;
+            TempData.Keep("ApiDefinition");
+
+            if (!string.IsNullOrEmpty(apiDefinitionJson))
+            {
+                apiDefinition = JsonSerializer.Deserialize<ApiDefinition>(apiDefinitionJson);
+            }
+        }
+
+        if (apiDefinition == null)
+        {
+            return RedirectToAction("Index");
+        }
+
+        if (apiDefinition.Servers == null)
+        {
+            apiDefinition.Servers = new Dictionary<string, ServerObject>();
+        }
+
+        apiDefinition.Servers[serverKey] = new ServerObject
+        {
+            Url = url,
+            Description = description
+        };
+
+        _tempStorage.StoreObject("ApiDefinition", apiDefinition);
+
+        return RedirectToAction("ManageServers");
+    }
+
+    [HttpPost]
+    public IActionResult RemoveServer(string serverKey)
+    {
+        ApiDefinition? apiDefinition = null;
+
+        if (_tempStorage.HasObject("ApiDefinition"))
+        {
+            apiDefinition = _tempStorage.RetrieveObject<ApiDefinition>("ApiDefinition");
+        }
+        else
+        {
+            var apiDefinitionJson = TempData["ApiDefinition"] as string;
+            TempData.Keep("ApiDefinition");
+
+            if (!string.IsNullOrEmpty(apiDefinitionJson))
+            {
+                apiDefinition = JsonSerializer.Deserialize<ApiDefinition>(apiDefinitionJson);
+            }
+        }
+
+        if (apiDefinition == null || apiDefinition.Servers == null)
+        {
+            return RedirectToAction("Index");
+        }
+
+        if (apiDefinition.Servers.ContainsKey(serverKey))
+        {
+            apiDefinition.Servers.Remove(serverKey);
+        }
+
+        _tempStorage.StoreObject("ApiDefinition", apiDefinition);
+
+        return RedirectToAction("ManageServers");
+    }
+
+
 }

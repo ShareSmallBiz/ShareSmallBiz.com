@@ -27,6 +27,10 @@
                                         }
                                     }
                                 </select>
+                                <!-- Add this somewhere in the TestForm.cshtml file, perhaps near the server selection dropdown -->
+                                <div class="text-end mb-2">
+                                    <a asp-action="ManageServers" class="btn btn-sm btn-outline-secondary">Manage Servers</a>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-5">
@@ -208,9 +212,12 @@
         </div>
     </div>
 </div>
-
 @section Scripts {
     <script>
+        // Declare variables in global scope
+        let pathSelect;
+        let methodSelect;
+
         // Format JSON in response
         function formatJson() {
             const responseContent = document.getElementById('response-content');
@@ -224,9 +231,344 @@
             }
         }
 
+        function updateParameters() {
+            if (!pathSelect) return;
+
+            const path = pathSelect.value;
+
+            if (!path) return;
+
+            // Get API definition
+            const apiDefinition = @Html.Raw(Json.Serialize(Model.ApiDefinition));
+
+            if (!apiDefinition || !apiDefinition.paths || !apiDefinition.paths[path]) return;
+
+            const pathItem = apiDefinition.paths[path];
+
+            // Clear and populate the method dropdown based on available methods
+            methodSelect.innerHTML = '<option value="">Select a method</option>';
+
+            // Check which HTTP methods are available for this path
+            const availableMethods = [];
+            if (pathItem.get) availableMethods.push('GET');
+            if (pathItem.post) availableMethods.push('POST');
+            if (pathItem.put) availableMethods.push('PUT');
+            if (pathItem.delete) availableMethods.push('DELETE');
+            if (pathItem.patch) availableMethods.push('PATCH');
+
+            // Add options for available methods
+            availableMethods.forEach(method => {
+                const option = document.createElement('option');
+                option.value = method;
+                option.textContent = method;
+                methodSelect.appendChild(option);
+            });
+
+            // If only one method is available, select it automatically
+            if (availableMethods.length === 1) {
+                methodSelect.value = availableMethods[0];
+                // Now update parameters based on the selected method
+                updateParametersForMethod();
+            }
+        }
+
+        function updateParametersForMethod() {
+            if (!pathSelect || !methodSelect) return;
+
+            const path = pathSelect.value;
+            const method = methodSelect.value.toLowerCase();
+
+            if (!path || !method) return;
+
+            const apiDefinition = @Html.Raw(Json.Serialize(Model.ApiDefinition));
+
+            if (!apiDefinition || !apiDefinition.paths || !apiDefinition.paths[path]) return;
+
+            const pathItem = apiDefinition.paths[path];
+            const operation = pathItem[method];
+
+            if (!operation) {
+                alert(`Method ${method.toUpperCase()} not available for this path`);
+                methodSelect.value = '';
+                return;
+            }
+
+            // Update path parameters
+            const pathParamsContainer = document.getElementById('path-params-fields');
+            pathParamsContainer.innerHTML = '';
+
+            if (operation.parameters) {
+                const pathParams = operation.parameters.filter(p => p.in === 'path');
+
+                pathParams.forEach(param => {
+                    const row = document.createElement('div');
+                    row.className = 'row mb-2';
+                    row.innerHTML = `
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" value="${param.name}" readonly />
+                        </div>
+                        <div class="col-md-8">
+                            <input type="text" name="PathParameters[${param.name}]" class="form-control" placeholder="${param.required ? 'Required' : 'Optional'}" />
+                        </div>
+                    `;
+                    pathParamsContainer.appendChild(row);
+                });
+            }
+
+            // Update query parameters
+            const queryParamsContainer = document.getElementById('query-params-fields');
+            queryParamsContainer.innerHTML = '';
+
+            if (operation.parameters) {
+                const queryParams = operation.parameters.filter(p => p.in === 'query');
+
+                queryParams.forEach(param => {
+                    const row = document.createElement('div');
+                    row.className = 'row mb-2';
+                    row.innerHTML = `
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" value="${param.name}" readonly />
+                        </div>
+                        <div class="col-md-8">
+                            <input type="text" name="QueryParameters[${param.name}]" class="form-control" placeholder="${param.required ? 'Required' : 'Optional'}" />
+                        </div>
+                    `;
+                    queryParamsContainer.appendChild(row);
+                });
+            }
+
+            // Update request body handling
+            const requestBodyContainer = document.getElementById('request-body');
+            const requestBodyTextarea = document.getElementById('request-body-textarea');
+
+            if (operation.requestBody && ['post', 'put', 'patch'].includes(method)) {
+                requestBodyContainer.style.display = 'block';
+
+                // Generate a sample request body based on the schema
+                if (operation.requestBody.content) {
+                    // Try application/json first, then fall back to others
+                    const contentType = operation.requestBody.content['application/json'] ||
+                                       operation.requestBody.content['text/json'] ||
+                                       operation.requestBody.content['application/*+json'] ||
+                                       Object.values(operation.requestBody.content)[0];
+
+                    if (contentType && contentType.schema) {
+                        const schema = contentType.schema;
+                        const sampleJson = generateSampleFromSchema(schema, apiDefinition);
+                        requestBodyTextarea.value = JSON.stringify(sampleJson, null, 2);
+                    } else {
+                        requestBodyTextarea.value = '{}';
+                    }
+                } else {
+                    requestBodyTextarea.value = '{}';
+                }
+            } else {
+                requestBodyContainer.style.display = 'none';
+                requestBodyTextarea.value = '';
+            }
+
+            // Update API documentation
+            updateApiDocumentation(operation, path);
+        }
+
+        // Function to update API documentation
+        function updateApiDocumentation(operation, path) {
+            const apiDocContainer = document.getElementById('api-doc');
+            apiDocContainer.innerHTML = '';
+
+            const docContent = document.createElement('div');
+
+            // Operation details
+            if (operation.summary || operation.description) {
+                const summary = document.createElement('h6');
+                summary.textContent = operation.summary || path;
+                docContent.appendChild(summary);
+
+                if (operation.description) {
+                    const description = document.createElement('p');
+                    description.textContent = operation.description;
+                    docContent.appendChild(description);
+                }
+            }
+
+            // Parameters
+            if (operation.parameters && operation.parameters.length > 0) {
+                const paramsTitle = document.createElement('h6');
+                paramsTitle.textContent = 'Parameters';
+                paramsTitle.className = 'mt-3';
+                docContent.appendChild(paramsTitle);
+
+                const paramsList = document.createElement('ul');
+                paramsList.className = 'list-group';
+
+                operation.parameters.forEach(param => {
+                    const paramItem = document.createElement('li');
+                    paramItem.className = 'list-group-item';
+
+                    const paramName = document.createElement('strong');
+                    paramName.textContent = param.name;
+
+                    const paramDetails = document.createElement('div');
+                    paramDetails.className = 'small';
+                    paramDetails.innerHTML = `
+                        <span class="badge bg-secondary">${param.in}</span>
+                        ${param.required ? '<span class="badge bg-danger">required</span>' : ''}
+                        ${param.description ? `<p class="mt-1 mb-0">${param.description}</p>` : ''}
+                    `;
+
+                    paramItem.appendChild(paramName);
+                    paramItem.appendChild(paramDetails);
+                    paramsList.appendChild(paramItem);
+                });
+
+                docContent.appendChild(paramsList);
+            }
+
+            // Request body
+            if (operation.requestBody) {
+                const requestBodyTitle = document.createElement('h6');
+                requestBodyTitle.textContent = 'Request Body';
+                requestBodyTitle.className = 'mt-3';
+                docContent.appendChild(requestBodyTitle);
+
+                const requestBodyDetails = document.createElement('div');
+                requestBodyDetails.className = 'small';
+                requestBodyDetails.innerHTML = `
+                    ${operation.requestBody.required ? '<span class="badge bg-danger">required</span>' : ''}
+                    ${operation.requestBody.description ? `<p class="mt-1 mb-0">${operation.requestBody.description}</p>` : ''}
+                `;
+
+                docContent.appendChild(requestBodyDetails);
+            }
+
+            // Responses
+            if (operation.responses && Object.keys(operation.responses).length > 0) {
+                const responsesTitle = document.createElement('h6');
+                responsesTitle.textContent = 'Responses';
+                responsesTitle.className = 'mt-3';
+                docContent.appendChild(responsesTitle);
+
+                const responsesList = document.createElement('ul');
+                responsesList.className = 'list-group';
+
+                for (const [code, response] of Object.entries(operation.responses)) {
+                    const responseItem = document.createElement('li');
+                    responseItem.className = 'list-group-item';
+
+                    const responseCode = document.createElement('strong');
+                    responseCode.textContent = code;
+
+                    const responseDetails = document.createElement('div');
+                    responseDetails.className = 'small';
+                    responseDetails.innerHTML = `
+                        <p class="mt-1 mb-0">${response.description || ''}</p>
+                    `;
+
+                    responseItem.appendChild(responseCode);
+                    responseItem.appendChild(responseDetails);
+                    responsesList.appendChild(responseItem);
+                }
+
+                docContent.appendChild(responsesList);
+            }
+
+            apiDocContainer.appendChild(docContent);
+        }
+
+        // Generate sample data from schema
+        function generateSampleFromSchema(schema, apiDefinition) {
+            // Handle $ref - this is the key part for resolving references like LoginRequest
+            if (schema.reference) {
+                const refPath = schema.reference;
+                let refName = refPath.split('/').pop();
+
+                console.log("Found reference:", refPath, "refName:", refName);
+
+                if (apiDefinition.components && apiDefinition.components.schemas && apiDefinition.components.schemas[refName]) {
+                    console.log("Found schema:", refName);
+                    return generateSampleFromSchema(apiDefinition.components.schemas[refName], apiDefinition);
+                }
+            }
+
+            // Also check the $ref property which is named differently in your model
+            if (schema.$ref) {
+                const refPath = schema.$ref;
+                let refName = refPath.split('/').pop();
+
+                console.log("Found $ref:", refPath, "refName:", refName);
+
+                if (apiDefinition.components && apiDefinition.components.schemas && apiDefinition.components.schemas[refName]) {
+                    console.log("Found schema:", refName);
+                    return generateSampleFromSchema(apiDefinition.components.schemas[refName], apiDefinition);
+                }
+            }
+
+            // Handle oneOf, anyOf, allOf
+            if (schema.oneOf && schema.oneOf.length > 0) {
+                return generateSampleFromSchema(schema.oneOf[0], apiDefinition);
+            }
+
+            if (schema.anyOf && schema.anyOf.length > 0) {
+                return generateSampleFromSchema(schema.anyOf[0], apiDefinition);
+            }
+
+            if (schema.allOf && schema.allOf.length > 0) {
+                let result = {};
+                for (const subSchema of schema.allOf) {
+                    Object.assign(result, generateSampleFromSchema(subSchema, apiDefinition));
+                }
+                return result;
+            }
+
+            // Handle different types
+            switch(schema.type) {
+                case 'object':
+                    const obj = {};
+                    if (schema.properties) {
+                        for (const [propName, propSchema] of Object.entries(schema.properties)) {
+                            obj[propName] = generateSampleFromSchema(propSchema, apiDefinition);
+                        }
+                    }
+                    return obj;
+
+                case 'array':
+                    if (schema.items) {
+                        return [generateSampleFromSchema(schema.items, apiDefinition)];
+                    }
+                    return [];
+
+                case 'string':
+                    if (schema.example) return schema.example;
+                    if (schema.format === 'date-time') return new Date().toISOString();
+                    if (schema.format === 'date') return new Date().toISOString().split('T')[0];
+                    if (schema.format === 'email') return 'user@example.com';
+                    if (schema.format === 'uuid') return '00000000-0000-0000-0000-000000000000';
+                    return 'string';
+
+                case 'number':
+                case 'integer':
+                    if (schema.example) return schema.example;
+                    return 0;
+
+                case 'boolean':
+                    if (schema.example) return schema.example;
+                    return false;
+
+                case 'null':
+                    return null;
+
+                default:
+                    return {};
+            }
+        }
+
         // On page load
         document.addEventListener('DOMContentLoaded', function() {
             formatJson();
+
+            // Get references to key elements
+            pathSelect = document.getElementById('path-select');
+            methodSelect = document.getElementById('method-select');
 
             // Add query parameter button
             document.getElementById('add-query-param').addEventListener('click', function() {
@@ -292,278 +634,24 @@
                 });
             });
 
-            // Path and method change events
-            const pathSelect = document.getElementById('path-select');
-            const methodSelect = document.getElementById('method-select');
-
+            // Path and method change event handling
             if (pathSelect && methodSelect) {
-                pathSelect.addEventListener('change', updateParameters);
-                methodSelect.addEventListener('change', updateParameters);
-            }
+                pathSelect.addEventListener('change', function() {
+                    updateParameters(); // Update methods based on path
+                });
 
-            function updateParameters() {
-                const path = pathSelect.value;
-                const method = methodSelect.value.toLowerCase();
+                methodSelect.addEventListener('change', function() {
+                    updateParametersForMethod(); // Update parameters based on method
+                });
 
-                if (!path || !method) return;
-
-                // Get API definition from a hidden field or fetch from server
-                const apiDefinition = @Html.Raw(Json.Serialize(Model.ApiDefinition));
-
-                if (!apiDefinition || !apiDefinition.paths || !apiDefinition.paths[path]) return;
-
-                const pathItem = apiDefinition.paths[path];
-                const operation = pathItem[method];
-
-                if (!operation) {
-                    alert(`Method ${method.toUpperCase()} not available for this path`);
-                    methodSelect.value = '';
-                    return;
+                // Initialize if both values are already selected
+                if (pathSelect.value && methodSelect.value) {
+                    updateParametersForMethod();
                 }
-
-                // Update path parameters
-                const pathParamsContainer = document.getElementById('path-params-fields');
-                pathParamsContainer.innerHTML = '';
-
-                if (operation.parameters) {
-                    const pathParams = operation.parameters.filter(p => p.in === 'path');
-
-                    pathParams.forEach(param => {
-                        const row = document.createElement('div');
-                        row.className = 'row mb-2';
-                        row.innerHTML = `
-                            <div class="col-md-4">
-                                <input type="text" class="form-control" value="${param.name}" readonly />
-                            </div>
-                            <div class="col-md-8">
-                                <input type="text" name="PathParameters[${param.name}]" class="form-control" placeholder="${param.required ? 'Required' : 'Optional'}" />
-                            </div>
-                        `;
-                        pathParamsContainer.appendChild(row);
-                    });
+                // Or just initialize methods if only path is selected
+                else if (pathSelect.value) {
+                    updateParameters();
                 }
-
-                // Update query parameters
-                const queryParamsContainer = document.getElementById('query-params-fields');
-                queryParamsContainer.innerHTML = '';
-
-                if (operation.parameters) {
-                    const queryParams = operation.parameters.filter(p => p.in === 'query');
-
-                    queryParams.forEach(param => {
-                        const row = document.createElement('div');
-                        row.className = 'row mb-2';
-                        row.innerHTML = `
-                            <div class="col-md-4">
-                                <input type="text" class="form-control" value="${param.name}" readonly />
-                            </div>
-                            <div class="col-md-8">
-                                <input type="text" name="QueryParameters[${param.name}]" class="form-control" placeholder="${param.required ? 'Required' : 'Optional'}" />
-                            </div>
-                        `;
-                        queryParamsContainer.appendChild(row);
-                    });
-                }
-
-                // Update request body
-                const requestBodyContainer = document.getElementById('request-body');
-                const requestBodyTextarea = document.getElementById('request-body-textarea');
-
-                if (operation.requestBody && ['post', 'put', 'patch'].includes(method)) {
-                    requestBodyContainer.style.display = 'block';
-
-                    // Generate a sample request body based on the schema
-                    if (operation.requestBody.content && operation.requestBody.content['application/json'] && operation.requestBody.content['application/json'].schema) {
-                        const schema = operation.requestBody.content['application/json'].schema;
-                        const sampleJson = generateSampleFromSchema(schema, apiDefinition);
-                        requestBodyTextarea.value = JSON.stringify(sampleJson, null, 2);
-                    } else {
-                        requestBodyTextarea.value = '{}';
-                    }
-                } else {
-                    requestBodyContainer.style.display = 'none';
-                    requestBodyTextarea.value = '';
-                }
-
-                // Update API documentation
-                const apiDocContainer = document.getElementById('api-doc');
-                apiDocContainer.innerHTML = '';
-
-                const docContent = document.createElement('div');
-
-                // Operation details
-                if (operation.summary || operation.description) {
-                    const summary = document.createElement('h6');
-                    summary.textContent = operation.summary || path;
-                    docContent.appendChild(summary);
-
-                    if (operation.description) {
-                        const description = document.createElement('p');
-                        description.textContent = operation.description;
-                        docContent.appendChild(description);
-                    }
-                }
-
-                // Parameters
-                if (operation.parameters && operation.parameters.length > 0) {
-                    const paramsTitle = document.createElement('h6');
-                    paramsTitle.textContent = 'Parameters';
-                    paramsTitle.className = 'mt-3';
-                    docContent.appendChild(paramsTitle);
-
-                    const paramsList = document.createElement('ul');
-                    paramsList.className = 'list-group';
-
-                    operation.parameters.forEach(param => {
-                        const paramItem = document.createElement('li');
-                        paramItem.className = 'list-group-item';
-
-                        const paramName = document.createElement('strong');
-                        paramName.textContent = param.name;
-
-                        const paramDetails = document.createElement('div');
-                        paramDetails.className = 'small';
-                        paramDetails.innerHTML = `
-                            <span class="badge bg-secondary">${param.in}</span>
-                            ${param.required ? '<span class="badge bg-danger">required</span>' : ''}
-                            ${param.description ? `<p class="mt-1 mb-0">${param.description}</p>` : ''}
-                        `;
-
-                        paramItem.appendChild(paramName);
-                        paramItem.appendChild(paramDetails);
-                        paramsList.appendChild(paramItem);
-                    });
-
-                    docContent.appendChild(paramsList);
-                }
-
-                // Request body
-                if (operation.requestBody) {
-                    const requestBodyTitle = document.createElement('h6');
-                    requestBodyTitle.textContent = 'Request Body';
-                    requestBodyTitle.className = 'mt-3';
-                    docContent.appendChild(requestBodyTitle);
-
-                    const requestBodyDetails = document.createElement('div');
-                    requestBodyDetails.className = 'small';
-                    requestBodyDetails.innerHTML = `
-                        ${operation.requestBody.required ? '<span class="badge bg-danger">required</span>' : ''}
-                        ${operation.requestBody.description ? `<p class="mt-1 mb-0">${operation.requestBody.description}</p>` : ''}
-                    `;
-
-                    docContent.appendChild(requestBodyDetails);
-                }
-
-                // Responses
-                if (operation.responses && Object.keys(operation.responses).length > 0) {
-                    const responsesTitle = document.createElement('h6');
-                    responsesTitle.textContent = 'Responses';
-                    responsesTitle.className = 'mt-3';
-                    docContent.appendChild(responsesTitle);
-
-                    const responsesList = document.createElement('ul');
-                    responsesList.className = 'list-group';
-
-                    for (const [code, response] of Object.entries(operation.responses)) {
-                        const responseItem = document.createElement('li');
-                        responseItem.className = 'list-group-item';
-
-                        const responseCode = document.createElement('strong');
-                        responseCode.textContent = code;
-
-                        const responseDetails = document.createElement('div');
-                        responseDetails.className = 'small';
-                        responseDetails.innerHTML = `
-                            <p class="mt-1 mb-0">${response.description || ''}</p>
-                        `;
-
-                        responseItem.appendChild(responseCode);
-                        responseItem.appendChild(responseDetails);
-                        responsesList.appendChild(responseItem);
-                    }
-
-                    docContent.appendChild(responsesList);
-                }
-
-                apiDocContainer.appendChild(docContent);
-            }
-
-            // Generate sample data from schema
-            function generateSampleFromSchema(schema, apiDefinition) {
-                // Handle $ref
-                if (schema.reference) {
-                    const refPath = schema.reference;
-                    const refName = refPath.split('/').pop();
-
-                    if (apiDefinition.components && apiDefinition.components.schemas && apiDefinition.components.schemas[refName]) {
-                        return generateSampleFromSchema(apiDefinition.components.schemas[refName], apiDefinition);
-                    }
-
-                    return { $ref: refPath };
-                }
-
-                // Handle oneOf, anyOf, allOf
-                if (schema.oneOf && schema.oneOf.length > 0) {
-                    return generateSampleFromSchema(schema.oneOf[0], apiDefinition);
-                }
-
-                if (schema.anyOf && schema.anyOf.length > 0) {
-                    return generateSampleFromSchema(schema.anyOf[0], apiDefinition);
-                }
-
-                if (schema.allOf && schema.allOf.length > 0) {
-                    let result = {};
-                    for (const subSchema of schema.allOf) {
-                        Object.assign(result, generateSampleFromSchema(subSchema, apiDefinition));
-                    }
-                    return result;
-                }
-
-                // Handle different types
-                switch(schema.type) {
-                    case 'object':
-                        const obj = {};
-                        if (schema.properties) {
-                            for (const [propName, propSchema] of Object.entries(schema.properties)) {
-                                obj[propName] = generateSampleFromSchema(propSchema, apiDefinition);
-                            }
-                        }
-                        return obj;
-
-                    case 'array':
-                        if (schema.items) {
-                            return [generateSampleFromSchema(schema.items, apiDefinition)];
-                        }
-                        return [];
-
-                    case 'string':
-                        if (schema.example) return schema.example;
-                        if (schema.format === 'date-time') return new Date().toISOString();
-                        if (schema.format === 'date') return new Date().toISOString().split('T')[0];
-                        if (schema.format === 'email') return 'user@example.com';
-                        if (schema.format === 'uuid') return '00000000-0000-0000-0000-000000000000';
-                        return 'string';
-
-                    case 'number':
-                    case 'integer':
-                        if (schema.example) return schema.example;
-                        return 0;
-
-                    case 'boolean':
-                        if (schema.example) return schema.example;
-                        return false;
-
-                    case 'null':
-                        return null;
-
-                    default:
-                        return {};
-                }
-            }
-
-            // Initialize parameters if path and method are already selected
-            if (pathSelect.value && methodSelect.value) {
-                updateParameters();
             }
         });
     </script>
