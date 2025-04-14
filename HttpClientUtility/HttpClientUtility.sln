@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShareSmallBiz.Portal", "ShareSmallBiz.Portal.csproj", "{59CD6D91-D888-2C46-5CC1-DB55D6365ED5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpClientUtility", "HttpClientUtility.csproj", "{88135D1D-FC0E-3F15-720B-970E8A3AA466}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,15 +10,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{59CD6D91-D888-2C46-5CC1-DB55D6365ED5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{59CD6D91-D888-2C46-5CC1-DB55D6365ED5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{59CD6D91-D888-2C46-5CC1-DB55D6365ED5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{59CD6D91-D888-2C46-5CC1-DB55D6365ED5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88135D1D-FC0E-3F15-720B-970E8A3AA466}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88135D1D-FC0E-3F15-720B-970E8A3AA466}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88135D1D-FC0E-3F15-720B-970E8A3AA466}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88135D1D-FC0E-3F15-720B-970E8A3AA466}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {AB199F44-9F39-4FAE-AF76-BC63EE6D2AB6}
+		SolutionGuid = {EF7530C0-B500-44C8-BEFA-F689D7E5893B}
 	EndGlobalSection
 EndGlobal
