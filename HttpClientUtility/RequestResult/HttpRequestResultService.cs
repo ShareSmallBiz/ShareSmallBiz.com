@@ -33,7 +33,7 @@ public class HttpRequestResultService(
             using var request = CreateHttpRequest(httpSendResults);
 
             // Ensure JSON content type
-            if (request.Content != null && request.Content.Headers.ContentType.MediaType != "application/json")
+            if (request.Content != null && request.Content.Headers.ContentType?.MediaType != "application/json")
             {
                 request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
             }
@@ -131,6 +131,11 @@ public class HttpRequestResultService(
         }
     }
 
+    /// <summary>
+    /// Creates an HttpRequestMessage based on the provided HttpRequestResultBase information
+    /// </summary>
+    /// <param name="httpSendResults">The request information used to create the HTTP request</param>
+    /// <returns>A fully configured HttpRequestMessage ready to be sent</returns>
     public HttpRequestMessage CreateHttpRequest(HttpRequestResultBase httpSendResults)
     {
         var request = new HttpRequestMessage(httpSendResults.RequestMethod, httpSendResults.RequestPath);

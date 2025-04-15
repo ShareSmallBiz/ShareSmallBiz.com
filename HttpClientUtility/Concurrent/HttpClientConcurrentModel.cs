@@ -14,7 +14,10 @@ public class HttpClientConcurrentModel : ConcurrentProcessorModel
     /// <param name="requestUrl">The request URL.</param>
     public HttpClientConcurrentModel(int taskId, string requestUrl) : base(taskId)
     {
-        StatusCall = new HttpRequestResult<SiteStatus>(taskId, requestUrl);
+        StatusCall = new HttpRequestResult<SiteStatus>(taskId, requestUrl)
+        {
+            RequestPath = requestUrl
+        };
         TaskId = taskId;
     }
 

@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace HttpClientUtility.MockService;
 
@@ -12,6 +11,11 @@ namespace HttpClientUtility.MockService;
 public class AsyncMockService : IAsyncMockService
 {
 
+    /// <summary>
+    /// Example method demonstrating async/await with cancellation token support
+    /// </summary>
+    /// <param name="ct">Cancellation token to monitor for cancellation requests</param>
+    /// <returns>A task that runs indefinitely until canceled</returns>
     public static async Task ExampleMethodAsync(CancellationToken ct)
     {
         while (true)
@@ -77,6 +81,12 @@ public class AsyncMockService : IAsyncMockService
             return result;
         });
     }
+    /// <summary>
+    /// Executes a long-running operation with support for cancellation
+    /// </summary>
+    /// <param name="loop">Number of iterations to perform</param>
+    /// <param name="cancellationToken">Cancellation token to monitor for cancellation requests</param>
+    /// <returns>A task representing the operation with a decimal result</returns>
     public async Task<decimal> LongRunningOperationWithCancellationTokenAsync(int loop,
                                                                               CancellationToken cancellationToken)
     {
@@ -107,6 +117,16 @@ public class AsyncMockService : IAsyncMockService
         // Return the result of the TaskCompletionSource.Task
         return await taskCompletionSource.Task;
     }
+    /// <summary>
+    /// Executes a long-running task with iteration and logging support
+    /// </summary>
+    /// <param name="name">Name of the task for identification in logs</param>
+    /// <param name="delay">Delay in milliseconds between operations</param>
+    /// <param name="iterations">Number of iterations to perform</param>
+    /// <param name="throwEx">Whether to throw an exception during task execution</param>
+    /// <param name="logger">Logger for tracking events and exceptions</param>
+    /// <param name="ct">Cancellation token to monitor for cancellation requests</param>
+    /// <returns>A task representing the operation</returns>
     public static async Task LongRunningTask(
         string name,
         int delay,
@@ -156,6 +176,14 @@ public class AsyncMockService : IAsyncMockService
             return;
         }
     }
+    /// <summary>
+    /// Performs a task with configurable delay and exception behavior
+    /// </summary>
+    /// <param name="name">Name of the task for identification</param>
+    /// <param name="delay">Delay in milliseconds before completing the task</param>
+    /// <param name="throwEx">Whether to throw an exception after the delay</param>
+    /// <param name="ct">Cancellation token to monitor for cancellation requests</param>
+    /// <returns>A task representing the operation</returns>
     public static async Task PerformTaskAsync(string name, int delay, bool throwEx, CancellationToken ct = default)
     {
         await Task.Delay(delay, ct);

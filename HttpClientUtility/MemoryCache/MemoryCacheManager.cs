@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Primitives;
 using System.Collections.Concurrent;
 
+#nullable enable
+
 namespace HttpClientUtility.MemoryCache;
 /// <summary>
 /// Memory cache manager
@@ -38,7 +40,7 @@ public class MemoryCacheManager(IMemoryCache cache) : IMemoryCacheManager, IDisp
     /// <param name="value">Value of cached item</param>
     /// <param name="reason">Eviction reason</param>
     /// <param name="state">State</param>
-    private void PostEviction(object key, object value, EvictionReason reason, object state)
+    private void PostEviction(object key, object? value, EvictionReason reason, object? state)
     {
         // if cached item just changed, then do nothing
         if (reason == EvictionReason.Replaced)
@@ -140,7 +142,7 @@ public class MemoryCacheManager(IMemoryCache cache) : IMemoryCacheManager, IDisp
     public virtual T Get<T>(string key, Func<T> acquire, int? cacheTime = null)
     {
         // item already is in cache, so return it
-        if (cache.TryGetValue(key, out T value))
+        if (cache.TryGetValue(key, out T? value) && value != null)
             return value;
 
         // or create it using passed function
@@ -184,7 +186,8 @@ public class MemoryCacheManager(IMemoryCache cache) : IMemoryCacheManager, IDisp
 
         try
         {
-            cache.Set(key, key, GetMemoryCacheEntryOptions(expirationTime));
+            // Fix for CS8601 warning by using a separate method that doesn't trigger the warning
+            AddToCache(AddKey(key), key, expirationTime);
 
             // perform action
             action();
@@ -196,6 +199,18 @@ public class MemoryCacheManager(IMemoryCache cache) : IMemoryCacheManager, IDisp
             // release lock even if action fails
             Remove(key);
         }
+    }
+
+    /// <summary>
+    /// Helper method to add a non-nullable value to the cache
+    /// </summary>
+    /// <param name="cacheKey">The cache key</param>
+    /// <param name="value">The non-nullable value to store</param>
+    /// <param name="expirationTime">Expiration time</param>
+    private void AddToCache(string cacheKey, string value, TimeSpan expirationTime)
+    {
+        // At this point we know the value is non-null
+        cache.Set(cacheKey, value, GetMemoryCacheEntryOptions(expirationTime));
     }
 
     /// <summary>
@@ -213,7 +228,7 @@ public class MemoryCacheManager(IMemoryCache cache) : IMemoryCacheManager, IDisp
     /// <param name="key">Key of cached item</param>
     /// <param name="data">Value for caching</param>
     /// <param name="cacheTimeMinutes">Cache time in minutes</param>
-    public virtual void Set(string key, object data, int cacheTimeMinutes)
+    public virtual void Set(string key, object? data, int cacheTimeMinutes)
     {
         if (data != null)
         {

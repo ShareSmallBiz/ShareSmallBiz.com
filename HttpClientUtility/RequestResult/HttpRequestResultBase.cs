@@ -2,12 +2,14 @@
 
 namespace HttpClientUtility.RequestResult;
 
-
 /// <summary>
 /// Abstract base class implementing template method pattern for HTTP requests.
 /// </summary>
 public abstract class HttpRequestResultBase : IRequestInfo, IResultInfo, IErrorInfo
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpRequestResultBase"/> class.
+    /// </summary>
     protected HttpRequestResultBase()
     {
         Id = 1;
@@ -60,7 +62,7 @@ public abstract class HttpRequestResultBase : IRequestInfo, IResultInfo, IErrorI
     /// <summary>
     /// Gets or sets the request path.
     /// </summary>
-    public string RequestPath { get; set; }
+    public required string RequestPath { get; set; }
 
     /// <summary>
     /// Gets the age of the result in hours, minutes, and seconds.
