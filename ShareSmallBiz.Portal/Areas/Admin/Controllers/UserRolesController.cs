@@ -5,6 +5,7 @@ using ShareSmallBiz.Portal.Infrastructure.Services;
 using System.Data;
 
 namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
+
 [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB limit
 [RequestFormLimits(MultipartBodyLengthLimit = 10 * 1024 * 1024)]
 public class UserRolesController(
@@ -244,8 +245,39 @@ public class UserRolesController(
             .OrderByDescending(u => u.LastModified)
             .ToListAsync();
 
-        var userModels = (await Task.WhenAll(users.Select(CreateUserModelAsync))).ToList();
+        // Fetch login history data efficiently
+        var loginHistories = await _context.LoginHistories
+            .Where(lh => lh.Success)
+            .GroupBy(lh => lh.UserId)
+            .Select(g => new
+            {
+                UserId = g.Key,
+                LastLogin = g.Max(lh => lh.LoginTime),
+                LoginCount = g.Count()
+            })
+            .ToDictionaryAsync(x => x.UserId);
 
+        var userModels = new List<UserModel>();
+        foreach (var user in users)
+        {
+            var userModel = await CreateUserModelAsync(user);
+
+            // Populate login history data if available
+            if (loginHistories.TryGetValue(user.Id, out var history))
+            {
+                userModel.LastLogin = history.LastLogin;
+                userModel.LoginCount = history.LoginCount;
+            }
+            else
+            {
+                userModel.LastLogin = null;
+                userModel.LoginCount = 0;
+            }
+
+            userModels.Add(userModel);
+        }
+
+        // Filter user models based on email confirmation and role
         if (!string.IsNullOrEmpty(emailConfirmed))
         {
             bool isConfirmed = bool.Parse(emailConfirmed);

@@ -16,6 +16,11 @@
        id="email" asp-page="./Email">
         <i class="bi bi-envelope-at me-2"></i> Email
     </a>
+    
+    <a class="nav-link d-flex align-items-center @ManageNavPages.PrivacySettingsNavClass(ViewContext)"
+       id="privacy-settings" asp-page="./PrivacySettings">
+        <i class="bi bi-shield-check me-2"></i> Privacy Settings
+    </a>
 
     <a class="nav-link d-flex align-items-center @ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage.ManageNavPages.ChangePasswordNavClass(ViewContext)"
        id="change-password" asp-page="./ChangePassword">

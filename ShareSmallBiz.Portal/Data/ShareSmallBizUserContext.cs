@@ -95,6 +95,13 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
             .WithMany(c => c.Media)
             .HasForeignKey(m => m.CommentId)
             .IsRequired(false);
+
+        // ---- LOGIN HISTORY ---- Add this section
+        builder.Entity<LoginHistory>()
+            .HasOne(lh => lh.User)
+            .WithMany(u => u.LoginHistories)
+            .HasForeignKey(lh => lh.UserId)
+            .IsRequired();
     }
     private void UpdateDateTrackingFields()
     {
@@ -150,4 +157,5 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
     public virtual DbSet<SocialLink> SocialLinks { get; set; }
     public virtual DbSet<UserFollow> UserFollows { get; set; }
     public virtual DbSet<Media> Media { get; set; }
+    public virtual DbSet<LoginHistory> LoginHistories { get; set; } // Add this line
 }

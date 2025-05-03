@@ -3,6 +3,7 @@
 #nullable disable
 
 using Microsoft.AspNetCore.Authentication;
+using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Data.Entities;
 using System;
 using System.Linq;
@@ -13,11 +14,13 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<ShareSmallBizUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly ShareSmallBizUserContext _context; // Add DbContext field
 
-        public LoginModel(SignInManager<ShareSmallBizUser> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(SignInManager<ShareSmallBizUser> signInManager, ILogger<LoginModel> logger, ShareSmallBizUserContext context) // Inject DbContext
         {
             _signInManager = signInManager;
             _logger = logger;
+            _context = context; // Assign DbContext
         }
 
         /// <summary>
@@ -101,9 +104,26 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
 
             _logger.LogInformation("Login attempt for email: {Email}", Input.Email);
 
+            // --- Start Login History Tracking ---
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+            var userAgent = HttpContext.Request.Headers["User-Agent"].ToString() ?? "Unknown";
+            var loginHistory = new LoginHistory
+            {
+                LoginTime = DateTime.UtcNow,
+                IpAddress = ipAddress,
+                UserAgent = userAgent,
+                Success = false // Default to false
+            };
+            // --- End Login History Tracking ---
+
             if (!ModelState.IsValid)
             {
                 _logger.LogWarning("Login failed: Model state is invalid.");
+                // --- Save Failed Login Attempt (Invalid Model) ---
+                // We don't have a user ID yet, so we can't associate it
+                _context.LoginHistories.Add(loginHistory);
+                await _context.SaveChangesAsync();
+                // --- End Save ---
                 return Page();
             }
 
@@ -111,13 +131,28 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
             if (user == null)
             {
                 _logger.LogWarning("Login failed: No user found with email {Email}", Input.Email);
+                // --- Save Failed Login Attempt (User Not Found) ---
+                // Still no user ID
+                _context.LoginHistories.Add(loginHistory);
+                await _context.SaveChangesAsync();
+                // --- End Save ---
                 ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                 return Page();
             }
 
+            // --- Associate User with Login History ---
+            loginHistory.UserId = user.Id;
+            // --- End Association ---
+
             _logger.LogWarning("User {UserName} found, attempting password sign-in.", user.UserName);
 
             var result = await _signInManager.PasswordSignInAsync(user.UserName, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+
+            // --- Update Login History Success Status ---
+            loginHistory.Success = result.Succeeded;
+            _context.LoginHistories.Add(loginHistory);
+            await _context.SaveChangesAsync();
+            // --- End Update and Save ---
 
             if (result.Succeeded)
             {
@@ -139,6 +174,7 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account
 
                 return LocalRedirect(returnUrl);
             }
+            // Removed redundant logging and saving for failed login here, as it's handled above
             else
             {
                 _logger.LogWarning("Login failed: Invalid credentials for user {UserName}.", user.UserName);

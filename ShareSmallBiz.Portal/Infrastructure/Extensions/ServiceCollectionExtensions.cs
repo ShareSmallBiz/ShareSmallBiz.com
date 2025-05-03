@@ -1,11 +1,11 @@
-﻿using HttpClientUtility.MemoryCache;
-using HttpClientUtility.RequestResult;
+﻿using WebSpark.HttpClientUtility.MemoryCache;
+using WebSpark.HttpClientUtility.RequestResult;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Extensions;
-
 
 public static class ServiceCollectionExtensions
 {
@@ -26,14 +26,13 @@ public static class ServiceCollectionExtensions
         {
             IHttpRequestResultService baseService = new HttpRequestResultService(
                 serviceProvider.GetRequiredService<ILogger<HttpRequestResultService>>(),
+                serviceProvider.GetRequiredService<IConfiguration>(), 
                 serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("HttpClientDecorator"));
-
-            var retryOptions = configuration.GetSection("HttpRequestResultPollyOptions").Get<HttpRequestResultPollyOptions>();
 
             IHttpRequestResultService pollyService = new HttpRequestResultServicePolly(
                 serviceProvider.GetRequiredService<ILogger<HttpRequestResultServicePolly>>(),
                 baseService,
-                retryOptions);
+                configuration.GetSection("HttpRequestResultPollyOptions").Get<HttpRequestResultPollyOptions>());
 
             IHttpRequestResultService telemetryService = new HttpRequestResultServiceTelemetry(
                 serviceProvider.GetRequiredService<ILogger<HttpRequestResultServiceTelemetry>>(),
@@ -69,6 +68,15 @@ public static class ServiceCollectionExtensions
             options.ConfigureWarnings(warnings =>
                 warnings.Throw(RelationalEventId.MultipleCollectionIncludeWarning));
         });
+        return services;
+    }
+
+    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
+    {
+        // Register application services
+        services.AddScoped<UserProvider>();
+        services.AddScoped<ProfileImageService>();
+        
         return services;
     }
 }

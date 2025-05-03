@@ -1,0 +1,50 @@
+@model ShareSmallBiz.Portal.Infrastructure.Models.UserModel
+
+@{
+    var completenessClass = Model.ProfileCompletenessScore switch
+    {
+        >= 80 => "bg-success",
+        >= 50 => "bg-info",
+        >= 30 => "bg-warning",
+        _ => "bg-danger"
+    };
+    
+    var completenessText = Model.ProfileCompletenessScore switch
+    {
+        >= 80 => "Excellent",
+        >= 50 => "Good",
+        >= 30 => "Needs Improvement",
+        _ => "Incomplete"
+    };
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+        <h6 class="m-0 fw-bold">Profile Completeness</h6>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-between mb-1">
+            <span>@completenessText</span>
+            <span>@Model.ProfileCompletenessScore%</span>
+        </div>
+        <div class="progress" style="height: 10px;">
+            <div class="progress-bar @completenessClass" role="progressbar" style="width: @Model.ProfileCompletenessScore%;" 
+                 aria-valuenow="@Model.ProfileCompletenessScore" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        
+        @if (Model.IncompleteProfileFields.Any())
+        {
+            <div class="mt-3">
+                <p class="mb-1 fw-bold">Complete these items to improve your profile:</p>
+                <ul class="list-group list-group-flush">
+                    @foreach (var field in Model.IncompleteProfileFields)
+                    {
+                        <li class="list-group-item px-0 py-1 border-0">
+                            <i class="bi bi-x-circle text-danger me-1"></i> @field
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</div>

@@ -123,7 +123,7 @@ public class MediaController : Controller
             // For non-image media, return appropriate icons
             if (media.MediaType != MediaType.Image)
             {
-                return await GetMediaTypeIconAsync(media.MediaType);
+                return GetMediaTypeIcon(media.MediaType);
             }
 
             // For external links to images, redirect
@@ -173,7 +173,7 @@ public class MediaController : Controller
             if (string.IsNullOrEmpty(videoId))
             {
                 // Fallback to default icon if we can't determine the video ID
-                return await GetMediaTypeIconAsync(MediaType.Video);
+                return GetMediaTypeIcon(MediaType.Video);
             }
 
             // Construct YouTube thumbnail URL
@@ -193,7 +193,7 @@ public class MediaController : Controller
                 // If that also fails, fall back to default image
                 if (!response.IsSuccessStatusCode)
                 {
-                    return await GetMediaTypeIconAsync(MediaType.Video);
+                    return GetMediaTypeIcon(MediaType.Video);
                 }
             }
 
@@ -207,11 +207,11 @@ public class MediaController : Controller
         {
             _logger.LogError(ex, "Error retrieving YouTube thumbnail for media {MediaId}", media.Id);
             // Fallback to media type icon
-            return await GetMediaTypeIconAsync(MediaType.Video);
+            return GetMediaTypeIcon(MediaType.Video);
         }
     }
 
-    private async Task<IActionResult> GetMediaTypeIconAsync(MediaType mediaType)
+    private IActionResult GetMediaTypeIcon(MediaType mediaType)
     {
         var iconName = mediaType switch
         {

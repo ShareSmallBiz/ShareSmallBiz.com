@@ -20,7 +20,7 @@ public class MediaTagHelper(
 
     [ViewContext]
     [HtmlAttributeNotBound]
-    public ViewContext ViewContext { get; set; }
+    public ViewContext? ViewContext { get; set; }
 
     /// <summary>
     /// The ID of the media item to render

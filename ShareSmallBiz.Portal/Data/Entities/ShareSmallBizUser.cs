@@ -1,4 +1,7 @@
-﻿namespace ShareSmallBiz.Portal.Data.Entities;
+﻿using ShareSmallBiz.Portal.Data.Entities;
+using ShareSmallBiz.Portal.Data.Enums;
+
+namespace ShareSmallBiz.Portal.Data.Entities;
 
 public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUser>
 {
@@ -48,6 +51,11 @@ public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUs
 
     public byte[]? ProfilePicture { get; set; }
     public string? ProfilePictureUrl { get; set; }
+    
+    /// <summary>
+    /// Determines if the user has a profile picture set
+    /// </summary>
+    public bool HasProfilePicture => !string.IsNullOrEmpty(ProfilePictureUrl) || ProfilePicture != null;
 
     // ---- SEO & PUBLIC PROFILE ----
     public string? Slug { get; set; } = string.Empty;
@@ -57,6 +65,27 @@ public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUs
 
     [MaxLength(250)]
     public string? Keywords { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Gets or sets the visibility level of the user profile
+    /// </summary>
+    public ProfileVisibility ProfileVisibility { get; set; } = ProfileVisibility.Public;
+    
+    /// <summary>
+    /// Gets or sets the custom profile URL if different from the generated slug
+    /// </summary>
+    [MaxLength(50)]
+    public string? CustomProfileUrl { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the count of profile views
+    /// </summary>
+    public int ProfileViewCount { get; set; } = 0;
+    
+    /// <summary>
+    /// Gets or sets the percentage of profile completeness (0-100)
+    /// </summary>
+    public int ProfileCompletenessScore { get; set; } = 0;
 
     // ---- SOCIAL & SERVICES ----
     public virtual ICollection<SocialLink> SocialLinks { get; set; }
@@ -71,6 +100,7 @@ public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUs
     public DateTime LastModified { get; set; } = DateTime.Now;
     public ICollection<Post> ReceivedPosts { get; set; } = [];
     public virtual ICollection<Media> Media { get; set; } = [];
+    public virtual ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
 
     public Task<bool> IsConfirmedAsync(UserManager<ShareSmallBizUser> manager, ShareSmallBizUser user)
     {

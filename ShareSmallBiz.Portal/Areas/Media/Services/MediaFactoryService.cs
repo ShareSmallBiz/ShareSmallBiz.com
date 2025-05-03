@@ -199,7 +199,7 @@ public class MediaFactoryService
     /// <summary>
     /// Gets a media URL with appropriate formatting
     /// </summary>
-    public async Task<string> GetMediaUrlAsync(MediaModel media)
+    public string GetMediaUrl(MediaModel media)
     {
         return _mediaService.GetMediaUrl(media);
     }
@@ -207,7 +207,7 @@ public class MediaFactoryService
     /// <summary>
     /// Gets a media thumbnail URL
     /// </summary>
-    public async Task<string> GetThumbnailUrlAsync(MediaModel media)
+    public string GetThumbnailUrl(MediaModel media)
     {
         return _mediaService.GetThumbnailUrl(media);
     }

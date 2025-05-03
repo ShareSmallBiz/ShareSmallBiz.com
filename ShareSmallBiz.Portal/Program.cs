@@ -56,7 +56,8 @@ builder.Services.AddSwaggerDocumentation();
 // ========================
 // Application Services
 // ======================
-builder.Services.AddApplicationServices();
+builder.Services.AddApplicationServices(); // Using ApplicationServicesExtensions
+builder.Services.AddInfrastructureServices(); // Using ServiceCollectionExtensions
 
 // ========================
 // MVC, Razor Pages, SignalR

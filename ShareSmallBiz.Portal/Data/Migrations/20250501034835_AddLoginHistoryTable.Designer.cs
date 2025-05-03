@@ -2,17 +2,20 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShareSmallBiz.Portal.Data;
 
 #nullable disable
 
-namespace ShareSmallBiz.Portal.Migrations
+namespace ShareSmallBiz.Portal.Data.Migrations
 {
     [DbContext(typeof(ShareSmallBizUserContext))]
-    partial class ShareSmallBizUserContextModelSnapshot : ModelSnapshot
+    [Migration("20250501034835_AddLoginHistoryTable")]
+    partial class AddLoginHistoryTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.4");
@@ -510,10 +513,6 @@ namespace ShareSmallBiz.Portal.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("CustomProfileUrl")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -565,20 +564,11 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ProfileCompletenessScore")
-                        .HasColumnType("INTEGER");
-
                     b.Property<byte[]>("ProfilePicture")
                         .HasColumnType("BLOB");
 
                     b.Property<string>("ProfilePictureUrl")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("ProfileViewCount")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ProfileVisibility")
-                        .HasColumnType("INTEGER");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("TEXT");

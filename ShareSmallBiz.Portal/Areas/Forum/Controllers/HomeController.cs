@@ -7,7 +7,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers;
 public class HomeController(DiscussionProvider postProvider, ILogger<HomeController> logger) : ForumBaseController
 {
     [HttpGet("")]
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
         return View();
     }
@@ -118,9 +118,4 @@ public class HomeController(DiscussionProvider postProvider, ILogger<HomeControl
         var result = await postProvider.GetDiscussionsAsync(pageNumber, pageSize, SortType.Recent);
         return PartialView("_postList", result.Posts);
     }
-
-
-
-
-
 }

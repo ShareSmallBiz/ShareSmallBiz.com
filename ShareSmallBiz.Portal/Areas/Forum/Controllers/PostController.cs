@@ -91,7 +91,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
                 await ProcessCoverImageAsync(discussionModel);
 
                 // Process content for any embedded media attribution
-                discussionModel.Content = await ProcessContentForMediaAttributionAsync(discussionModel.Content);
+                discussionModel.Content = ProcessContentForMediaAttribution(discussionModel.Content);
 
                 await _postService.CreateDiscussionAsync(discussionModel, currentUser);
                 return RedirectToAction("Index");
@@ -159,7 +159,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
                 }
 
                 // Process content for any embedded media attribution
-                discussionModel.Content = await ProcessContentForMediaAttributionAsync(discussionModel.Content);
+                discussionModel.Content = ProcessContentForMediaAttribution(discussionModel.Content);
 
                 var success = await _postService.UpdatePostAsync(discussionModel, currentUser);
                 if (!success)
@@ -292,7 +292,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
         /// <summary>
         /// Processes the content to handle any embedded media and ensure proper attribution
         /// </summary>
-        private async Task<string> ProcessContentForMediaAttributionAsync(string content)
+        private string ProcessContentForMediaAttribution(string content)
         {
             if (string.IsNullOrEmpty(content))
             {
@@ -302,7 +302,7 @@ namespace ShareSmallBiz.Portal.Areas.Forum.Controllers
             // This is a placeholder for future enhancement
             // In a more comprehensive implementation, you might:
             // 1. Parse the HTML content to find image tags
-            // 2. Extract unsplash image URLs 
+            // 2. Extract unsplash image URLs
             // 3. Register those with the media service
             // 4. Replace direct image URLs with media service URLs
             // 5. Ensure attribution blocks are properly maintained

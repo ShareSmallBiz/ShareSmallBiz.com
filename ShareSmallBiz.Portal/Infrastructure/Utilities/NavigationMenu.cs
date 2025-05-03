@@ -4,27 +4,27 @@
 public class MenuItem
 {
     [JsonPropertyName("role")]
-    public string Role { get; set; }
+    public string? Role { get; set; }
 
     [JsonPropertyName("text")]
-    public string Text { get; set; }
+    public string? Text { get; set; }
 
     [JsonPropertyName("url")]
-    public string Url { get; set; }
+    public string? Url { get; set; }
 
     [JsonPropertyName("icon")]
-    public string Icon { get; set; }
+    public string? Icon { get; set; }
 
     [JsonPropertyName("description")]
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     [JsonPropertyName("keywords")]
-    public string Keywords { get; set; }
+    public string? Keywords { get; set; }
 }
 
 public class NavigationMenu
 {
     [JsonPropertyName("menuItems")]
-    public List<MenuItem> MenuItems { get; set; }
+    public List<MenuItem>? MenuItems { get; set; }
 }
 

@@ -39,7 +39,7 @@ public class DiscussionsController(ILogger<DiscussionsController> logger, Discus
 
     // GET: /post
     [HttpGet("")]
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
         return View();
     }

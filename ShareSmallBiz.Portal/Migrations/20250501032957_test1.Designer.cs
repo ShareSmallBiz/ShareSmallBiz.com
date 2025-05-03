@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShareSmallBiz.Portal.Data;
 
@@ -10,9 +11,11 @@ using ShareSmallBiz.Portal.Data;
 namespace ShareSmallBiz.Portal.Migrations
 {
     [DbContext(typeof(ShareSmallBizUserContext))]
-    partial class ShareSmallBizUserContextModelSnapshot : ModelSnapshot
+    [Migration("20250501032957_test1")]
+    partial class test1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.4");
@@ -204,6 +207,11 @@ namespace ShareSmallBiz.Portal.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Location")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("LoginTime")
@@ -219,6 +227,7 @@ namespace ShareSmallBiz.Portal.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UserAgent")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UserId")
@@ -510,10 +519,6 @@ namespace ShareSmallBiz.Portal.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("CustomProfileUrl")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -565,20 +570,11 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ProfileCompletenessScore")
-                        .HasColumnType("INTEGER");
-
                     b.Property<byte[]>("ProfilePicture")
                         .HasColumnType("BLOB");
 
                     b.Property<string>("ProfilePictureUrl")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("ProfileViewCount")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ProfileVisibility")
-                        .HasColumnType("INTEGER");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("TEXT");
@@ -648,9 +644,11 @@ namespace ShareSmallBiz.Portal.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("FollowerId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("FollowingId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("ModifiedDate")
@@ -857,11 +855,15 @@ namespace ShareSmallBiz.Portal.Migrations
                 {
                     b.HasOne("ShareSmallBiz.Portal.Data.Entities.ShareSmallBizUser", "Follower")
                         .WithMany("Following")
-                        .HasForeignKey("FollowerId");
+                        .HasForeignKey("FollowerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("ShareSmallBiz.Portal.Data.Entities.ShareSmallBizUser", "Following")
                         .WithMany("Followers")
-                        .HasForeignKey("FollowingId");
+                        .HasForeignKey("FollowingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Follower");
 

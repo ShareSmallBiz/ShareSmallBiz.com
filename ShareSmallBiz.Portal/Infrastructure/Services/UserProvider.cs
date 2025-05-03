@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.Options;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Data.Entities;
+using ShareSmallBiz.Portal.Data.Enums;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Services;
 
@@ -44,6 +46,7 @@ public class ShareSmallBizUserManager(
     /// Retrieves the social links of a user by their ID.
     /// </summary>
     /// <param name="userId">The ID of the user.</param>
+    /// <param name="ct">The cancellation token.</param>
     /// <returns>A list of SocialLink objects.</returns>
     public async Task<List<SocialLink>> GetUserSocialLinksAsync(string userId, CancellationToken ct = default)
     {
@@ -571,4 +574,196 @@ public class UserProvider(
         }
     }
 
+    /// <summary>
+    /// Checks if a user is following another user
+    /// </summary>
+    /// <param name="followerId">The ID of the follower user</param>
+    /// <param name="followingId">The ID of the user being followed</param>
+    /// <returns>True if the follower is following the other user</returns>
+    public async Task<bool> CheckFollowingAsync(string followerId, string followingId)
+    {
+        if (string.IsNullOrEmpty(followerId) || string.IsNullOrEmpty(followingId))
+        {
+            return false;
+        }
+
+        return await context.UserFollows
+            .AnyAsync(uf => uf.FollowerId == followerId && uf.FollowingId == followingId);
+    }
+
+    /// <summary>
+    /// Increments the profile view count for a user
+    /// </summary>
+    /// <param name="userId">The ID of the user whose profile was viewed</param>
+    /// <returns>True if the operation was successful</returns>
+    public async Task<bool> IncrementProfileViewCountAsync(string userId)
+    {
+        try
+        {
+            var user = await context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                logger.LogWarning("User with ID {UserId} not found when trying to increment profile view count", userId);
+                return false;
+            }
+
+            user.ProfileViewCount++;
+            user.LastModified = DateTime.UtcNow;
+            
+            // Store view for analytics (optional implementation)
+            // context.ProfileViews.Add(new ProfileView 
+            // { 
+            //     UserId = userId, 
+            //     ViewDate = DateTime.UtcNow,
+            //     IPAddress = GetCurrentIP(), // Would need implementation
+            //     UserAgent = GetCurrentUserAgent(), // Would need implementation
+            //     Location = GetCurrentLocation() // Would need implementation
+            // });
+            
+            await context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error incrementing profile view count for user {UserId}", userId);
+            return false;
+        }
+    }
+    
+    /// <summary>
+    /// Updates the custom profile URL for a user
+    /// </summary>
+    /// <param name="userId">The ID of the user</param>
+    /// <param name="customUrl">The new custom profile URL</param>
+    /// <returns>True if successful, false if the URL is already taken or invalid</returns>
+    public async Task<(bool Success, string? ErrorMessage)> UpdateCustomProfileUrlAsync(string userId, string customUrl)
+    {
+        if (string.IsNullOrWhiteSpace(customUrl))
+        {
+            return (false, "Custom URL cannot be empty");
+        }
+        
+        // Validate custom URL format (alphanumeric, hyphens, and underscores only)
+        if (!Regex.IsMatch(customUrl, @"^[a-zA-Z0-9\-_]+$"))
+        {
+            return (false, "Custom URL can only contain letters, numbers, hyphens, and underscores");
+        }
+        
+        // Check if URL is already taken by another user
+        bool isUrlTaken = await context.Users
+            .AnyAsync(u => u.CustomProfileUrl == customUrl && u.Id != userId);
+            
+        if (isUrlTaken)
+        {
+            return (false, "This custom URL is already taken by another user");
+        }
+        
+        try
+        {
+            var user = await context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return (false, "User not found");
+            }
+            
+            user.CustomProfileUrl = customUrl;
+            user.LastModified = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+            
+            logger.LogInformation("Updated custom profile URL for user {UserId} to {CustomUrl}", userId, customUrl);
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating custom profile URL for user {UserId}", userId);
+            return (false, "An error occurred while updating the custom profile URL");
+        }
+    }
+    
+    /// <summary>
+    /// Updates the profile visibility setting for a user
+    /// </summary>
+    /// <param name="userId">The ID of the user</param>
+    /// <param name="visibility">The new visibility setting</param>
+    /// <returns>True if successful</returns>
+    public async Task<bool> UpdateProfileVisibilityAsync(string userId, ProfileVisibility visibility)
+    {
+        try
+        {
+            var user = await context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                logger.LogWarning("User with ID {UserId} not found when trying to update profile visibility", userId);
+                return false;
+            }
+            
+            user.ProfileVisibility = visibility;
+            user.LastModified = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+            
+            logger.LogInformation("Updated profile visibility for user {UserId} to {Visibility}", userId, visibility);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating profile visibility for user {UserId}", userId);
+            return false;
+        }
+    }
+    
+    /// <summary>
+    /// Calculates and updates the profile completeness score for a user
+    /// </summary>
+    /// <param name="userId">The ID of the user</param>
+    /// <returns>The updated completeness score (0-100)</returns>
+    public async Task<int> UpdateProfileCompletenessScoreAsync(string userId)
+    {
+        try
+        {
+            var user = await context.Users
+                .Include(u => u.SocialLinks)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+                
+            if (user == null)
+            {
+                logger.LogWarning("User with ID {UserId} not found when trying to calculate profile completeness", userId);
+                return 0;
+            }
+            
+            int score = 0;
+            int totalPossiblePoints = 100;
+            int fieldCount = 8; // Total number of profile fields we're checking
+            int pointsPerField = totalPossiblePoints / fieldCount;
+            
+            // Basic profile fields (50%)
+            if (!string.IsNullOrWhiteSpace(user.DisplayName)) score += pointsPerField;
+            if (!string.IsNullOrWhiteSpace(user.FirstName) && !string.IsNullOrWhiteSpace(user.LastName)) score += pointsPerField;
+            if (!string.IsNullOrWhiteSpace(user.Bio)) score += pointsPerField;
+            if (!string.IsNullOrWhiteSpace(user.ProfilePictureUrl)) score += pointsPerField;
+            
+            // SEO & contact fields (25%)
+            if (!string.IsNullOrWhiteSpace(user.MetaDescription)) score += pointsPerField;
+            if (!string.IsNullOrWhiteSpace(user.WebsiteUrl)) score += pointsPerField;
+            
+            // Social connections (25%)
+            if (user.SocialLinks != null && user.SocialLinks.Any()) score += pointsPerField;
+            if (await context.UserFollows.AnyAsync(uf => uf.FollowerId == userId)) score += pointsPerField;
+            
+            // Ensure score is within 0-100 range
+            score = Math.Min(100, Math.Max(0, score));
+            
+            // Update the user's profile completeness score
+            user.ProfileCompletenessScore = score;
+            user.LastModified = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+            
+            logger.LogInformation("Updated profile completeness score for user {UserId} to {Score}", userId, score);
+            return score;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error calculating profile completeness score for user {UserId}", userId);
+            return 0;
+        }
+    }
 }

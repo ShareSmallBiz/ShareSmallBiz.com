@@ -3,7 +3,6 @@ using ShareSmallBiz.Portal.Infrastructure.Services;
 
 namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
 
-
 public class EmailSendController(
     ShareSmallBizUserContext _context,
     ShareSmallBizUserManager _userManager,
@@ -58,20 +57,20 @@ public class EmailSendController(
     {
         [Required(ErrorMessage = "From Email is required.")]
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
-        public string FromEmail { get; set; }
+        public string? FromEmail { get; set; }
 
         [Required(ErrorMessage = "To Email is required.")]
         [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
-        public string ToEmail { get; set; }
+        public string? ToEmail { get; set; }
 
         [Required(ErrorMessage = "Subject is required.")]
-        public string Subject { get; set; }
+        public string? Subject { get; set; }
 
         [Required(ErrorMessage = "HTML content is required.")]
-        public string HtmlContent { get; set; }
+        public string? HtmlContent { get; set; }
 
         [Required(ErrorMessage = "Text content is required.")]
-        public string TextContent { get; set; }
+        public string? TextContent { get; set; }
     }
 }
 

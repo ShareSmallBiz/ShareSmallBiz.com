@@ -3,6 +3,23 @@
 @{
     ViewData["Title"] = "Profile";
     ViewData["ActivePage"] = ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage.ManageNavPages.Index;
+    
+    // Determine the profile completeness class based on score
+    var completenessClass = Model.ProfileCompletenessScore switch
+    {
+        >= 80 => "bg-success",
+        >= 50 => "bg-info",
+        >= 30 => "bg-warning",
+        _ => "bg-danger"
+    };
+    
+    var completenessText = Model.ProfileCompletenessScore switch
+    {
+        >= 80 => "Excellent",
+        >= 50 => "Good",
+        >= 30 => "Needs Improvement",
+        _ => "Incomplete"
+    };
 }
 
 @if (string.IsNullOrEmpty(Model.Input.ProfilePictureUrl))
@@ -17,7 +34,7 @@
     <partial name="_StatusMessage" model="Model.StatusMessage" />
     <partial name="_StatusMessage" model="Model.UserNameChangeLimitMessage" />
 
-    <form id="profile-form" method="post" class="needs-validation" novalidate>
+    <form id="profile-form" method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
         <div class="row row-cols-1 row-cols-md-2 g-4">
             <!-- Left Column (Form Fields) -->
             <div class="col">
@@ -61,37 +78,96 @@
             </div>
 
             <!-- Right Column (Profile Picture) -->
-            <div class="col d-flex flex-column align-items-center">
-                <div class="mb-3 text-center">
-                    <label class="form-label fw-bold">Profile Picture</label>
-                    <div class="position-relative">
-                        @if (!string.IsNullOrEmpty(Model.Input.ProfilePictureUrl))
-                        {
-                            <img id="profilePicture" class="img-fluid rounded-circle shadow-lg"
-                                 style="width: 200px; height: 200px; object-fit: cover;"
-                                 src="@Model.Input.ProfilePictureUrl">
-                        }
-                        else
-                        {
-                            <img id="profilePicture" class="img-fluid rounded-circle shadow-lg"
-                                 style="width: 200px; height: 200px; object-fit: cover;"
-                                 src="https://via.placeholder.com/200?text=Profile">
-                        }
+            <div class="col d-flex flex-column">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Profile Picture</h5>
                     </div>
-                    @if (string.IsNullOrEmpty(Model.Input.ProfilePictureUrl))
-                    {
-                        <div class="alert alert-info mt-2" role="alert">
-                            You haven't set a profile picture yet. Please visit the <a asp-area="Media" asp-controller="UserMedia" asp-action="Profile">Profile Picture</a> page to set one.
+                    <div class="card-body text-center">
+                        <div class="position-relative mb-3">
+                            @if (!string.IsNullOrEmpty(Model.Input.ProfilePictureUrl))
+                            {
+                                <img id="profilePicture" class="img-fluid rounded-circle shadow-sm"
+                                     style="width: 180px; height: 180px; object-fit: cover;"
+                                     src="@Model.Input.ProfilePictureUrl">
+                            }
+                            else
+                            {
+                                <img id="profilePicture" class="img-fluid rounded-circle shadow-sm"
+                                     style="width: 180px; height: 180px; object-fit: cover;"
+                                     src="https://via.placeholder.com/180?text=Profile">
+                            }
                         </div>
-                    }
-                    else
-                    {
-                        <div class="mt-2">
-                            <a asp-area="Media" asp-controller="UserMedia" asp-action="Profile" class="btn btn-primary">
-                                <i class="bi bi-pencil me-1"></i> Manage Profile Picture
+
+                        <div class="d-flex justify-content-center mb-2">
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" name="Input.ProfilePictureOption" id="keep-image" value="keep" checked>
+                                <label class="btn btn-outline-secondary" for="keep-image">Keep</label>
+
+                                <input type="radio" class="btn-check" name="Input.ProfilePictureOption" id="upload-image" value="upload">
+                                <label class="btn btn-outline-primary" for="upload-image">Upload</label>
+
+                                <input type="radio" class="btn-check" name="Input.ProfilePictureOption" id="url-image" value="url">
+                                <label class="btn btn-outline-info" for="url-image">Use URL</label>
+
+                                <input type="radio" class="btn-check" name="Input.ProfilePictureOption" id="remove-image" value="remove">
+                                <label class="btn btn-outline-danger" for="remove-image">Remove</label>
+                            </div>
+                        </div>
+
+                        <div id="upload-image-section" class="mb-3 d-none">
+                            <label asp-for="Input.ProfilePictureFile" class="form-label">Upload a new image</label>
+                            <input asp-for="Input.ProfilePictureFile" type="file" class="form-control" accept="image/*" onchange="previewImage(this)" />
+                            <div class="form-text">
+                                Images will be optimized automatically. For best results, use a square image.
+                            </div>
+                        </div>
+
+                        <div id="url-image-section" class="mb-3 d-none">
+                            <label asp-for="Input.ProfilePictureUrl" class="form-label">Image URL</label>
+                            <input asp-for="Input.ProfilePictureUrl" class="form-control" onchange="updateImagePreview(this.value)" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Completeness Section -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Profile Completeness</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>@completenessText</span>
+                            <span>@Model.ProfileCompletenessScore%</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 10px;">
+                            <div class="progress-bar @completenessClass" role="progressbar" 
+                                 style="width: @(Model.ProfileCompletenessScore)%;" 
+                                 aria-valuenow="@Model.ProfileCompletenessScore" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                        
+                        @if (Model.IncompleteProfileFields.Any())
+                        {
+                            <div class="mt-2 mb-3">
+                                <small class="text-muted">Complete these items to improve your profile:</small>
+                                <ul class="list-group list-group-flush small">
+                                    @foreach (var field in Model.IncompleteProfileFields)
+                                    {
+                                        <li class="list-group-item px-0 py-1 border-0">
+                                            <i class="bi bi-x-circle text-danger me-1"></i> @field
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                        
+                        <div>
+                            <a href="@Url.Page("./PrivacySettings")" class="btn btn-sm btn-outline-primary w-100">
+                                <i class="bi bi-shield-check me-1"></i> Manage Privacy Settings
                             </a>
                         </div>
-                    }
+                    </div>
                 </div>
             </div>
         </div>
@@ -139,4 +215,40 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Handle profile picture option switch
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to toggle visibility based on selected option
+            function handleOptionChange() {
+                const selectedOption = document.querySelector('input[name="Input.ProfilePictureOption"]:checked').value;
+                document.getElementById('upload-image-section').classList.toggle('d-none', selectedOption !== 'upload');
+                document.getElementById('url-image-section').classList.toggle('d-none', selectedOption !== 'url');
+            }
+            
+            // Add event listeners to radio buttons
+            document.querySelectorAll('input[name="Input.ProfilePictureOption"]').forEach(radio => {
+                radio.addEventListener('change', handleOptionChange);
+            });
+            
+            // Initialize on page load
+            handleOptionChange();
+        });
+        
+        // Image preview functionality
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('profilePicture').src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        function updateImagePreview(url) {
+            if (url) {
+                document.getElementById('profilePicture').src = url;
+            }
+        }
+    </script>
 }

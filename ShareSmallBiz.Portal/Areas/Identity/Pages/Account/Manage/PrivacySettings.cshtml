@@ -1,0 +1,89 @@
+@page
+@model ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage.PrivacySettingsModel
+@{
+    ViewData["Title"] = "Privacy Settings";
+    ViewData["ActivePage"] = ManageNavPages.PrivacySettings;
+}
+
+<h3>@ViewData["Title"]</h3>
+<partial name="_StatusMessage" for="StatusMessage" />
+
+<div class="row">
+    <div class="col-md-12">
+        <form id="privacy-settings-form" method="post">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>Profile Visibility</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Control who can see your profile on ShareSmallBiz. This affects your public profile accessible at 
+                        <a href="@Url.Page("/Profiles/ViewProfile", new { id = Model.UserName })">@Url.Page("/Profiles/ViewProfile", new { id = Model.UserName })</a>
+                    </p>
+                    
+                    <div class="form-group mb-4">
+                        <label asp-for="Input.ProfileVisibility" class="form-label fw-bold">Profile Visibility</label>
+                        <select asp-for="Input.ProfileVisibility" class="form-select" asp-items="Html.GetEnumSelectList<ShareSmallBiz.Portal.Data.Enums.ProfileVisibility>()">
+                        </select>
+                        <div class="form-text mt-1">
+                            <ul class="mb-0 ps-3">
+                                <li><strong>Public</strong> - Anyone can view your profile</li>
+                                <li><strong>Authenticated</strong> - Only logged in users can view your profile</li>
+                                <li><strong>Connections</strong> - Only users you follow or who follow you can view your profile</li>
+                                <li><strong>Private</strong> - Only you can view your profile</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-link me-2"></i>Custom Profile URL</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Create a custom URL for your profile to make it easier to share and remember.
+                    </p>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Input.CustomProfileUrl" class="form-label fw-bold">Custom Profile URL</label>
+                        <div class="input-group">
+                            <span class="input-group-text">@Url.Page("/Profiles/")</span>
+                            <input asp-for="Input.CustomProfileUrl" class="form-control" placeholder="yournamehere" />
+                        </div>
+                        <span asp-validation-for="Input.CustomProfileUrl" class="text-danger"></span>
+                        <div class="form-text">
+                            Use only letters, numbers, hyphens, and underscores. No spaces or special characters allowed.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-activity me-2"></i>Profile Analytics</h5>
+                </div>
+                <div class="card-body">
+                    <p>Your profile has been viewed <strong>@Model.ProfileViewCount</strong> times.</p>
+                    
+                    <div class="form-check mb-3">
+                        <input asp-for="Input.ShowProfileViewCount" class="form-check-input" type="checkbox" />
+                        <label asp-for="Input.ShowProfileViewCount" class="form-check-label">
+                            Show profile view count to visitors
+                        </label>
+                        <div class="form-text">
+                            When enabled, the number of profile views will be visible to anyone who can see your profile.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="save-changes-button" type="submit" class="btn btn-primary">Save changes</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

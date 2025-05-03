@@ -485,6 +485,7 @@ public class DiscussionProvider(
     /// <param name="postId">ID of the discussion containing the comment.</param>
     /// <param name="commentId">ID of the comment to delete.</param>
     /// <param name="userPrincipal">The current user's claims principal.</param>
+    /// <param name="ct">The cancellation token.</param>
     /// <returns>True if the comment was deleted successfully, otherwise false.</returns>
     public async Task<bool> DeleteCommentAsync(int postId, int commentId, ClaimsPrincipal userPrincipal, CancellationToken ct)
     {

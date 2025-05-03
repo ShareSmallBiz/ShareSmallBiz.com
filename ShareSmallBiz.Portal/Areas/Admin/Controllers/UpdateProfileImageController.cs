@@ -286,15 +286,15 @@ namespace ShareSmallBiz.Portal.Areas.Admin.Controllers
 
     public class ProfileImageUpdateModel
     {
-        public string UserId { get; set; }
-        public string UserName { get; set; }
-        public string DisplayName { get; set; }
-        public string Email { get; set; }
+        public string? UserId { get; set; }
+        public string? UserName { get; set; }
+        public string? DisplayName { get; set; }
+        public string? Email { get; set; }
         public bool HasProfilePicture { get; set; }
-        public string CurrentProfileImageType { get; set; } // "stored" or "url"
-        public string ProfilePicturePreview { get; set; }
-        public string ProfilePictureOption { get; set; } // "keep", "upload", "url", "remove"
-        public IFormFile ProfilePictureFile { get; set; }
-        public string ProfilePictureUrl { get; set; }
+        public string? CurrentProfileImageType { get; set; } // "stored" or "url"
+        public string? ProfilePicturePreview { get; set; }
+        public string? ProfilePictureOption { get; set; } // "keep", "upload", "url", "remove"
+        public IFormFile? ProfilePictureFile { get; set; }
+        public string? ProfilePictureUrl { get; set; }
     }
 }

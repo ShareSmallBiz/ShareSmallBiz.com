@@ -1,4 +1,5 @@
 ﻿namespace ShareSmallBiz.Portal.Areas.Admin.Controllers;
+
 using global::ShareSmallBiz.Portal.Infrastructure.Services;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Models;
@@ -10,7 +11,7 @@ using System.Text.Json;
 
 public class AdminDiscussionModel : DiscussionModel
 {
-    public string AuthorId { get; set; }
+    public string? AuthorId { get; set; }
     public List<UserModel>? Users { get; set; } = [];
     // Add this property to store available media
     public List<MediaModel>? AvailableMedia { get; set; } = [];

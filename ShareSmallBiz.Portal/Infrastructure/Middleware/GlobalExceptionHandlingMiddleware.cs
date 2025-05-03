@@ -76,7 +76,7 @@ public class GlobalExceptionHandlingMiddleware
         }
         else
         {
-            await HandleWebExceptionAsync(context, exception);
+            HandleWebExceptionAsync(context, exception);
         }
     }
 
@@ -102,7 +102,7 @@ public class GlobalExceptionHandlingMiddleware
         await context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
     }
 
-    private async Task HandleWebExceptionAsync(HttpContext context, Exception exception)
+    private void HandleWebExceptionAsync(HttpContext context, Exception exception)
     {
         // For web UI requests, redirect to an error page
         var statusCode = DetermineStatusCode(exception);

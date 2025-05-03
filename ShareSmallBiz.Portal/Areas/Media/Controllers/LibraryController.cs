@@ -108,7 +108,7 @@ public class LibraryController : Controller
         }
 
         // Get public URL
-        var publicUrl = await _mediaFactoryService.GetMediaUrlAsync(media);
+        var publicUrl = _mediaFactoryService.GetMediaUrl(media);
         ViewBag.PublicUrl = publicUrl;
 
         // Set YouTube embed URL if applicable

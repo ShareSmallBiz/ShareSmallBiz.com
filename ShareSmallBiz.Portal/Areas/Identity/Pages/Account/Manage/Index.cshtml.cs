@@ -8,7 +8,9 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 {
     public class IndexModel(
         ShareSmallBizUserManager userManager,
-        SignInManager<ShareSmallBizUser> signInManager) : PageModel
+        SignInManager<ShareSmallBizUser> signInManager,
+        ProfileImageService profileImageService,
+        UserProvider userProvider) : PageModel
     {
         public string Username { get; set; }
 
@@ -20,6 +22,16 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 
         [BindProperty]
         public InputModel Input { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the profile completeness score.
+        /// </summary>
+        public int ProfileCompletenessScore { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the list of incomplete profile fields.
+        /// </summary>
+        public List<string> IncompleteProfileFields { get; set; } = [];
 
         public class InputModel
         {
@@ -64,6 +76,14 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
 
             [Display(Name = "Instagram")]
             public string Instagram { get; set; }
+
+            // Profile picture file upload
+            [Display(Name = "Profile Picture")]
+            public IFormFile ProfilePictureFile { get; set; }
+            
+            // Profile picture option
+            [Display(Name = "Profile Picture Option")]
+            public string ProfilePictureOption { get; set; } = "keep"; // keep, upload, url, remove
         }
 
         private async Task LoadAsync(ShareSmallBizUser user, CancellationToken ct = default)
@@ -72,6 +92,28 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
             var phoneNumber = await userManager.GetPhoneNumberAsync(user).ConfigureAwait(true);
 
             Username = userName;
+            ProfileCompletenessScore = user.ProfileCompletenessScore;
+            
+            // Calculate incomplete fields
+            IncompleteProfileFields = [];
+            
+            if (string.IsNullOrWhiteSpace(user.ProfilePictureUrl))
+                IncompleteProfileFields.Add("Profile Picture");
+                
+            if (string.IsNullOrWhiteSpace(user.Bio))
+                IncompleteProfileFields.Add("Bio");
+                
+            if (string.IsNullOrWhiteSpace(user.FirstName) || string.IsNullOrWhiteSpace(user.LastName))
+                IncompleteProfileFields.Add("Name");
+                
+            if (string.IsNullOrWhiteSpace(user.WebsiteUrl))
+                IncompleteProfileFields.Add("Website");
+                
+            if (string.IsNullOrWhiteSpace(user.MetaDescription))
+                IncompleteProfileFields.Add("Meta Description");
+                
+            if (!user.SocialLinks.Any())
+                IncompleteProfileFields.Add("Social Links");
 
             Input = new InputModel
             {
@@ -200,9 +242,43 @@ namespace ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage
                 updated = true;
             }
 
+            // Handle profile picture updates
+            bool profilePictureUpdated = false;
+            
+            switch (Input.ProfilePictureOption)
+            {
+                case "upload" when Input.ProfilePictureFile != null:
+                    // Process and optimize the uploaded image
+                    var imageResult = await profileImageService.ProcessProfileImageAsync(Input.ProfilePictureFile, user.Id);
+                    if (!string.IsNullOrEmpty(imageResult.MainImageUrl))
+                    {
+                        user.ProfilePictureUrl = imageResult.MainImageUrl;
+                        profilePictureUpdated = true;
+                    }
+                    break;
+                    
+                case "url" when !string.IsNullOrEmpty(Input.ProfilePictureUrl) && Input.ProfilePictureUrl != user.ProfilePictureUrl:
+                    user.ProfilePictureUrl = Input.ProfilePictureUrl;
+                    profilePictureUpdated = true;
+                    break;
+                    
+                case "remove":
+                    user.ProfilePictureUrl = null;
+                    profilePictureUpdated = true;
+                    break;
+            }
+            
+            if (profilePictureUpdated)
+            {
+                updated = true;
+            }
+
             if (updated)
             {
                 await userManager.UpdateAsync(user);
+                
+                // Update profile completeness score when profile is updated
+                await userProvider.UpdateProfileCompletenessScoreAsync(user.Id);
             }
 
             await signInManager.RefreshSignInAsync(user);

@@ -1,4 +1,4 @@
-﻿using HttpClientUtility.StringConverter;
+﻿using WebSpark.HttpClientUtility.StringConverter;
 using ShareSmallBiz.Portal.Areas.Media.Services;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 
