@@ -1,9 +1,9 @@
-﻿using WebSpark.HttpClientUtility.MemoryCache;
-using WebSpark.HttpClientUtility.RequestResult;
-using Microsoft.EntityFrameworkCore.Diagnostics;
+﻿using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 using ShareSmallBiz.Portal.Data;
 using ShareSmallBiz.Portal.Infrastructure.Services;
+using WebSpark.HttpClientUtility.MemoryCache;
+using WebSpark.HttpClientUtility.RequestResult;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Extensions;
 
@@ -26,13 +26,15 @@ public static class ServiceCollectionExtensions
         {
             IHttpRequestResultService baseService = new HttpRequestResultService(
                 serviceProvider.GetRequiredService<ILogger<HttpRequestResultService>>(),
-                serviceProvider.GetRequiredService<IConfiguration>(), 
+                serviceProvider.GetRequiredService<IConfiguration>(),
                 serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("HttpClientDecorator"));
+
+            var retryOptions = configuration.GetSection("HttpRequestResultPollyOptions").Get<HttpRequestResultPollyOptions>();
 
             IHttpRequestResultService pollyService = new HttpRequestResultServicePolly(
                 serviceProvider.GetRequiredService<ILogger<HttpRequestResultServicePolly>>(),
                 baseService,
-                configuration.GetSection("HttpRequestResultPollyOptions").Get<HttpRequestResultPollyOptions>());
+                retryOptions);
 
             IHttpRequestResultService telemetryService = new HttpRequestResultServiceTelemetry(
                 serviceProvider.GetRequiredService<ILogger<HttpRequestResultServiceTelemetry>>(),

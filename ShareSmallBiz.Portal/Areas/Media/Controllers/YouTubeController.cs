@@ -58,7 +58,7 @@ public class YouTubeController : Controller
         };
 
         // Get any recently added YouTube videos (for the "Recently Added" section)
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         var recentYouTubeMedia = await _youTubeMediaService.GetRecentlyAddedVideosAsync(userId, 4);
 
         viewModel.RecentlyAdded = recentYouTubeMedia.ToList();
@@ -81,8 +81,8 @@ public class YouTubeController : Controller
                 try
                 {
                     var metadata = JsonSerializer.Deserialize<Dictionary<string, string>>(media.StorageMetadata);
-                    if (metadata != null && metadata.TryGetValue("channelId", out string channelId) &&
-                        metadata.TryGetValue("channelTitle", out string channelTitle))
+                    if (metadata != null && metadata.TryGetValue("channelId", out var channelId) && channelId != null &&
+                        metadata.TryGetValue("channelTitle", out var channelTitle) && channelTitle != null)
                     {
                         if (channels.TryGetValue(channelId, out var existing))
                         {
@@ -132,10 +132,18 @@ public class YouTubeController : Controller
 
         viewModel.Query = query;
         viewModel.MaxResults = maxResults;
-        viewModel.Page = pageNumber; // Set the page property with the pageNumber parameter
+        viewModel.Page = pageNumber;
 
         try
         {
+            // Try to get a channel by name/username/URL
+            var channelResult = await _youTubeMediaService.TryGetChannelByNameOrUrlAsync(query, maxResults);
+            if (channelResult != null)
+            {
+                viewModel.ChannelResult = channelResult;
+                return View(viewModel);
+            }
+
             var searchResults = await _youTubeMediaService.SearchVideosAsync(
                 viewModel.Query,
                 viewModel.MaxResults > 0 ? viewModel.MaxResults : 12);
@@ -163,6 +171,14 @@ public class YouTubeController : Controller
 
         try
         {
+            // Try to get a channel by name/username/URL
+            var channelResult = await _youTubeMediaService.TryGetChannelByNameOrUrlAsync(viewModel.Query, viewModel.MaxResults);
+            if (channelResult != null)
+            {
+                viewModel.ChannelResult = channelResult;
+                return View(viewModel);
+            }
+
             var searchResults = await _youTubeMediaService.SearchVideosAsync(
                 viewModel.Query,
                 viewModel.MaxResults > 0 ? viewModel.MaxResults : 12);
@@ -189,7 +205,7 @@ public class YouTubeController : Controller
 
         try
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
 
             // Build YouTube URL from video ID
             var youtubeUrl = $"https://www.youtube.com/watch?v={viewModel.VideoId}";
@@ -237,7 +253,7 @@ public class YouTubeController : Controller
             }
 
             // Check if user already has this video in their library
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
             var existingMedia = await _context.Media
                 .Where(m => m.UserId == userId && m.StorageProvider == StorageProviderNames.YouTube)
                 .Where(m => m.StorageMetadata.Contains(videoId))
@@ -278,7 +294,7 @@ public class YouTubeController : Controller
             }
 
             // 2. Check if user has already added videos from this channel
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
             IEnumerable<MediaModel> userVideosFromChannel = await _youTubeMediaService.GetUserMediaFromChannelAsync(userId, channelId);
 
             // Add the user's videos to the viewModel
@@ -310,7 +326,7 @@ public class YouTubeController : Controller
 
         try
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
 
             // Create the media entry for the channel
             var media = await _youTubeMediaService.CreateYouTubeChannelMediaAsync(

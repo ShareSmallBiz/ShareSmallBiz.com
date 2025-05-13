@@ -8,40 +8,40 @@
 <!-- Mobile-First Account Management Navigation -->
 <nav class="nav nav-pills flex-column gap-2">
     <a class="nav-link d-flex align-items-center @ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage.ManageNavPages.IndexNavClass(ViewContext)"
-       id="profile" asp-page="./Index">
+        id="profile" asp-page="./Index">
         <i class="bi bi-person-circle me-2"></i> Profile
     </a>
 
     <a class="nav-link d-flex align-items-center @ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage.ManageNavPages.EmailNavClass(ViewContext)"
-       id="email" asp-page="./Email">
+        id="email" asp-page="./Email">
         <i class="bi bi-envelope-at me-2"></i> Email
     </a>
-    
+
     <a class="nav-link d-flex align-items-center @ManageNavPages.PrivacySettingsNavClass(ViewContext)"
-       id="privacy-settings" asp-page="./PrivacySettings">
+        id="privacy-settings" asp-page="./PrivacySettings">
         <i class="bi bi-shield-check me-2"></i> Privacy Settings
     </a>
 
     <a class="nav-link d-flex align-items-center @ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage.ManageNavPages.ChangePasswordNavClass(ViewContext)"
-       id="change-password" asp-page="./ChangePassword">
+        id="change-password" asp-page="./ChangePassword">
         <i class="bi bi-key me-2"></i> Password
     </a>
 
     @if (hasExternalLogins)
     {
         <a class="nav-link d-flex align-items-center @ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage.ManageNavPages.ExternalLoginsNavClass(ViewContext)"
-           id="external-logins" asp-page="./ExternalLogins">
+            id="external-logins" asp-page="./ExternalLogins">
             <i class="bi bi-box-arrow-in-right me-2"></i> External Logins
         </a>
     }
 
     <a class="nav-link d-flex align-items-center @ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage.ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext)"
-       id="two-factor" asp-page="./TwoFactorAuthentication">
+        id="two-factor" asp-page="./TwoFactorAuthentication">
         <i class="bi bi-shield-lock me-2"></i> Two-Factor Authentication
     </a>
 
     <a class="nav-link d-flex align-items-center @ShareSmallBiz.Portal.Areas.Identity.Pages.Account.Manage.ManageNavPages.PersonalDataNavClass(ViewContext)"
-       id="personal-data" asp-page="./PersonalData">
+        id="personal-data" asp-page="./PersonalData">
         <i class="bi bi-file-earmark-person me-2"></i> Personal Data
     </a>
 </nav>

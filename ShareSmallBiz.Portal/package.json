@@ -58,7 +58,7 @@
         "jszip": "^3.10.1",
         "pdfmake": "^0.2.20",
         "prismjs": "^1.30.0",
-        "terser": "^5.39.0",
+        "terser": "^5.39.1",
         "trumbowyg": "^2.31.0"
     },
     "devDependencies": {
@@ -75,7 +75,7 @@
         "p-limit": "6.2.0",
         "postcss": "8.5.3",
         "prettier": "3.5.3",
-        "sass": "^1.87.0",
+        "sass": "^1.88.0",
         "shelljs": "0.10.0",
         "uglify-js": "^3.19.3",
         "upath": "2.0.1",

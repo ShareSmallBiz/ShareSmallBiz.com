@@ -25,4 +25,6 @@ public class YouTubeSearchViewModel
     public List<MediaModel> RecentlyAdded { get; set; } = new();
 
     public List<YouTubeChannelListItemViewModel> PopularChannels { get; set; } = new();
+
+    public YouTubeChannelViewModel? ChannelResult { get; set; }
 }

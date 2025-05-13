@@ -158,7 +158,7 @@ public class YouTubeMediaService
         try
         {
             var metadata = _youTubeService.ExtractMetadataFromJson(media.StorageMetadata);
-            if (metadata != null && metadata.TryGetValue("channelId", out string channelId))
+            if (metadata != null && metadata.TryGetValue("channelId", out var channelId) && channelId != null)
             {
                 return channelId;
             }
@@ -184,7 +184,7 @@ public class YouTubeMediaService
         try
         {
             var metadata = _youTubeService.ExtractMetadataFromJson(media.StorageMetadata);
-            if (metadata != null && metadata.TryGetValue("videoId", out string videoId))
+            if (metadata != null && metadata.TryGetValue("videoId", out var videoId) && videoId != null)
             {
                 return videoId;
             }
@@ -385,7 +385,7 @@ public class YouTubeMediaService
             try
             {
                 var metadata = _youTubeService.ExtractMetadataFromJson(m.StorageMetadata);
-                return metadata != null && metadata.TryGetValue("channelId", out string storedChannelId) && storedChannelId == channelId;
+                return metadata != null && metadata.TryGetValue("channelId", out var storedChannelId) && storedChannelId != null && storedChannelId == channelId;
             }
             catch
             {
@@ -401,5 +401,44 @@ public class YouTubeMediaService
     {
         var youtubeMedia = await _mediaService.GetMediaByStorageProviderAsync(userId, StorageProviderNames.YouTube);
         return youtubeMedia.OrderByDescending(m => m.CreatedDate).Take(count);
+    }
+
+    /// <summary>
+    /// Attempts to find a YouTube channel by channel name, username, or URL.
+    /// </summary>
+    public async Task<YouTubeChannelViewModel?> TryGetChannelByNameOrUrlAsync(string query, int videoCount = 12)
+    {
+        // Try to extract channelId or username from the query
+        string channelId = _youTubeService.ExtractChannelIdFromUrl(query);
+        string username = _youTubeService.ExtractUsernameFromUrl(query);
+        YouTubeChannelViewModel? channelVm = null;
+
+        if (!string.IsNullOrEmpty(channelId))
+        {
+            // Query is a channel URL
+            channelVm = await GetChannelDetailsAsync(channelId, videoCount);
+        }
+        else if (!string.IsNullOrEmpty(username))
+        {
+            // Query is a user URL
+            var channelResponse = await _youTubeService.GetChannelByUsernameAsync(username);
+            if (channelResponse?.Items != null && channelResponse.Items.Any())
+            {
+                var channelInfo = channelResponse.Items[0];
+                channelVm = await GetChannelDetailsAsync(channelInfo.Id, videoCount);
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(query) && !query.Contains(" "))
+        {
+            // Query is a single word, try as username
+            var channelResponse = await _youTubeService.GetChannelByUsernameAsync(query);
+            if (channelResponse?.Items != null && channelResponse.Items.Any())
+            {
+                var channelInfo = channelResponse.Items[0];
+                channelVm = await GetChannelDetailsAsync(channelInfo.Id, videoCount);
+            }
+        }
+        // Optionally: Try to search for channel by name using YouTube Data API search (not implemented here)
+        return channelVm;
     }
 }
