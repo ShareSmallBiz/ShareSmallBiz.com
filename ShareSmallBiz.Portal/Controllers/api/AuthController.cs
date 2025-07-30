@@ -1,7 +1,10 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using ShareSmallBiz.Portal.Data.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 namespace ShareSmallBiz.Portal.Controllers.api;
 
 
@@ -33,6 +36,14 @@ public class AuthController : ControllerBase
 
         var token = await GenerateJwtToken(user).ConfigureAwait(true);
         return Ok(new { Token = token, UserId = user.Id, DisplayName = user.DisplayName });
+    }
+
+    [HttpPost("oauth/login")]
+    public async Task<IActionResult> OAuthLogin([FromBody] LoginRequest model)
+    {
+        // This creates the api/auth/oauth/login endpoint
+        // You can either redirect to the main login or implement OAuth-specific logic here
+        return await Login(model);
     }
 
     [HttpPost("register")]

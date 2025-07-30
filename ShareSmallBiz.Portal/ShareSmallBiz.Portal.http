@@ -21,3 +21,25 @@ POST {{ShareSmallBiz.Portal_HostAddress}}/api/post/{{id}}/comment
 "string"
 
 ###
+
+# Test OAuth Login Endpoint
+POST {{ShareSmallBiz.Portal_HostAddress}}/api/oauth/login
+Content-Type: application/json
+
+{
+    "email": "test@example.com",
+    "password": "TestPassword123!"
+}
+
+###
+
+# Test Auth Login Endpoint (original)
+POST {{ShareSmallBiz.Portal_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "test@example.com",
+    "password": "TestPassword123!"
+}
+
+###
