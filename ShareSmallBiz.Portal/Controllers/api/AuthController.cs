@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ShareSmallBiz.Portal.Data.Entities;
 using System.IdentityModel.Tokens.Jwt;
@@ -49,13 +50,33 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest model)
     {
+        // Validate required fields
+        if (string.IsNullOrEmpty(model.DisplayName))
+            return BadRequest(new { Message = "Display name is required" });
+
+        // Generate a unique slug from display name
+        var baseSlug = model.DisplayName.ToLowerInvariant()
+            .Replace(" ", "-")
+            .Replace("'", string.Empty)
+            .Replace("\"", string.Empty);
+
+        // Ensure slug is unique by checking if it already exists
+        var uniqueSlug = baseSlug;
+        var counter = 1;
+        while (await _userManager.Users.AnyAsync(u => u.Slug == uniqueSlug))
+        {
+            uniqueSlug = $"{baseSlug}-{counter}";
+            counter++;
+        }
+
         var user = new ShareSmallBizUser
         {
             UserName = model.Email,
             Email = model.Email,
             DisplayName = model.DisplayName,
             FirstName = model.FirstName,
-            LastName = model.LastName
+            LastName = model.LastName,
+            Slug = uniqueSlug
         };
 
         var result = await _userManager.CreateAsync(user, model.Password);
