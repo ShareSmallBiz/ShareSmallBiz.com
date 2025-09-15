@@ -46,18 +46,13 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
         Media = post.Media?.Select(media => new MediaModel(media)).ToList() ?? [];
     }
 
-    public bool Equals(DiscussionModel other)
+    public bool Equals(DiscussionModel? other)
     {
-        if (Id == other.Id)
-            return true;
-
-        return false;
+        if (other is null) return false;
+        return Id == other.Id;
     }
 
-    public override bool Equals(object obj)
-    {
-        return Equals(obj as DiscussionModel);
-    }
+    public override bool Equals(object? obj) => Equals(obj as DiscussionModel);
     public override int GetHashCode()
     {
         return Id.GetHashCode();
@@ -68,7 +63,7 @@ public class DiscussionModel : BaseModel, IEquatable<DiscussionModel>
     public string Content { get; set; } = string.Empty;
     public string Cover { get; set; } = "https://sharesmallbiz.com/";
     public string Description { get; set; } = string.Empty;
-    public int Id { get; set; }
+    // Id inherited from BaseModel (duplicate removed)
     public bool IsFeatured { get; set; } = false;
     public bool IsPublic { get; set; } = true;
     public List<string> Keywords { get; set; } = [];

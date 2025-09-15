@@ -21,7 +21,8 @@ module.exports = function renderAssets() {
     // Define paths for Bootstrap Icons fonts, Feather Icons SVGs, Font Awesome fonts, and Trumbowyg assets
     const bootstrapIconsFontPath = upath.resolve(upath.dirname(__filename), '../node_modules/bootstrap-icons/font/fonts');
     const featherIconsSvgPath = upath.resolve(upath.dirname(__filename), '../node_modules/feather-icons/dist/icons'); // Path to Feather SVGs
-    const fontAwesomeFontPath = upath.resolve(upath.dirname(__filename), '../node_modules/fontawesome-free/webfonts'); // Path to Font Awesome fonts
+    // Updated Font Awesome path to official @fortawesome package
+    const fontAwesomeFontPath = upath.resolve(upath.dirname(__filename), '../node_modules/@fortawesome/fontawesome-free/webfonts');
     const trumbowygPath = upath.resolve(upath.dirname(__filename), '../node_modules/trumbowyg/dist'); // Path to Trumbowyg assets
     const jqueryValidationPath = upath.resolve(upath.dirname(__filename), '../node_modules/jquery-validation/dist');
     const jqueryUnobtrusivePath = upath.resolve(upath.dirname(__filename), '../node_modules/jquery-validation-unobtrusive/dist');

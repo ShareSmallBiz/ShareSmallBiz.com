@@ -6,14 +6,13 @@ namespace ShareSmallBiz.Portal.Data.Entities
 {
     public class LoginHistory : BaseEntity
     {
-        [Key]
-        public int Id { get; set; }
+        // Id inherited from BaseEntity
 
         [Required]
-        public string UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
 
         [ForeignKey("UserId")]
-        public virtual ShareSmallBizUser User { get; set; }
+    public virtual ShareSmallBizUser? User { get; set; }
 
         public DateTime LoginTime { get; set; }
 

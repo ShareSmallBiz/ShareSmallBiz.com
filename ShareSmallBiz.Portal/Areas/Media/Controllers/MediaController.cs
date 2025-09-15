@@ -54,15 +54,25 @@ public class MediaController : Controller
                 return NotFound();
             }
 
-            // For external links, redirect to the external URL
+            // For external links, redirect to the external URL (guard against null/empty Url)
             if (media.StorageProvider == StorageProviderNames.External)
             {
+                if (string.IsNullOrWhiteSpace(media.Url))
+                {
+                    _logger.LogWarning("External media {MediaId} has no URL", media.Id);
+                    return NotFound();
+                }
                 return Redirect(media.Url);
             }
 
-            // For YouTube videos, redirect to the YouTube URL
+            // For YouTube videos, redirect to the YouTube URL (guard against null/empty Url)
             if (media.StorageProvider == StorageProviderNames.YouTube)
             {
+                if (string.IsNullOrWhiteSpace(media.Url))
+                {
+                    _logger.LogWarning("YouTube media {MediaId} has no URL", media.Id);
+                    return NotFound();
+                }
                 return Redirect(media.Url);
             }
 
@@ -81,7 +91,8 @@ public class MediaController : Controller
                 ? "inline"
                 : "attachment; filename=" + media.FileName;
 
-            Response.Headers.Add("Content-Disposition", contentDisposition);
+            // Use indexer assignment instead of Add to avoid duplicate header exceptions and analyzer warning ASP0019
+            Response.Headers["Content-Disposition"] = contentDisposition;
 
             // Return the file with the appropriate content type
             return File(stream, contentType);
@@ -114,9 +125,14 @@ public class MediaController : Controller
                 thumbnailSize = requestedSize;
             }
 
-            // For YouTube videos, fetch and return the thumbnail
+            // For YouTube videos, fetch and return the thumbnail (validate Url if needed by downstream logic)
             if (media.StorageProvider == StorageProviderNames.YouTube)
             {
+                if (string.IsNullOrWhiteSpace(media.Url))
+                {
+                    _logger.LogWarning("YouTube media {MediaId} has no URL for thumbnail", media.Id);
+                    return GetMediaTypeIcon(MediaType.Video);
+                }
                 return await GetYouTubeThumbnailAsync(media);
             }
 
@@ -126,9 +142,14 @@ public class MediaController : Controller
                 return GetMediaTypeIcon(media.MediaType);
             }
 
-            // For external links to images, redirect
+            // For external links to images, redirect (guard against null/empty Url)
             if (media.StorageProvider == StorageProviderNames.External && media.MediaType == MediaType.Image)
             {
+                if (string.IsNullOrWhiteSpace(media.Url))
+                {
+                    _logger.LogWarning("External image media {MediaId} has no URL", media.Id);
+                    return NotFound();
+                }
                 return Redirect(media.Url);
             }
 

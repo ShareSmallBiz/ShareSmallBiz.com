@@ -1,16 +1,18 @@
 {
     "title": "ShareSmallBiz Portal",
-    "name": "web-spark-portal",
-    "version": "8.0.1",
+    "name": "sharesmallbiz-portal",
+    "version": "8.1.0",
     "scripts": {
-        "build": "npm run clean && npm run build:scss && npm run build:scripts && npm run build:assets ",
+        "build": "npm run clean && npm run build:scss && npm run build:scripts && npm run build:assets",
         "build:assets": "node scripts/build-assets.js",
         "build:scripts": "node scripts/build-scripts.js",
         "build:scss": "node scripts/build-scss.js",
         "clean": "node scripts/clean.js",
         "start": "npm run build && node scripts/start.js",
         "start:debug": "npm run build && node scripts/start-debug.js",
-        "PromptSpark": "node src/PromptSpark/npm_build.js"
+        "security:audit": "npm audit --audit-level=high || exit 0",
+        "security:audit:fix": "npm audit fix || exit 0",
+        "deps:check": "npx npm-check-updates"
     },
     "description": "The admin portal for all things ShareSmallBiz.",
     "keywords": [
@@ -24,24 +26,26 @@
     ],
     "homepage": "https://markhazleton.com/",
     "bugs": {
-        "email": "mark.hazleton@controlorigins.com"
+        "email": "mark@markhazleton.com"
     },
     "license": "SEE_LICENSE",
     "author": "Mark Hazleton",
     "contributors": [
-        "David Miller (https://davidmiller.io/)",
         "Mark Hazleton (https://markhazleton.com/)"
     ],
     "repository": {
         "type": "git",
         "url": "https://github.com/markhazleton/ShareSmallBiz.git"
     },
+    "engines": {
+        "node": ">=18.0.0"
+    },
     "dependencies": {
+        "@fortawesome/fontawesome-free": "^7.0.1",
         "@microsoft/signalr": "^9.0.6",
         "@popperjs/core": "^2.11.8",
         "bootstrap": "^5.3.8",
         "bootstrap-icons": "^1.13.1",
-        "bootswatch": "^5.3.8",
         "datatables.net": "^2.3.4",
         "datatables.net-bs5": "^2.3.4",
         "datatables.net-buttons-bs5": "^3.2.5",
@@ -51,26 +55,22 @@
         "datatables.net-scroller-bs5": "^2.4.3",
         "datatables.net-staterestore-bs5": "^1.4.2",
         "feather-icons": "^4.29.2",
-        "fontawesome-free": "^1.0.4",
         "jquery": "^3.7.1",
         "jquery-validation": "^1.21.0",
         "jquery-validation-unobtrusive": "^4.0.0",
         "jszip": "^3.10.1",
         "pdfmake": "^0.2.20",
         "prismjs": "^1.30.0",
-        "terser": "^5.44.0",
         "trumbowyg": "^2.31.0"
     },
     "devDependencies": {
-        "@fullhuman/postcss-purgecss": "^7.0.2",
+        "glob": "^11.0.3",
         "autoprefixer": "10.4.21",
         "bootswatch": "^5.3.8",
         "browser-sync": "3.0.4",
         "chokidar": "4.0.3",
-        "clean-css-cli": "^5.6.3",
         "concurrently": "9.2.1",
         "cssnano": "^7.1.1",
-        "dotenv": "17.2.2",
         "ncp": "^2.0.0",
         "p-limit": "7.1.1",
         "postcss": "8.5.6",

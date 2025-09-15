@@ -27,6 +27,10 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest model)
     {
+        if (model == null || string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password))
+        {
+            return BadRequest(new { Message = "Email and password are required" });
+        }
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user == null)
             return Unauthorized(new { Message = "Invalid credentials" });
@@ -51,8 +55,8 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterRequest model)
     {
         // Validate required fields
-        if (string.IsNullOrEmpty(model.DisplayName))
-            return BadRequest(new { Message = "Display name is required" });
+        if (model == null || string.IsNullOrWhiteSpace(model.DisplayName) || string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Password))
+            return BadRequest(new { Message = "Display name, email and password are required" });
 
         // Generate a unique slug from display name
         var baseSlug = model.DisplayName.ToLowerInvariant()

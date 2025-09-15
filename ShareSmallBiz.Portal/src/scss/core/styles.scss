@@ -20,8 +20,8 @@
 // Import Bootstrap Icons
 @import "../../../node_modules/bootstrap-icons/font/bootstrap-icons";
 
-// Import Font Awesome 
-@import "../../../node_modules/fontawesome-free/css/all"; // Import Font Awesome
+// Import Font Awesome (updated package path)
+@import "../../../node_modules/@fortawesome/fontawesome-free/css/all"; // Font Awesome
 
 // Import DataTables Bootstrap 5 styling
 @import "../../../node_modules/datatables.net-bs5/css/dataTables.bootstrap5";

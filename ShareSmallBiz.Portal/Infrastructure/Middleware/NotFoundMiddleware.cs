@@ -47,7 +47,7 @@ public class NotFoundMiddleware(RequestDelegate next, ILogger<NotFoundMiddleware
     {
         if (!context.Request.Path.Equals(newPath, StringComparison.OrdinalIgnoreCase))
         {
-            context.Response.Headers.Add("X-Redirected", "true");
+            context.Response.Headers["X-Redirected"] = "true";
             context.Response.Redirect(newPath, permanent: true);
         }
     }
