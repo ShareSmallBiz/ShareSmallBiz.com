@@ -61,7 +61,8 @@ Keep answers concrete and code-aware. Prefer referencing existing patterns over 
 
 - Build: `dotnet build ShareSmallBiz.Portal.csproj` (task: `build`).
 - Run (hot reload): `dotnet watch run --project ShareSmallBiz.Portal.csproj` (task: `watch`).
-- EF migrations: `dotnet ef migrations add <Timestamp_Description>` (timestamp prefix manually added) then `dotnet ef database update`.
+- EF migrations: `dotnet tool restore`, then `dotnet tool run dotnet-ef migrations add <Description> --output-dir Migrations --context ShareSmallBizUserContext`, then `dotnet tool run dotnet-ef database update`.
+- Migration cleanliness check: `npm run ef:migration:check` scaffolds a temporary migration in the unified `Migrations` folder, asserts it is empty, and removes it.
 - Swagger UI at `/swagger` configured explicitly with `RoutePrefix = "swagger"`.
 
 ### 11. Controllers & Routing

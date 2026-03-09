@@ -1,7 +1,10 @@
 ﻿@using ShareSmallBiz.Portal.Infrastructure.Models
+@using System.Text.Encodings.Web
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @model UserModel
 @{
     ViewData["Title"] = "Chat - " + Model.UserName;
+    var chatHubUrl = Configuration["Chat:HubUrl"] ?? string.Empty;
 }
 
 <div class="container-fluid px-0">
@@ -65,6 +68,8 @@
                         <!-- Hidden field to store the variant name -->
                         <span id="chatVariantName" class="d-none">sharesmallbizchat</span>
 
+                        <div id="connectionStatus" class="alert alert-info rounded-0 border-0 mb-0 d-none" role="status"></div>
+
                         <!-- Chat Conversation -->
                         <div id="chatConversation" class="flex-grow-1 d-flex flex-column">
                             <!-- Messages Container -->
@@ -97,8 +102,7 @@
 </div>
 
 @section Scripts {
-    <!-- Include SignalR and marked libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js"></script>
+    <!-- Include marked library -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         // --------------------
@@ -106,9 +110,9 @@
         // --------------------
         // Set userName from the provided UserModel
         let userName = '@Model.UserName';
+        let configuredChatHubUrl = '@JavaScriptEncoder.Default.Encode(chatHubUrl)';
         // Always use "sharesmallbizchat" as the variant name
         let chatVariantName = 'sharesmallbizchat';
-        let isConnecting = true;
         let streamingBuffer = '';
         let conversationId = new Date().getTime().toString();
         let connection = null;
@@ -128,6 +132,44 @@
                 return marked.parse(text);
             }
             return text;
+        }
+
+        function getConnectionStatusElement() {
+            return document.getElementById('connectionStatus');
+        }
+
+        function setComposerEnabled(enabled) {
+            var chatInputField = document.getElementById('chatInput');
+            var sendMessageButton = document.getElementById('sendMessageBtn');
+
+            if (chatInputField) {
+                chatInputField.disabled = !enabled;
+            }
+
+            if (sendMessageButton) {
+                sendMessageButton.disabled = !enabled;
+            }
+        }
+
+        function setConnectionStatus(message, alertClass) {
+            var statusElement = getConnectionStatusElement();
+            if (!statusElement) {
+                return;
+            }
+
+            if (!message) {
+                statusElement.textContent = '';
+                statusElement.className = 'alert rounded-0 border-0 mb-0 d-none';
+                return;
+            }
+
+            statusElement.textContent = message;
+            statusElement.className = 'alert rounded-0 border-0 mb-0 ' + (alertClass || 'alert-info');
+        }
+
+        function setChatAvailability(message, isAvailable, alertClass) {
+            setComposerEnabled(isAvailable);
+            setConnectionStatus(message, alertClass);
         }
 
         // Append a new message to the chat
@@ -210,12 +252,40 @@
 
         // Initialize the SignalR chat connection
         function initChatConnection() {
+            if (typeof signalR === 'undefined') {
+                setChatAvailability('Chat client failed to load.', false, 'alert-danger');
+                return;
+            }
+
+            if (!configuredChatHubUrl) {
+                setChatAvailability('Chat is not configured for this environment. Set Chat:HubUrl to enable it.', false, 'alert-warning');
+                return;
+            }
+
+            setChatAvailability('Connecting to chat service...', false, 'alert-info');
+
             connection = new signalR.HubConnectionBuilder()
-                .withUrl('https://webspark.markhazleton.com/chatHub')
+                .withUrl(configuredChatHubUrl)
+                .withAutomaticReconnect()
                 .build();
+
+            connection.on('ReceiveMessage', handleReceiveMessage);
+
+            connection.onreconnecting(function() {
+                setChatAvailability('Reconnecting to chat service...', false, 'alert-warning');
+            });
+
+            connection.onreconnected(function() {
+                setChatAvailability('', true);
+            });
+
+            connection.onclose(function() {
+                setChatAvailability('Chat disconnected. If this uses a remote hub, that server must allow this site origin via CORS.', false, 'alert-danger');
+            });
+
             connection.start().then(function(){
-                isConnecting = false;
                 console.log('Connected to SignalR hub');
+                setChatAvailability('', true);
 
                 // Add a welcome message to the chat
                 setTimeout(function() {
@@ -224,9 +294,8 @@
 
             }).catch(function(error){
                 console.error('SignalR connection failed:', error);
-                isConnecting = false;
+                setChatAvailability('Unable to connect to the chat service. If this uses a remote hub, that server must allow this site origin via CORS.', false, 'alert-danger');
             });
-            connection.on('ReceiveMessage', handleReceiveMessage);
         }
 
         // Handle sending a message from the chat input
@@ -234,9 +303,12 @@
             var chatInputField = document.getElementById('chatInput');
             if (userName && chatInputField && chatInputField.value.trim() !== '') {
                 var message = chatInputField.value.trim();
-                if (connection) {
+                if (connection && connection.state === signalR.HubConnectionState.Connected) {
                     connection.invoke('SendMessage', userName, message, conversationId, chatVariantName)
                         .catch(function(err){ console.error(err); });
+                } else {
+                    setChatAvailability('Chat is not connected yet.', false, 'alert-warning');
+                    return;
                 }
                 chatInputField.value = '';
             }
@@ -244,6 +316,8 @@
 
         // Set up event listeners for chat once the DOM is ready
         document.addEventListener('DOMContentLoaded', function(){
+            setComposerEnabled(false);
+
             var joinModalButton = document.getElementById('joinModalButton');
             joinModalButton.addEventListener('click', function() {
                 document.getElementById('chatModalTitle').textContent = 'Chat with ShareSmallBiz';
