@@ -26,9 +26,10 @@ namespace ShareSmallBiz.Portal.Infrastructure.Extensions
                 .AddUserConfirmation<ShareSmallBizUser>()
                 .AddDefaultUI();
 
+            var keyPath = configuration["DataProtection:KeyPath"] ?? @"C:\websites\ShareSmallBiz\keys";
             services.AddDataProtection()
                     .SetApplicationName("ShareSmallBiz")
-                    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\websites\ShareSmallBiz\keys"));
+                    .PersistKeysToFileSystem(new DirectoryInfo(keyPath));
 
             var jwtSecret = configuration["JwtSettings:Secret"];
             var issuer = configuration["JwtSettings:Issuer"];

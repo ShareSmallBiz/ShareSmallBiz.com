@@ -11,7 +11,6 @@ function minifyAndCopyJS() {
     const inputPath = path.join(__dirname, '../src/js/');  // Custom scripts
     const bootstrapJSPath = path.join(__dirname, '../node_modules/bootstrap/dist/js/bootstrap.bundle.js');  // Bootstrap JS
     const jqueryJSPath = path.join(__dirname, '../node_modules/jquery/dist/jquery.js');  // jQuery
-    const featherJSPath = path.join(__dirname, '../node_modules/feather-icons/dist/feather.min.js');  // Feather Icons
     const signalRPath = path.join(__dirname, '../node_modules/@microsoft/signalr/dist/browser/signalr.js');  // SignalR
     const outputPath = path.join(__dirname, '../wwwroot/dist/js/');  // Output directory
     const outputFile = 'ShareSmallBiz.min.js';
@@ -31,7 +30,6 @@ function minifyAndCopyJS() {
         'datatables.js': fs.readFileSync(dataTablesJSPath, 'utf8'),                  // DataTables core
         'datatables-bs5.js': fs.readFileSync(dataTablesBS5Path, 'utf8'),             // DataTables Bootstrap 5
         'bootstrap.js': fs.readFileSync(bootstrapJSPath, 'utf8'),                    // Bootstrap JS
-        'feather.js': fs.readFileSync(featherJSPath, 'utf8'),                        // Feather Icons
         'signalr.js': fs.readFileSync(signalRPath, 'utf8'),                          // SignalR
         'ShareSmallBiz.js': fs.readFileSync(path.join(inputPath, 'ShareSmallBiz.js'), 'utf8'), // Custom script
     };

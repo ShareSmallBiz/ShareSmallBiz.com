@@ -1,17 +1,16 @@
-﻿using ShareSmallBiz.Portal.Areas.Media;
+using Scalar.AspNetCore;
+using ShareSmallBiz.Portal.Areas.Media;
 using ShareSmallBiz.Portal.Infrastructure.Extensions;
 using ShareSmallBiz.Portal.Infrastructure.Logging;
 using ShareSmallBiz.Portal.Infrastructure.Middleware;
 using System.Text.Json;
 
-// Rest of the code remains unchanged
 var builder = WebApplication.CreateBuilder(args);
 
 // ========================
 // Configuration
 // ========================
 builder.Configuration.AddCustomConfiguration(builder.Environment);
-
 
 // ========================
 // Logging Configuration
@@ -49,20 +48,21 @@ builder.Services.AddIdentityServices(builder.Configuration);
 builder.Services.AddHttpClientUtilities(builder.Configuration);
 
 // ========================
-// OpenAPI/Swagger
+// OpenAPI Documentation
 // ========================
-builder.Services.AddSwaggerDocumentation();
+builder.Services.AddOpenApiDocumentation();
 
 // ========================
 // Application Services
 // ======================
-builder.Services.AddApplicationServices(); // Using ApplicationServicesExtensions
-builder.Services.AddInfrastructureServices(); // Using ServiceCollectionExtensions
+builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices();
 
 // ========================
 // MVC, Razor Pages, SignalR
 // ========================
 builder.Services.AddMvcServices();
+builder.Services.AddCorsPolicy(builder.Configuration);
 
 // ========================
 // Json Serializer Configuration
@@ -79,63 +79,34 @@ builder.Services.AddHttpContextAccessor();
 // ========================
 builder.Services.AddMediaServices(builder.Configuration);
 
-
-
 var app = builder.Build();
 app.UseGlobalExceptionHandling();
 
 // ========================
 // Middleware Configuration
 // ========================
-app.UseSwagger();
-app.UseSwaggerUI(options =>
-{
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "ShareSmallBiz API v1");
-    options.RoutePrefix = "swagger";
-});
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-app.UseAuthentication(); // ✅ Ensure authentication middleware is before authorization
+app.UseAuthentication();
 app.UseAuthorization();
-app.UseSession(); // ✅ Ensure session middleware runs AFTER authentication
-app.UseCors("AllowAllOrigins");
+app.UseSession();
+app.UseCors("ApiCorsPolicy");
 
-// ✅ Debug Middleware to Check Authentication Status
-app.Use(async (context, next) =>
+// ========================
+// API Docs (non-production only)
+// ========================
+if (!app.Environment.IsProduction())
 {
-    var user = context.User;
-    var isAuthenticated = user.Identity?.IsAuthenticated ?? false;
-    var userName = user.Identity?.Name ?? "Unknown";
-
-    if (isAuthenticated)
-    {
-        app.Logger.LogInformation("🔹 Middleware: User is authenticated as {UserName}", userName);
-    }
-    else
-    {
-        app.Logger.LogInformation("⚠️ Middleware: User is NOT authenticated.");
-    }
-
-    var authCookie = context.Request.Cookies[".AspNetCore.Identity.Application"];
-    if (authCookie != null)
-    {
-        app.Logger.LogInformation("🔹 Auth Cookie Found in Request");
-    }
-    else
-    {
-        app.Logger.LogInformation("⚠️ No Authentication Cookie Found in Request!");
-    }
-
-    await next();
-});
+    app.MapOpenApi();
+    app.MapScalarApiReference(options => options.WithTitle("ShareSmallBiz API"));
+}
 
 // ========================
 // Route Configuration
 // ========================
 app.MapRazorPages();
 app.MapMediaEndpoints();
-
 
 app.MapControllerRoute(
     name: "areaRoute",
@@ -147,7 +118,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}"
 );
 
-
 app.MapFallbackToController("GetError", "Home");
 app.MapControllerRoute(
     name: "catchAll",
@@ -155,9 +125,8 @@ app.MapControllerRoute(
     defaults: new { controller = "Home", action = "GetError" }
 );
 
-
 app.MapSitemap();
 
-app.Logger.LogWarning("🔹 Application started successfully.");
+app.Logger.LogWarning("Application started successfully.");
 
 app.Run();

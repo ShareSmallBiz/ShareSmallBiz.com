@@ -1,43 +1,45 @@
-﻿using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.OpenApi;
+using Microsoft.OpenApi;
 
 namespace ShareSmallBiz.Portal.Infrastructure.Extensions
 {
-    public static class SwaggerExtensions
+    public static class OpenApiExtensions
     {
-        public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
+        public static IServiceCollection AddOpenApiDocumentation(this IServiceCollection services)
         {
-            services.AddEndpointsApiExplorer();
-            services.AddSwaggerGen(options =>
+            services.AddOpenApi("v1", options =>
             {
-                options.SwaggerDoc("v1", new OpenApiInfo
+                options.AddDocumentTransformer((document, context, cancellationToken) =>
                 {
-                    Version = "v1",
-                    Title = "ShareSmallBiz API",
-                    Description = "API documentation for ShareSmallBiz Portal",
-                    Contact = new OpenApiContact
+                    document.Info = new OpenApiInfo
                     {
-                        Name = "Support",
-                        Email = "support@sharesmallbiz.com",
-                        Url = new Uri("https://sharesmallbiz.com/")
+                        Version = "v1",
+                        Title = "ShareSmallBiz API",
+                        Description = "API documentation for ShareSmallBiz Portal",
+                        Contact = new OpenApiContact
+                        {
+                            Name = "Support",
+                            Email = "support@sharesmallbiz.com",
+                            Url = new Uri("https://sharesmallbiz.com/")
+                        }
+                    };
+
+                    // Only include routes that start with /api/
+                    if (document.Paths != null)
+                    {
+                        var apiPaths = document.Paths
+                            .Where(p => p.Key.StartsWith("/api/", StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+
+                        document.Paths.Clear();
+                        foreach (var path in apiPaths)
+                            document.Paths.Add(path.Key, path.Value);
                     }
+
+                    return Task.CompletedTask;
                 });
-
-                // Only include routes that start with /api/
-                options.DocInclusionPredicate((docName, apiDesc) =>
-                {
-                    if (apiDesc.RelativePath == null)
-                        return false;
-
-                    return apiDesc.RelativePath.StartsWith("api/", StringComparison.OrdinalIgnoreCase);
-                });
-
-                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                if (File.Exists(xmlPath))
-                {
-                    options.IncludeXmlComments(xmlPath);
-                }
             });
+
             return services;
         }
     }

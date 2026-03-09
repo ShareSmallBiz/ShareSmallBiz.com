@@ -18,20 +18,17 @@ module.exports = function renderAssets() {
         sh.cp(sourceFile, destFile);
     });
 
-    // Define paths for Bootstrap Icons fonts, Feather Icons SVGs, Font Awesome fonts, and Trumbowyg assets
+    // Define paths for Bootstrap Icons fonts, Font Awesome fonts, and Trumbowyg assets
     const bootstrapIconsFontPath = upath.resolve(upath.dirname(__filename), '../node_modules/bootstrap-icons/font/fonts');
-    const featherIconsSvgPath = upath.resolve(upath.dirname(__filename), '../node_modules/feather-icons/dist/icons'); // Path to Feather SVGs
-    // Updated Font Awesome path to official @fortawesome package
     const fontAwesomeFontPath = upath.resolve(upath.dirname(__filename), '../node_modules/@fortawesome/fontawesome-free/webfonts');
-    const trumbowygPath = upath.resolve(upath.dirname(__filename), '../node_modules/trumbowyg/dist'); // Path to Trumbowyg assets
+    const trumbowygPath = upath.resolve(upath.dirname(__filename), '../node_modules/trumbowyg/dist');
     const jqueryValidationPath = upath.resolve(upath.dirname(__filename), '../node_modules/jquery-validation/dist');
     const jqueryUnobtrusivePath = upath.resolve(upath.dirname(__filename), '../node_modules/jquery-validation-unobtrusive/dist');
 
-    // Updated destination paths
+    // Destination paths
     const fontsDestPath = upath.resolve(destPath, 'dist/css/fonts');
-    const featherIconsDestPath = upath.resolve(destPath, 'dist/css/icons/feather-icons');
     const fontAwesomeDestPath = upath.resolve(destPath, 'dist/webfonts');
-    const trumbowygDestPath = upath.resolve(destPath, 'dist/trumbowyg'); // Destination for Trumbowyg assets
+    const trumbowygDestPath = upath.resolve(destPath, 'dist/trumbowyg');
     const jqueryDestPath = upath.resolve(destPath, 'dist/jquery');
 
     // Copy Bootstrap Icons fonts
@@ -46,20 +43,6 @@ module.exports = function renderAssets() {
         });
     } else {
         console.error(`Bootstrap Icons fonts path not found: ${bootstrapIconsFontPath}`);
-    }
-
-    // Copy Feather Icons SVGs
-    if (fs.existsSync(featherIconsSvgPath)) {
-        const featherSvgFiles = glob.sync('**/*.svg', { cwd: featherIconsSvgPath, nodir: true });
-        featherSvgFiles.forEach((file) => {
-            const sourceFile = path.join(featherIconsSvgPath, file);
-            const destFile = path.join(featherIconsDestPath, file);
-            sh.mkdir('-p', path.dirname(destFile));
-            sh.cp(sourceFile, destFile);
-            console.log(`Copied: ${sourceFile} to ${destFile}`);
-        });
-    } else {
-        console.error(`Feather Icons SVGs path not found: ${featherIconsSvgPath}`);
     }
 
     // Copy Font Awesome fonts
@@ -90,7 +73,6 @@ module.exports = function renderAssets() {
         console.error(`Trumbowyg assets path not found: ${trumbowygPath}`);
     }
 
-
     // Copy jQuery validation files
     if (fs.existsSync(jqueryValidationPath)) {
         const validationFiles = glob.sync('jquery.validate.min.js', { cwd: jqueryValidationPath, nodir: true });
@@ -118,5 +100,5 @@ module.exports = function renderAssets() {
         console.error(`jQuery Unobtrusive Validation path not found: ${jqueryUnobtrusivePath}`);
     }
 
-    console.log('Assets and fonts (including Trumbowyg, SVGs, and Font Awesome) copying completed!');
+    console.log('Assets and fonts copying completed!');
 };
