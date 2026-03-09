@@ -8,11 +8,11 @@ using ShareSmallBiz.Portal.Data;
 
 #nullable disable
 
-namespace ShareSmallBiz.Portal.Data.Migrations
+namespace ShareSmallBiz.Portal.Migrations
 {
     [DbContext(typeof(ShareSmallBizUserContext))]
-    [Migration("20250501034835_AddLoginHistoryTable")]
-    partial class AddLoginHistoryTable
+    [Migration("20250502223558_UserProfile")]
+    partial class UserProfile
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -513,6 +513,10 @@ namespace ShareSmallBiz.Portal.Data.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("CustomProfileUrl")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -564,11 +568,20 @@ namespace ShareSmallBiz.Portal.Data.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("ProfileCompletenessScore")
+                        .HasColumnType("INTEGER");
+
                     b.Property<byte[]>("ProfilePicture")
                         .HasColumnType("BLOB");
 
                     b.Property<string>("ProfilePictureUrl")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("ProfileViewCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ProfileVisibility")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("TEXT");

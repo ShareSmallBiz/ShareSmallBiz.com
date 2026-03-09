@@ -15,7 +15,7 @@ namespace ShareSmallBiz.Portal.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.4");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.3");
 
             modelBuilder.Entity("KeywordPost", b =>
                 {
@@ -239,7 +239,6 @@ namespace ShareSmallBiz.Portal.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Attribution")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
@@ -247,7 +246,6 @@ namespace ShareSmallBiz.Portal.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ContentType")
-                        .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
@@ -258,7 +256,6 @@ namespace ShareSmallBiz.Portal.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(512)
                         .HasColumnType("TEXT");
 
@@ -283,7 +280,6 @@ namespace ShareSmallBiz.Portal.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("StorageMetadata")
-                        .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("TEXT");
 

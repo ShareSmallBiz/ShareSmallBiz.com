@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace ShareSmallBiz.Portal.Data.Migrations
+namespace ShareSmallBiz.Portal.Migrations
 {
     /// <inheritdoc />
     public partial class UserProfile : Migration
