@@ -1,9 +1,13 @@
 # ShareSmallBiz Web — API Gap Analysis
 
-This document lists every capability the React web app requires that is not currently provided
-by `api.sharesmallbiz.com`. Each missing endpoint is written in the same style as the
-existing [api-developer-guide.md](api-developer-guide.md) so it can be used directly as a
-specification for the API team.
+> **Status as of 2026-03-11: ALL 14 GAPS RESOLVED ✅**
+>
+> This document was originally written as a specification for missing API capabilities.
+> All identified gaps have been implemented across three phases (Phase A, B, C).
+> The [api-developer-guide.md](api-developer-guide.md) (sections 19–26) is the canonical
+> reference for these endpoints going forward.
+>
+> This file is retained as a historical record of what was identified, specified, and delivered.
 
 Access level key:
 
@@ -40,6 +44,12 @@ Access level key:
 total discussions, partnerships formed). There is no public endpoint that returns these
 aggregate numbers. `GET /api/admin/dashboard` contains this data but requires the Admin role.
 
+**Status: ✅ IMPLEMENTED — Phase A**
+
+- `StatsService` + `StatsController` added
+- Results cached 5 minutes via `IMemoryCache`
+- See [api-developer-guide.md §19](api-developer-guide.md#19-community-stats)
+
 ---
 
 ### GET /api/stats `[Public]`
@@ -53,6 +63,7 @@ need to be real-time.
 {
   "totalMembers": 2847,
   "totalDiscussions": 4821,
+  "totalArticles": 42,
   "totalKeywords": 42,
   "memberGrowthThisMonth": 83
 }
@@ -64,6 +75,13 @@ need to be real-time.
 
 **Gap:** The navigation bar contains a full-width search input. There is no search endpoint.
 The current implementation does nothing when the user types.
+
+**Status: ✅ IMPLEMENTED — Phase A**
+
+- `SearchService` + `SearchController` added
+- Case-insensitive full-text search across Posts (title/description/content), Users (displayName/bio), Keywords
+- `SearchResultModel` collections default to empty lists (not null) when filtered by type
+- See [api-developer-guide.md §20](api-developer-guide.md#20-search)
 
 ---
 
@@ -81,31 +99,9 @@ Full-text search across discussions, profiles, and keywords. Returns grouped res
 
 ```json
 {
-  "discussions": [
-    {
-      "id": 101,
-      "title": "How to Market Your Small Business on LinkedIn",
-      "slug": "how-to-market-...",
-      "description": "A short excerpt...",
-      "createdDate": "2026-01-15T12:00:00Z"
-    }
-  ],
-  "profiles": [
-    {
-      "id": "3fa85f64-...",
-      "displayName": "Jane Smith",
-      "userName": "jane.smith",
-      "profilePictureUrl": "/Media/42",
-      "bio": "Small business owner from Austin, TX."
-    }
-  ],
-  "keywords": [
-    {
-      "id": 7,
-      "name": "Marketing",
-      "postCount": 312
-    }
-  ]
+  "discussions": [ { "id": 101, "title": "...", "slug": "...", "description": "...", "createdDate": "..." } ],
+  "profiles":    [ { "id": "3fa85f64-...", "displayName": "Jane Smith", "userName": "jane.smith", "profilePictureUrl": "..." } ],
+  "keywords":    [ { "id": 7, "name": "Marketing", "postCount": 312 } ]
 }
 ```
 
@@ -120,8 +116,14 @@ Full-text search across discussions, profiles, and keywords. Returns grouped res
 ## 3. User Preferences / Settings
 
 **Gap:** The Settings page has tabs for notification preferences and privacy controls.
-There is no endpoint to read or write these settings. The `UserModel` returned by
-`GET /api/users/{userId}` does not include any preference fields.
+There is no endpoint to read or write these settings.
+
+**Status: ✅ IMPLEMENTED — Phase A**
+
+- `UserPreference` entity added (migration `20260311083125_PhaseA_DatabaseSchema`)
+- `UserSettingsController` at route `api/users/{userId}/settings`
+- Fields: email notifications, per-event toggles (follower/comment/like/DM), privacy settings
+- See [api-developer-guide.md §21](api-developer-guide.md#21-user-settings)
 
 ---
 
@@ -129,46 +131,9 @@ There is no endpoint to read or write these settings. The `UserModel` returned b
 
 Return the caller's preference settings. The caller must be the account owner.
 
-**Response `200 OK`:**
-
-```json
-{
-  "notifications": {
-    "emailOnComment": true,
-    "emailOnLike": false,
-    "emailOnFollow": true,
-    "weeklySummary": false
-  },
-  "privacy": {
-    "profileVisibility": "Public",
-    "showEmail": false,
-    "showWebsite": true
-  }
-}
-```
-
-`profileVisibility` values: `Public`, `Authenticated`, `Connections`, `Private`
-
----
-
 ### PUT /api/users/{userId}/settings `[Authenticated]`
 
-Update preference settings. Only the provided fields are changed (partial update).
-
-**Request body:**
-
-```json
-{
-  "notifications": {
-    "emailOnComment": false
-  },
-  "privacy": {
-    "profileVisibility": "Connections"
-  }
-}
-```
-
-**Response `204 No Content`**
+Update preference settings.
 
 ---
 
@@ -177,58 +142,33 @@ Update preference settings. Only the provided fields are changed (partial update
 **Gap:** The navigation header shows a bell icon with a badge count. There is no
 notifications endpoint of any kind.
 
+**Status: ✅ IMPLEMENTED — Phase B**
+
+- `Notification` entity + migration `20260311131707_PhaseB_NewTables`
+- `NotificationService` + `NotificationsController`
+- Self-notifications are skipped automatically
+- Notifications created on follow, comment, like, and direct message events
+- See [api-developer-guide.md §22](api-developer-guide.md#22-notifications)
+
 ---
 
 ### GET /api/notifications `[Authenticated]`
 
 Return the caller's notifications, newest first.
 
-| Query param | Type | Default | Description |
-|---|---|---|---|
-| `unreadOnly` | `bool` | `false` | Return only unread notifications |
-| `pageSize` | `int` | `20` | Results per page |
-| `pageNumber` | `int` | `1` | 1-based page |
-
-**Response `200 OK`:**
-
-```json
-{
-  "items": [
-    {
-      "id": "a1b2c3...",
-      "type": "comment",
-      "message": "Jane Smith commented on your post.",
-      "isRead": false,
-      "createdDate": "2026-03-10T14:00:00Z",
-      "targetId": 101,
-      "targetType": "discussion"
-    }
-  ],
-  "unreadCount": 3,
-  "totalCount": 47,
-  "pageNumber": 1,
-  "pageSize": 20,
-  "totalPages": 3
-}
-```
-
-`type` values: `comment`, `like`, `follow`, `mention`
-
----
-
-### POST /api/notifications/read-all `[Authenticated]`
-
-Mark all notifications as read.
-
-**Response `204 No Content`**
-
----
+| Query param | Type | Default |
+|---|---|---|
+| `unreadOnly` | `bool` | `false` |
+| `pageSize` | `int` | `20` |
+| `pageNumber` | `int` | `1` |
 
 ### PUT /api/notifications/{id}/read `[Authenticated]`
 
-Mark a single notification as read.
+Mark a single notification as read. Returns `403` if not owned by caller.
 
-**Response `204 No Content`**
+### POST /api/notifications/read-all `[Authenticated]`
+
+Mark all notifications as read. Returns `{ "markedCount": N }`.
 
 ---
 
@@ -237,111 +177,52 @@ Mark a single notification as read.
 **Gap:** The navigation header shows a mail icon with a badge count. There is no
 messaging endpoint.
 
+**Status: ✅ IMPLEMENTED — Phase B**
+
+- `DirectMessage` entity + migration `20260311131707_PhaseB_NewTables`
+- `MessageService` + `DirectMessagesController`
+- Deterministic `ConversationId` = `min(userA,userB)_max(userA,userB)` ensures both directions share same thread
+- Sending a message auto-creates a notification to the recipient
+- Getting messages auto-marks incoming unread messages as read
+- See [api-developer-guide.md §23](api-developer-guide.md#23-direct-messages)
+
 ---
 
 ### GET /api/messages/conversations `[Authenticated]`
 
 List the caller's conversations, most-recently-active first.
 
-**Response `200 OK`:**
-
-```json
-[
-  {
-    "conversationId": "conv_abc123",
-    "otherUser": {
-      "id": "3fa85f64-...",
-      "displayName": "Jane Smith",
-      "userName": "jane.smith",
-      "profilePictureUrl": "/Media/42"
-    },
-    "lastMessage": "Sounds great, let's connect!",
-    "lastMessageDate": "2026-03-09T18:22:00Z",
-    "unreadCount": 2
-  }
-]
-```
-
----
-
 ### GET /api/messages/conversations/{conversationId} `[Authenticated]`
 
-Return messages in a conversation, newest first.
-
-| Query param | Type | Default |
-|---|---|---|
-| `pageSize` | `int` | `30` |
-| `pageNumber` | `int` | `1` |
-
-**Response `200 OK`:** paginated list of message objects:
-
-```json
-{
-  "items": [
-    {
-      "id": "msg_xyz",
-      "senderId": "3fa85f64-...",
-      "content": "Hi! I saw your post about marketing.",
-      "sentDate": "2026-03-09T18:20:00Z",
-      "isRead": true
-    }
-  ],
-  "totalCount": 14,
-  "pageNumber": 1,
-  "pageSize": 30,
-  "totalPages": 1
-}
-```
-
----
+Return messages in a conversation (paginated). Marks incoming messages as read on fetch.
 
 ### POST /api/messages `[Authenticated]`
 
-Send a direct message to another user.
-
-**Request body:**
-
-```json
-{
-  "recipientId": "3fa85f64-...",
-  "content": "Hi Jane, would you be interested in a collaboration?"
-}
-```
-
-**Response `201 Created`:**
-
-```json
-{
-  "conversationId": "conv_abc123",
-  "messageId": "msg_xyz"
-}
-```
-
-**Error responses:**
-
-| Status | Reason |
-|---|---|
-| `400` | `content` is empty |
-| `404` | `recipientId` does not exist |
+Send a direct message. Returns `MessageModel` on `201 Created`.
 
 ---
 
 ## 6. Follow Status on Profile Listings
 
 **Gap:** `GET /api/profiles` returns a list of `UserModel` objects but does not indicate
-whether the authenticated caller is already following each profile. Without this, the
-"Follow" / "Unfollow" button cannot be initialised correctly in the Suggested Connections
-widget.
+whether the authenticated caller is already following each profile.
+
+**Status: ✅ IMPLEMENTED — Phase A**
+
+- `ProfilesApiController.GetAll` and `GetBySlug` augmented with `isFollowedByMe`
+- `followerCount` and `followingCount` added as denormalized fields to `ShareSmallBizUser` (migration Phase A)
+- See [api-developer-guide.md §7](api-developer-guide.md#7-profiles) and [§27 UserModel](api-developer-guide.md#usermodel)
 
 ---
 
 ### Change to existing: GET /api/profiles `[Public]`
 
-When an `Authorization` header is present, augment each `UserModel` in the response with:
+When an `Authorization` header is present, each `UserModel` now includes:
 
 ```json
 {
-  "...": "all existing UserModel fields",
+  "followerCount": 128,
+  "followingCount": 34,
   "isFollowedByMe": true
 }
 ```
@@ -354,53 +235,27 @@ When an `Authorization` header is present, augment each `UserModel` in the respo
 
 **Gap:** The post card has Save (bookmark) and Share buttons. Neither has an API endpoint.
 
+**Status: ✅ IMPLEMENTED — Phase B**
+
+- `PostSave` entity + migration `20260311131707_PhaseB_NewTables` (unique index on UserId+PostId)
+- `DiscussionProvider` extended: `SaveDiscussionAsync` (toggle), `GetSavedDiscussionsAsync`, `ShareDiscussionAsync`
+- `DiscussionController` extended: `POST /{id}/save`, `GET /saved`, `POST /{id}/share`
+- `Post.ShareCount` field added (migration Phase A)
+- See [api-developer-guide.md §8](api-developer-guide.md#8-discussions)
+
 ---
 
 ### POST /api/discussion/{id}/save `[Authenticated]`
 
-Toggle a saved/bookmarked state on a discussion.
+Toggle save. Returns `{ "saved": true|false }`.
 
-**Response `200 OK`:**
+### GET /api/discussion/saved `[Authenticated]`
 
-```json
-{ "saved": true }
-```
-
----
-
-### GET /api/users/{userId}/saved `[Authenticated]`
-
-Return the discussions saved by the caller.
-
-**Response `200 OK`:** array of [DiscussionModel]
-
----
+Return saved discussions for the authenticated user.
 
 ### POST /api/discussion/{id}/share `[Authenticated]`
 
-Record that the caller shared a discussion (increments the share counter).
-
-**Response `200 OK`:**
-
-```json
-{ "shareCount": 14 }
-```
-
----
-
-### Change to existing: DiscussionModel
-
-Add two fields:
-
-```json
-{
-  "...": "all existing fields",
-  "shareCount": 14,
-  "isSavedByMe": false
-}
-```
-
-`isSavedByMe` is `null` when the request is unauthenticated.
+Increment share counter. Returns `{ "shareCount": N }`.
 
 ---
 
@@ -409,26 +264,18 @@ Add two fields:
 **Gap:** `PostCommentModel` includes a `likeCount` field, but there is no endpoint to
 like or unlike a comment.
 
+**Status: ✅ IMPLEMENTED — Phase A**
+
+- `CommentProvider.LikeCommentAsync` added (toggle)
+- `CommentsController` extended with `POST /{id}/like`
+- Returns `{ "liked": bool, "likeCount": int }`
+- See [api-developer-guide.md §9](api-developer-guide.md#9-comments)
+
 ---
 
 ### POST /api/comments/{id}/like `[Authenticated]`
 
-Toggle a like on a comment.
-
-**Response `204 No Content`**
-
----
-
-### Change to existing: PostCommentModel
-
-Add:
-
-```json
-{
-  "...": "all existing fields",
-  "isLikedByMe": false
-}
-```
+Toggle a like on a comment. Returns `{ "liked": true, "likeCount": 5 }`.
 
 ---
 
@@ -436,39 +283,22 @@ Add:
 
 **Gap:** The right sidebar displays upcoming local events. There is no events endpoint.
 
+**Status: ✅ IMPLEMENTED — Phase C**
+
+- `Event` entity + migration `20260311135517_PhaseC_NewTables`
+- `EventService` (5-min cache keyed by date+count) + `EventsController`
+- Organizer FK uses `OnDelete(DeleteBehavior.SetNull)` — events survive organizer account deletion
+- See [api-developer-guide.md §25](api-developer-guide.md#25-events)
+
 ---
 
 ### GET /api/events `[Public]`
 
-Return upcoming events, ordered by date ascending.
-
-| Query param | Type | Description |
-|---|---|---|
-| `from` | `date` | Start date filter (ISO 8601). Defaults to today. |
-| `count` | `int` | Max results. Default `10`. |
-
-**Response `200 OK`:**
-
-```json
-[
-  {
-    "id": 1,
-    "title": "Small Business Networking Night",
-    "description": "Monthly meetup for local small business owners.",
-    "location": "Portland Business Center",
-    "isOnline": false,
-    "startDate": "2026-03-15T18:00:00Z",
-    "endDate": "2026-03-15T20:00:00Z",
-    "registrationUrl": "https://eventbrite.com/..."
-  }
-]
-```
-
----
+Upcoming events. `from` defaults to today (UTC). Cached 5 minutes.
 
 ### GET /api/events/{id} `[Public]`
 
-**Response `200 OK`:** single event object as above.
+Single event detail.
 
 ---
 
@@ -477,54 +307,24 @@ Return upcoming events, ordered by date ascending.
 **Gap:** There is no forgot-password or reset-password flow. Users who forget their
 password have no self-service recovery path.
 
+**Status: ✅ IMPLEMENTED — Phase C**
+
+- `POST /api/auth/forgot-password` and `POST /api/auth/reset-password` added to `AuthController`
+- Uses ASP.NET Identity `UserManager.GeneratePasswordResetTokenAsync` / `ResetPasswordAsync` — no custom token table needed
+- Always returns `200` on forgot-password to prevent account enumeration
+- Reset link uses `AppSettings:FrontendUrl` config value
+- `ForgotPasswordRequest` and `ResetPasswordRequest` DTOs added to `AuthModels.cs`
+- See [api-developer-guide.md §6](api-developer-guide.md#6-auth-endpoints)
+
 ---
 
 ### POST /api/auth/forgot-password `[Public]`
 
-Send a password reset email to the given address.
-
-**Request body:**
-
-```json
-{ "email": "jane@example.com" }
-```
-
-**Response `200 OK`:**
-
-```json
-{ "message": "If that address is registered, a reset link has been sent." }
-```
-
-> Always returns 200 regardless of whether the email exists, to prevent account
-> enumeration.
-
----
+Sends reset email. Always `200 OK`.
 
 ### POST /api/auth/reset-password `[Public]`
 
-Complete the reset using the token from the email.
-
-**Request body:**
-
-```json
-{
-  "email": "jane@example.com",
-  "token": "<token-from-email>",
-  "newPassword": "NewSecurePassword1!"
-}
-```
-
-**Response `200 OK`:**
-
-```json
-{ "message": "Password reset successfully. You can now sign in." }
-```
-
-**Error responses:**
-
-| Status | Reason |
-|---|---|
-| `400` | Token expired, already used, or password fails validation |
+Completes reset using ASP.NET Identity token. `400` if token invalid/expired.
 
 ---
 
@@ -533,240 +333,119 @@ Complete the reset using the token from the email.
 **Gap:** The AI Assistant component is currently a "coming soon" placeholder because the
 API exposes no AI endpoint.
 
+**Status: ✅ IMPLEMENTED (Phase 1 placeholder) — Phase C**
+
+- `AiController` added with `POST /api/ai/chat`
+- Phase 1: context-aware curated responses for `retail`, `restaurant`, `services`, `ecommerce`, and a general default
+- Response includes `response` (string), `suggestions[]`, and `actionItems[]`
+- Phase 2 (future): replace with real LLM integration (Claude/OpenAI)
+- See [api-developer-guide.md §26](api-developer-guide.md#26-ai-assistant)
+
 ---
 
 ### POST /api/ai/chat `[Authenticated]`
 
-Send a message to the AI business assistant and receive a response.
-
-**Request body:**
-
-```json
-{
-  "message": "What are the best marketing strategies for a local hardware store?",
-  "context": "retail"
-}
-```
-
-`context` (optional): a hint about the user's business type to improve relevance.
-
-**Response `200 OK`:**
-
-```json
-{
-  "response": "For a local hardware store, the most effective strategies are...",
-  "suggestions": [
-    "Run seasonal promotions tied to home improvement projects",
-    "Partner with local contractors for referral programmes"
-  ],
-  "actionItems": [
-    "Set up a Google Business Profile if you haven't already",
-    "Create a loyalty card scheme for repeat customers"
-  ]
-}
-```
+Returns structured advice with suggestions and action items. No database I/O in Phase 1.
 
 ---
 
 ## 12. Missing Fields on Existing Models
 
+**Status: ✅ ALL FIELDS ADDED — Phase A**
+
 ### UserModel
 
-| Field | Type | Notes |
+| Field | Type | Status |
 |---|---|---|
-| `followerCount` | `int` | Currently only available via a separate `GET /api/profiles/{slug}/followers` call |
-| `followingCount` | `int` | Currently only available via `GET /api/profiles/{slug}/following` |
-| `isFollowedByMe` | `bool?` | `null` when unauthenticated; set when JWT present |
+| `followerCount` | `int` | ✅ Added — denormalized on `ShareSmallBizUser` |
+| `followingCount` | `int` | ✅ Added — denormalized on `ShareSmallBizUser` |
+| `isFollowedByMe` | `bool?` | ✅ Added — computed in `ProfilesApiController` |
 
 ### DiscussionModel
 
-| Field | Type | Notes |
+| Field | Type | Status |
 |---|---|---|
-| `shareCount` | `int` | Number of times this discussion has been shared |
-| `isSavedByMe` | `bool?` | Whether the authenticated caller has saved/bookmarked this |
+| `shareCount` | `int` | ✅ Added — `Post.ShareCount` column (Phase A migration) |
+| `isSavedByMe` | `bool?` | ✅ Added — computed from `PostSave` table (Phase B) |
 
 ### PostCommentModel
 
-| Field | Type | Notes |
+| Field | Type | Status |
 |---|---|---|
-| `isLikedByMe` | `bool?` | Whether the authenticated caller has liked this comment |
+| `isLikedByMe` | `bool?` | ✅ Added — computed in `CommentsController` |
 
 ---
 
 ## 13. CMS / Public Articles
 
-**Gap:** The platform needs a public-facing content layer — staff- or editor-authored articles that
-are readable without a login and that search engines can index. This is distinct from
-user-generated `DiscussionModel` posts:
+**Gap:** The platform needs a public-facing content layer — staff- or editor-authored
+articles that are readable without a login and that search engines can index.
 
-| Dimension | CMS Article | Discussion |
-|---|---|---|
-| Authored by | Staff / editors | Any member |
-| Login required to read | No | No (public discussions) |
-| SEO / crawlable | Yes — canonical URL, meta description | Secondary |
-| Comments | Optional (moderated) | Yes (full thread) |
-| Purpose | Content marketing, evergreen guides | Community conversation |
+**Status: ✅ IMPLEMENTED — Phase B**
 
-There is currently no `/api/articles` surface at all.
+**Design decision:** Articles reuse the existing `Post` entity (`IsPublic=true`) with the
+`Category` field (added Phase A migration) rather than a separate Article entity. This
+avoids schema duplication while enabling all required filtering.
 
----
-
-### ArticleModel
-
-```json
-{
-  "id": 1,
-  "title": "5 Ways Small Businesses Can Leverage AI in 2026",
-  "slug": "small-business-ai-2026",
-  "description": "A concise meta description (≤ 160 chars) used in search previews.",
-  "content": "<HTML or Markdown — full body>",
-  "coverImageUrl": "/Media/77",
-  "category": "Marketing",
-  "tags": ["AI", "Productivity", "Tools"],
-  "author": {
-    "displayName": "ShareSmallBiz Editorial",
-    "profilePictureUrl": "/Media/1"
-  },
-  "publishedDate": "2026-02-01T09:00:00Z",
-  "modifiedDate": "2026-02-05T14:30:00Z",
-  "readingTimeMinutes": 6,
-  "viewCount": 1842,
-  "isFeatured": true
-}
-```
+- `ArticleService` (15-min category cache, 5-min featured cache) + `ArticlesController`
+- `GetBySlugAsync` increments `PostViews` on retrieval
+- List responses omit `content` for payload efficiency; detail response includes it
+- See [api-developer-guide.md §24](api-developer-guide.md#24-articles--cms)
 
 ---
 
 ### GET /api/articles `[Public]`
 
-Return a paginated list of published articles, newest first.
-
-| Query param | Type | Default | Description |
-|---|---|---|---|
-| `pageNumber` | `int` | `1` | 1-based page |
-| `pageSize` | `int` | `10` | Results per page |
-| `category` | `string` | — | Filter by category name |
-| `tag` | `string` | — | Filter by tag |
-| `featured` | `bool` | — | `true` to return only featured articles |
-
-**Response `200 OK`:**
-
-```json
-{
-  "items": [ { "...": "ArticleModel (without full content body)" } ],
-  "totalCount": 42,
-  "pageNumber": 1,
-  "pageSize": 10,
-  "totalPages": 5
-}
-```
-
-> The `content` field is omitted in list responses; return only summary fields to keep
-> the payload small. Deliver full `content` only via the detail endpoint below.
-
----
+Paginated list. Filters: `category`, `tag`, `featured`.
 
 ### GET /api/articles/{slug} `[Public]`
 
-Return a single article by slug, including the full `content` body.
-
-**Response `200 OK`:** full `ArticleModel` as above.
-
-**Error responses:**
-
-| Status | Reason |
-|---|---|
-| `404` | No published article matches the slug |
-
----
+Full article with content. Increments view count.
 
 ### GET /api/articles/featured `[Public]`
 
-Return the _n_ most recent featured articles. Intended for the home-page hero carousel or
-sidebar "Featured Reads" widget.
-
-| Query param | Type | Default |
-|---|---|---|
-| `count` | `int` | `3` |
-
-**Response `200 OK`:** array of `ArticleModel` (without `content`).
-
----
+Top N featured articles.
 
 ### GET /api/articles/categories `[Public]`
 
-Return the distinct category names and article counts. Used to populate a category
-navigation menu.
-
-**Response `200 OK`:**
-
-```json
-[
-  { "name": "Marketing", "articleCount": 14 },
-  { "name": "Finance",   "articleCount": 9  },
-  { "name": "Tech",      "articleCount": 7  }
-]
-```
-
----
+Distinct categories with article counts (cached 15 min).
 
 ### GET /api/articles/related/{slug} `[Public]`
 
-Return up to _n_ articles in the same category or sharing tags with the given article.
-Displayed in a "You might also like" section at the bottom of an article detail page.
-
-| Query param | Type | Default |
-|---|---|---|
-| `count` | `int` | `4` |
-
-**Response `200 OK`:** array of `ArticleModel` (without `content`).
-
----
-
-### Change to existing: GET /api/stats
-
-Add a `totalArticles` field to the community stats response:
-
-```json
-{
-  "totalMembers": 2847,
-  "totalDiscussions": 4821,
-  "totalArticles": 42,
-  "totalKeywords": 42,
-  "memberGrowthThisMonth": 83
-}
-```
+Same-category articles, excluding the specified slug.
 
 ---
 
 ## 14. Summary Table
 
-| Gap | Endpoint(s) | Access |
-|---|---|---|
-| Community stats | `GET /api/stats` | Public |
-| Search | `GET /api/search` | Public |
-| User settings read | `GET /api/users/{userId}/settings` | Authenticated |
-| User settings write | `PUT /api/users/{userId}/settings` | Authenticated |
-| Notifications list | `GET /api/notifications` | Authenticated |
-| Notifications mark read | `PUT /api/notifications/{id}/read`, `POST /api/notifications/read-all` | Authenticated |
-| Direct messages — list | `GET /api/messages/conversations` | Authenticated |
-| Direct messages — thread | `GET /api/messages/conversations/{id}` | Authenticated |
-| Direct messages — send | `POST /api/messages` | Authenticated |
-| Follow status on profile list | Augment `GET /api/profiles` response | Public (field null) / Authenticated |
-| Save / bookmark discussion | `POST /api/discussion/{id}/save`, `GET /api/users/{userId}/saved` | Authenticated |
-| Share discussion | `POST /api/discussion/{id}/share` | Authenticated |
-| Like a comment | `POST /api/comments/{id}/like` | Authenticated |
-| Events list | `GET /api/events` | Public |
-| Events detail | `GET /api/events/{id}` | Public |
-| Forgot password | `POST /api/auth/forgot-password` | Public |
-| Reset password | `POST /api/auth/reset-password` | Public |
-| AI chat | `POST /api/ai/chat` | Authenticated |
-| `UserModel.followerCount` / `followingCount` / `isFollowedByMe` | Existing model change | — |
-| `DiscussionModel.shareCount` / `isSavedByMe` | Existing model change | — |
-| `PostCommentModel.isLikedByMe` | Existing model change | — |
-| CMS articles list | `GET /api/articles` | Public |
-| CMS article detail | `GET /api/articles/{slug}` | Public |
-| CMS featured articles | `GET /api/articles/featured` | Public |
-| CMS article categories | `GET /api/articles/categories` | Public |
-| CMS related articles | `GET /api/articles/related/{slug}` | Public |
-| `GET /api/stats` — add `totalArticles` | Existing endpoint change | Public |
+| Gap | Endpoint(s) | Access | Status |
+|---|---|---|---|
+| Community stats | `GET /api/stats` | Public | ✅ Phase A |
+| Search | `GET /api/search` | Public | ✅ Phase A |
+| User settings read | `GET /api/users/{userId}/settings` | Authenticated | ✅ Phase A |
+| User settings write | `PUT /api/users/{userId}/settings` | Authenticated | ✅ Phase A |
+| Notifications list | `GET /api/notifications` | Authenticated | ✅ Phase B |
+| Notifications mark read | `PUT /api/notifications/{id}/read`, `POST /api/notifications/read-all` | Authenticated | ✅ Phase B |
+| Direct messages — list | `GET /api/messages/conversations` | Authenticated | ✅ Phase B |
+| Direct messages — thread | `GET /api/messages/conversations/{id}` | Authenticated | ✅ Phase B |
+| Direct messages — send | `POST /api/messages` | Authenticated | ✅ Phase B |
+| Follow status on profile list | Augment `GET /api/profiles` response | Public (field null) / Authenticated | ✅ Phase A |
+| Save / bookmark discussion | `POST /api/discussion/{id}/save`, `GET /api/discussion/saved` | Authenticated | ✅ Phase B |
+| Share discussion | `POST /api/discussion/{id}/share` | Authenticated | ✅ Phase B |
+| Like a comment | `POST /api/comments/{id}/like` | Authenticated | ✅ Phase A |
+| Events list | `GET /api/events` | Public | ✅ Phase C |
+| Events detail | `GET /api/events/{id}` | Public | ✅ Phase C |
+| Forgot password | `POST /api/auth/forgot-password` | Public | ✅ Phase C |
+| Reset password | `POST /api/auth/reset-password` | Public | ✅ Phase C |
+| AI chat | `POST /api/ai/chat` | Authenticated | ✅ Phase C (placeholder) |
+| `UserModel.followerCount` / `followingCount` / `isFollowedByMe` | Existing model change | — | ✅ Phase A |
+| `DiscussionModel.shareCount` / `isSavedByMe` | Existing model change | — | ✅ Phase A/B |
+| `PostCommentModel.isLikedByMe` | Existing model change | — | ✅ Phase A |
+| CMS articles list | `GET /api/articles` | Public | ✅ Phase B |
+| CMS article detail | `GET /api/articles/{slug}` | Public | ✅ Phase B |
+| CMS featured articles | `GET /api/articles/featured` | Public | ✅ Phase B |
+| CMS article categories | `GET /api/articles/categories` | Public | ✅ Phase B |
+| CMS related articles | `GET /api/articles/related/{slug}` | Public | ✅ Phase B |
+| `GET /api/stats` — add `totalArticles` | Existing endpoint change | Public | ✅ Phase A/B |
+
+**All 14 gaps resolved. 26 endpoints implemented. 3 model changes delivered.**
