@@ -63,6 +63,7 @@ builder.Services.AddInfrastructureServices();
 // ========================
 builder.Services.AddMvcServices();
 builder.Services.AddCorsPolicy(builder.Configuration);
+builder.Services.AddRateLimitingServices();
 
 // ========================
 // Json Serializer Configuration
@@ -88,9 +89,10 @@ app.UseGlobalExceptionHandling();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSession();
+app.UseRateLimiter();
 app.UseCors("ApiCorsPolicy");
 
 // ========================

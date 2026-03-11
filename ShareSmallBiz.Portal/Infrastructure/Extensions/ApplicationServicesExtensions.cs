@@ -20,6 +20,8 @@ namespace ShareSmallBiz.Portal.Infrastructure.Extensions
             services.AddScoped<AdminCommentService, AdminCommentService>();
             services.AddScoped<MailerSendService, MailerSendService>();
             services.AddScoped<StorageProviderService, StorageProviderService>();
+            services.AddScoped<StatsService, StatsService>();
+            services.AddScoped<SearchService, SearchService>();
             return services;
         }
     }

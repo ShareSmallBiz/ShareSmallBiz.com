@@ -10,6 +10,8 @@ public class PostCommentModel : BaseModel
     public int LikeCount { get; set; } = 0; // Count of likes on the comment
     public UserModel? Author { get; set; } // The author of the comment
     public List<PostCommentLikeModel> Likes { get; set; } = [];
+    public bool? IsLikedByMe { get; set; } // null when unauthenticated, true/false when authenticated
+
     public PostCommentModel() { }
     public PostCommentModel(PostComment comment)
     {
@@ -35,6 +37,21 @@ public class PostCommentModel : BaseModel
                 PostCommentId = like.PostCommentId,
                 CreatedID = like.CreatedID
             })] : [];
+    }
+
+    /// <summary>
+    /// Sets IsLikedByMe based on current user ID
+    /// </summary>
+    public void SetIsLikedByMe(string? currentUserId)
+    {
+        if (string.IsNullOrEmpty(currentUserId))
+        {
+            IsLikedByMe = null;
+        }
+        else
+        {
+            IsLikedByMe = Likes.Any(l => l.CreatedID == currentUserId);
+        }
     }
 
     public UserModel GetAuthor(ShareSmallBizUser user)

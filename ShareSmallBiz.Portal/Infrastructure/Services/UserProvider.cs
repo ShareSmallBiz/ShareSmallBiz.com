@@ -766,4 +766,190 @@ public class UserProvider(
             return 0;
         }
     }
+
+    /// <summary>
+    /// Gets user notification and privacy settings.
+    /// Creates default UserPreference if not exists.
+    /// </summary>
+    /// <param name="userId">The ID of the user</param>
+    /// <returns>UserSettingModel with notification and privacy preferences, or null if user not found</returns>
+    public async Task<Controllers.api.UserSettingModel?> GetUserSettingsAsync(string userId)
+    {
+        try
+        {
+            var user = await context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                logger.LogWarning("User with ID {UserId} not found when retrieving settings", userId);
+                return null;
+            }
+
+            var preference = await context.UserPreferences.FirstOrDefaultAsync(up => up.UserId == userId);
+            if (preference == null)
+            {
+                // Create default preferences if not exists
+                preference = new UserPreference
+                {
+                    UserId = userId,
+                    EmailOnComment = true,
+                    EmailOnLike = false,
+                    EmailOnFollow = true,
+                    WeeklySummary = false,
+                    ProfileVisibility = ProfileVisibility.Public,
+                    ShowEmail = false,
+                    ShowWebsite = true
+                };
+                context.UserPreferences.Add(preference);
+                await context.SaveChangesAsync();
+            }
+
+            var settings = new Controllers.api.UserSettingModel
+            {
+                UserId = userId,
+                Notifications = new Controllers.api.UserSettingModel.NotificationSettings
+                {
+                    EmailOnComment = preference.EmailOnComment,
+                    EmailOnLike = preference.EmailOnLike,
+                    EmailOnFollow = preference.EmailOnFollow,
+                    WeeklySummary = preference.WeeklySummary
+                },
+                Privacy = new Controllers.api.UserSettingModel.PrivacySettings
+                {
+                    ProfileVisibility = preference.ProfileVisibility,
+                    ShowEmail = preference.ShowEmail,
+                    ShowWebsite = preference.ShowWebsite
+                }
+            };
+
+            logger.LogInformation("Retrieved settings for user {UserId}", userId);
+            return settings;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving settings for user {UserId}", userId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Updates user notification and privacy settings.
+    /// Creates UserPreference if not exists.
+    /// </summary>
+    /// <param name="userId">The ID of the user</param>
+    /// <param name="request">Update request with notification and privacy settings</param>
+    /// <returns>True if update successful, false if user not found</returns>
+    public async Task<bool> UpdateUserSettingsAsync(string userId, Controllers.api.UpdateUserSettingRequest request)
+    {
+        try
+        {
+            var user = await context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                logger.LogWarning("User with ID {UserId} not found when updating settings", userId);
+                return false;
+            }
+
+            var preference = await context.UserPreferences.FirstOrDefaultAsync(up => up.UserId == userId);
+            if (preference == null)
+            {
+                // Create new preference with provided values
+                preference = new UserPreference
+                {
+                    UserId = userId,
+                    EmailOnComment = request.Notifications.EmailOnComment,
+                    EmailOnLike = request.Notifications.EmailOnLike,
+                    EmailOnFollow = request.Notifications.EmailOnFollow,
+                    WeeklySummary = request.Notifications.WeeklySummary,
+                    ProfileVisibility = request.Privacy.ProfileVisibility,
+                    ShowEmail = request.Privacy.ShowEmail,
+                    ShowWebsite = request.Privacy.ShowWebsite
+                };
+                context.UserPreferences.Add(preference);
+            }
+            else
+            {
+                // Update existing preference
+                preference.EmailOnComment = request.Notifications.EmailOnComment;
+                preference.EmailOnLike = request.Notifications.EmailOnLike;
+                preference.EmailOnFollow = request.Notifications.EmailOnFollow;
+                preference.WeeklySummary = request.Notifications.WeeklySummary;
+                preference.ProfileVisibility = request.Privacy.ProfileVisibility;
+                preference.ShowEmail = request.Privacy.ShowEmail;
+                preference.ShowWebsite = request.Privacy.ShowWebsite;
+                context.UserPreferences.Update(preference);
+            }
+
+            await context.SaveChangesAsync();
+            logger.LogInformation("Updated settings for user {UserId}", userId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating settings for user {UserId}", userId);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Gets the follower count for a user.
+    /// </summary>
+    /// <param name="userId">The ID of the user</param>
+    /// <returns>The number of followers</returns>
+    public async Task<int> GetFollowerCountAsync(string userId)
+    {
+        try
+        {
+            var count = await context.UserFollows
+                .Where(uf => uf.FollowingId == userId)
+                .CountAsync();
+            return count;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting follower count for user {UserId}", userId);
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Gets the following count for a user.
+    /// </summary>
+    /// <param name="userId">The ID of the user</param>
+    /// <returns>The number of users this user follows</returns>
+    public async Task<int> GetFollowingCountAsync(string userId)
+    {
+        try
+        {
+            var count = await context.UserFollows
+                .Where(uf => uf.FollowerId == userId)
+                .CountAsync();
+            return count;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting following count for user {UserId}", userId);
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// Checks if a user follows another user.
+    /// </summary>
+    /// <param name="followerId">The ID of the potential follower</param>
+    /// <param name="followingId">The ID of the user to check if followed</param>
+    /// <returns>True if followerId follows followingId, false otherwise</returns>
+    public async Task<bool> IsFollowedByMeAsync(string followerId, string followingId)
+    {
+        try
+        {
+            var exists = await context.UserFollows
+                .AnyAsync(uf => uf.FollowerId == followerId && uf.FollowingId == followingId);
+            return exists;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error checking if user {FollowerId} follows {FollowingId}", followerId, followingId);
+            return false;
+        }
+    }
 }

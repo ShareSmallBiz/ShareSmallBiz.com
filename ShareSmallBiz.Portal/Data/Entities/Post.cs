@@ -26,6 +26,9 @@ public class Post : BaseEntity
     [Required]
     [StringLength(160)]
     public string Title { get; set; } = string.Empty;
+    [StringLength(100)]
+    public string? Category { get; set; } // For CMS articles/blog categorization
+    public int ShareCount { get; set; } = 0; // Track number of shares
     public virtual ICollection<PostLike> Likes { get; set; } = new List<PostLike>();
     public virtual ICollection<Keyword> PostCategories { get; set; } = new List<Keyword>();
     public virtual ICollection<PostComment> Comments { get; set; } = new List<PostComment>();

@@ -98,6 +98,8 @@ public class ShareSmallBizUser : IdentityUser, IUserConfirmation<ShareSmallBizUs
     public virtual ICollection<Post> Posts { get; set; }
     public string? WebsiteUrl { get; set; }
     public DateTime LastModified { get; set; } = DateTime.Now;
+    public int FollowerCount { get; set; } = 0; // Denormalized follower count for performance
+    public int FollowingCount { get; set; } = 0; // Denormalized following count for performance
     public ICollection<Post> ReceivedPosts { get; set; } = [];
     public virtual ICollection<Media> Media { get; set; } = [];
     public virtual ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();

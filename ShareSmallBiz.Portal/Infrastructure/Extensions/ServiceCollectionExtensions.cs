@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Memory;
 using ShareSmallBiz.Portal.Data;
+using ShareSmallBiz.Portal.Infrastructure.Middleware;
 using ShareSmallBiz.Portal.Infrastructure.Services;
 using WebSpark.HttpClientUtility.MemoryCache;
 using WebSpark.HttpClientUtility.RequestResult;
@@ -11,15 +12,18 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddHttpClientUtilities(this IServiceCollection services, IConfiguration configuration)
     {
+        // RequestIdHandler adds a unique X-Request-ID per outgoing request (not shared across requests)
+        services.AddTransient<RequestIdHandler>();
+
         // Register the HttpClient service.
         services.AddHttpClient("HttpClientService", client =>
         {
             client.Timeout = TimeSpan.FromMilliseconds(90000);
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             client.DefaultRequestHeaders.Add("User-Agent", "HttpClientService");
-            client.DefaultRequestHeaders.Add("X-Request-ID", Guid.NewGuid().ToString());
             client.DefaultRequestHeaders.Add("X-Request-Source", "HttpClientService");
-        });
+        })
+        .AddHttpMessageHandler<RequestIdHandler>();
 
         // Register the HTTP Send Service using the Decorator Pattern.
         services.AddSingleton(serviceProvider =>

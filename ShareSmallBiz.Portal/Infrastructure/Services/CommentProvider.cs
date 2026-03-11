@@ -104,4 +104,64 @@ public class CommentProvider(
             .OrderByDescending(c => c.CreatedDate)
             .ToListAsync();
     }
+
+    public async Task<PostCommentModel?> GetCommentByIdAsync(int commentId)
+    {
+        var comment = await context.PostComments
+            .Include(c => c.Author)
+            .Include(c => c.Likes)
+            .FirstOrDefaultAsync(c => c.Id == commentId);
+
+        return comment is null ? null : new PostCommentModel(comment);
+    }
+
+    /// <summary>
+    /// Toggles like on a comment. If already liked, removes the like (unlike). If not liked, adds a like.
+    /// </summary>
+    /// <param name="commentId">The ID of the comment to like/unlike</param>
+    /// <param name="userId">The ID of the user liking the comment</param>
+    /// <returns>True if successful, false if comment not found</returns>
+    public async Task<bool> LikeCommentAsync(int commentId, string userId)
+    {
+        try
+        {
+            var comment = await context.PostComments.FindAsync(commentId);
+            if (comment == null)
+            {
+                logger.LogWarning("Comment with ID {CommentId} not found.", commentId);
+                return false;
+            }
+
+            // Check if user already likes this comment
+            var existingLike = await context.PostCommentLikes
+                .FirstOrDefaultAsync(pcl => pcl.PostCommentId == commentId && pcl.CreatedID == userId);
+
+            if (existingLike != null)
+            {
+                // Unlike: Remove the like
+                context.PostCommentLikes.Remove(existingLike);
+                logger.LogInformation("User {UserId} unliked comment {CommentId}.", userId, commentId);
+            }
+            else
+            {
+                // Like: Add new like
+                var like = new PostCommentLike
+                {
+                    PostCommentId = commentId,
+                    CreatedID = userId,
+                    CreatedDate = DateTime.UtcNow
+                };
+                context.PostCommentLikes.Add(like);
+                logger.LogInformation("User {UserId} liked comment {CommentId}.", userId, commentId);
+            }
+
+            await context.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error toggling like for comment {CommentId} by user {UserId}", commentId, userId);
+            throw;
+        }
+    }
 }

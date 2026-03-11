@@ -52,7 +52,7 @@ public class ProfilesController : Controller
         }
         
         // Check visibility permissions
-        if (!HasProfileAccessPermission(userModel))
+        if (!await HasProfileAccessPermissionAsync(userModel))
         {
             return RedirectToAction("AccessDenied", "Error", new { message = "This profile is not publicly accessible" });
         }
@@ -79,27 +79,27 @@ public class ProfilesController : Controller
     /// <summary>
     /// Checks if the current user has permission to view the specified profile
     /// </summary>
-    private bool HasProfileAccessPermission(UserModel profile)
+    private async Task<bool> HasProfileAccessPermissionAsync(UserModel profile)
     {
         // Allow public profiles for everyone
         if (profile.ProfileVisibility == ProfileVisibility.Public)
         {
             return true;
         }
-        
+
         // Profile owner always has access
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (currentUserId == profile.Id)
         {
             return true;
         }
-        
+
         // For authenticated-only profiles, check if user is logged in
         if (profile.ProfileVisibility == ProfileVisibility.Authenticated)
         {
             return User.Identity?.IsAuthenticated ?? false;
         }
-        
+
         // For connection-only profiles, check if the user follows or is followed by the profile owner
         if (profile.ProfileVisibility == ProfileVisibility.Connections)
         {
@@ -107,13 +107,10 @@ public class ProfilesController : Controller
             {
                 return false;
             }
-            
-            // Check connection status asynchronously (converted to sync call for this method)
-            var task = IsConnectionAsync(currentUserId, profile.Id);
-            task.Wait();
-            return task.Result;
+
+            return await IsConnectionAsync(currentUserId, profile.Id).ConfigureAwait(false);
         }
-        
+
         // Private profiles are only accessible to the owner (already checked above)
         return false;
     }

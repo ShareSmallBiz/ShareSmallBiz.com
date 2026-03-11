@@ -228,11 +228,27 @@ public class UserModel
     /// Gets or sets the profile completeness score (0-100)
     /// </summary>
     public int ProfileCompletenessScore { get; set; }
-    
+
     /// <summary>
     /// Gets or sets the fields that need completion to improve profile score
     /// </summary>
     public List<string> IncompleteProfileFields { get; set; } = [];
+
+    /// <summary>
+    /// Gets or sets the number of followers
+    /// </summary>
+    public int FollowerCount { get; set; } = 0;
+
+    /// <summary>
+    /// Gets or sets the number of users this user is following
+    /// </summary>
+    public int FollowingCount { get; set; } = 0;
+
+    /// <summary>
+    /// Gets or sets whether current user follows this user (null when unauthenticated)
+    /// </summary>
+    public bool? IsFollowedByMe { get; set; } = null;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="UserModel"/> class.
     /// </summary>
@@ -278,6 +294,8 @@ public class UserModel
         CustomProfileUrl = author.CustomProfileUrl;
         ProfileViewCount = author.ProfileViewCount;
         ProfileCompletenessScore = author.ProfileCompletenessScore;
+        FollowerCount = author.FollowerCount;
+        FollowingCount = author.FollowingCount;
         // LoginCount and LastLogin will be populated separately
 
         if (string.IsNullOrEmpty(DisplayName))
