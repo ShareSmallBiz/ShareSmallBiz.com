@@ -54,15 +54,15 @@ public class SearchResultModel
     /// <summary>
     /// Discussions matching the search query.
     /// </summary>
-    public List<DiscussionModel>? Discussions { get; set; }
+    public List<DiscussionModel> Discussions { get; set; } = [];
 
     /// <summary>
     /// User profiles matching the search query.
     /// </summary>
-    public List<UserModel>? Profiles { get; set; }
+    public List<UserModel> Profiles { get; set; } = [];
 
     /// <summary>
     /// Keywords matching the search query.
     /// </summary>
-    public List<KeywordModel>? Keywords { get; set; }
+    public List<KeywordModel> Keywords { get; set; } = [];
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShareSmallBiz.Portal.Data;
 
@@ -10,9 +11,11 @@ using ShareSmallBiz.Portal.Data;
 namespace ShareSmallBiz.Portal.Migrations
 {
     [DbContext(typeof(ShareSmallBizUserContext))]
-    partial class ShareSmallBizUserContextModelSnapshot : ModelSnapshot
+    [Migration("20260311131707_PhaseB_NewTables")]
+    partial class PhaseB_NewTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.4");
@@ -206,60 +209,6 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("DirectMessages");
-                });
-
-            modelBuilder.Entity("ShareSmallBiz.Portal.Data.Entities.Event", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CreatedID")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsOnline")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Location")
-                        .HasMaxLength(300)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("ModifiedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("ModifiedID")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("OrganizerId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("RegistrationUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrganizerId");
-
-                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("ShareSmallBiz.Portal.Data.Entities.Keyword", b =>
@@ -999,16 +948,6 @@ namespace ShareSmallBiz.Portal.Migrations
                     b.Navigation("Recipient");
 
                     b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("ShareSmallBiz.Portal.Data.Entities.Event", b =>
-                {
-                    b.HasOne("ShareSmallBiz.Portal.Data.Entities.ShareSmallBizUser", "Organizer")
-                        .WithMany()
-                        .HasForeignKey("OrganizerId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Organizer");
                 });
 
             modelBuilder.Entity("ShareSmallBiz.Portal.Data.Entities.LoginHistory", b =>

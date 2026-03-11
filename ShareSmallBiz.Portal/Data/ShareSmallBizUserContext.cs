@@ -109,6 +109,61 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
             .WithOne()
             .HasForeignKey<UserPreference>(up => up.UserId)
             .IsRequired();
+
+        // ---- NOTIFICATIONS ----
+        builder.Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Notification>()
+            .HasOne(n => n.Actor)
+            .WithMany()
+            .HasForeignKey(n => n.ActorId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        // ---- DIRECT MESSAGES ----
+        builder.Entity<DirectMessage>()
+            .HasOne(dm => dm.Sender)
+            .WithMany()
+            .HasForeignKey(dm => dm.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<DirectMessage>()
+            .HasOne(dm => dm.Recipient)
+            .WithMany()
+            .HasForeignKey(dm => dm.RecipientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<DirectMessage>()
+            .HasIndex(dm => dm.ConversationId);
+
+        // ---- POST SAVES ----
+        builder.Entity<PostSave>()
+            .HasOne(ps => ps.User)
+            .WithMany()
+            .HasForeignKey(ps => ps.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PostSave>()
+            .HasOne(ps => ps.Post)
+            .WithMany()
+            .HasForeignKey(ps => ps.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PostSave>()
+            .HasIndex(ps => new { ps.UserId, ps.PostId })
+            .IsUnique();
+
+        // ---- EVENTS ----
+        builder.Entity<Event>()
+            .HasOne(e => e.Organizer)
+            .WithMany()
+            .HasForeignKey(e => e.OrganizerId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
     }
     private void UpdateDateTrackingFields()
     {
@@ -166,4 +221,8 @@ public partial class ShareSmallBizUserContext(DbContextOptions<ShareSmallBizUser
     public virtual DbSet<Media> Media { get; set; }
     public virtual DbSet<LoginHistory> LoginHistories { get; set; }
     public virtual DbSet<UserPreference> UserPreferences { get; set; }
+    public virtual DbSet<Notification> Notifications { get; set; }
+    public virtual DbSet<DirectMessage> DirectMessages { get; set; }
+    public virtual DbSet<PostSave> PostSaves { get; set; }
+    public virtual DbSet<Event> Events { get; set; }
 }

@@ -535,4 +535,77 @@ public class DiscussionProvider(
 
         return posts ?? new List<DiscussionModel>();
     }
+
+    /// <summary>
+    /// Toggle save/bookmark for a discussion. Returns true if saved, false if unsaved.
+    /// </summary>
+    public async Task<bool> SaveDiscussionAsync(int postId, string userId)
+    {
+        var existing = await context.PostSaves
+            .FirstOrDefaultAsync(ps => ps.PostId == postId && ps.UserId == userId);
+
+        if (existing is not null)
+        {
+            context.PostSaves.Remove(existing);
+            await context.SaveChangesAsync();
+            logger.LogInformation("User {UserId} unsaved discussion {PostId}", userId, postId);
+            return false; // unsaved
+        }
+
+        var post = await context.Posts.FindAsync(postId);
+        if (post is null)
+        {
+            logger.LogWarning("Post {PostId} not found for save operation", postId);
+            return false;
+        }
+
+        context.PostSaves.Add(new PostSave { PostId = postId, UserId = userId });
+        await context.SaveChangesAsync();
+        logger.LogInformation("User {UserId} saved discussion {PostId}", userId, postId);
+        return true; // saved
+    }
+
+    /// <summary>
+    /// Get all discussions saved by a user.
+    /// </summary>
+    public async Task<List<DiscussionModel>> GetSavedDiscussionsAsync(string userId)
+    {
+        var posts = await context.PostSaves
+            .AsNoTracking()
+            .Where(ps => ps.UserId == userId)
+            .Include(ps => ps.Post).ThenInclude(p => p.Author)
+            .Include(ps => ps.Post).ThenInclude(p => p.PostCategories)
+            .OrderByDescending(ps => ps.CreatedDate)
+            .Select(ps => ps.Post)
+            .ToListAsync();
+
+        return [.. posts.Select(p => new DiscussionModel(p))];
+    }
+
+    /// <summary>
+    /// Check whether a user has saved a specific post.
+    /// </summary>
+    public async Task<bool> IsDiscussionSavedAsync(int postId, string userId)
+    {
+        return await context.PostSaves
+            .AnyAsync(ps => ps.PostId == postId && ps.UserId == userId);
+    }
+
+    /// <summary>
+    /// Record a share — increments the post's ShareCount.
+    /// </summary>
+    public async Task<bool> ShareDiscussionAsync(int postId, string userId)
+    {
+        var post = await context.Posts.FindAsync(postId);
+        if (post is null)
+        {
+            logger.LogWarning("Post {PostId} not found for share operation", postId);
+            return false;
+        }
+
+        post.ShareCount++;
+        await context.SaveChangesAsync();
+        logger.LogInformation("User {UserId} shared discussion {PostId} (total shares: {Count})", userId, postId, post.ShareCount);
+        return true;
+    }
 }

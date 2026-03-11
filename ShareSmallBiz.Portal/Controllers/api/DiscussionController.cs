@@ -1,4 +1,5 @@
 ﻿using ShareSmallBiz.Portal.Infrastructure.Services;
+using System.Security.Claims;
 
 namespace ShareSmallBiz.Portal.Controllers.api;
 
@@ -128,5 +129,44 @@ public class DiscussionController(DiscussionProvider discussionProvider) : Contr
             return BadRequest("Unable to like post.");
         }
         return NoContent();
+    }
+
+    /// <summary>POST /api/discussion/{id}/save — toggle save/bookmark (auth required)</summary>
+    [HttpPost("{id}/save")]
+    [Authorize]
+    public async Task<IActionResult> SavePost(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var saved = await discussionProvider.SaveDiscussionAsync(id, userId);
+        return Ok(new { saved, message = saved ? "Discussion saved." : "Discussion unsaved." });
+    }
+
+    /// <summary>GET /api/discussion/saved — get saved discussions for current user (auth required)</summary>
+    [HttpGet("saved")]
+    [Authorize]
+    public async Task<IActionResult> GetSaved()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var posts = await discussionProvider.GetSavedDiscussionsAsync(userId);
+        return Ok(posts);
+    }
+
+    /// <summary>POST /api/discussion/{id}/share — record a share, increments counter (auth required)</summary>
+    [HttpPost("{id}/share")]
+    [Authorize]
+    public async Task<IActionResult> SharePost(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized();
+
+        var result = await discussionProvider.ShareDiscussionAsync(id, userId);
+        return result ? Ok(new { message = "Share recorded." }) : NotFound(new { message = "Discussion not found." });
     }
 }

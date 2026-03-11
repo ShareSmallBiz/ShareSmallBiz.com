@@ -128,6 +128,77 @@ public class AuthController : ControllerBase
         return Ok(new { Message = "Registration successful. Please check your email to confirm your account before signing in." });
     }
 
+    /// <summary>
+    /// POST /api/auth/forgot-password — send a password reset link.
+    /// Always returns 200 to prevent user enumeration.
+    /// </summary>
+    [HttpPost("forgot-password")]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest model)
+    {
+        if (string.IsNullOrWhiteSpace(model.Email))
+            return BadRequest(new { Message = "Email is required." });
+
+        // Always return OK — never reveal whether the email exists
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user != null && await _userManager.IsEmailConfirmedAsync(user))
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = Uri.EscapeDataString(token);
+            var frontendUrl = _configuration["AppSettings:FrontendUrl"] ?? "https://app.sharesmallbiz.com";
+            var resetLink = $"{frontendUrl}/reset-password?token={encodedToken}&email={Uri.EscapeDataString(user.Email!)}";
+
+            await _emailSender.SendEmailAsync(
+                user.Email!,
+                "Reset your ShareSmallBiz password",
+                $"<p>You requested a password reset. Click the link below to set a new password.</p>" +
+                $"<p><a href='{resetLink}'>Reset Password</a></p>" +
+                $"<p>This link expires in 24 hours. If you did not request this, you can safely ignore this email.</p>");
+
+            _logger.LogInformation("Password reset email sent to {Email}", user.Email);
+        }
+        else
+        {
+            _logger.LogInformation("Password reset requested for unknown or unconfirmed email: {Email}", model.Email);
+        }
+
+        return Ok(new { Message = "If that email address is registered and confirmed, you will receive a password reset link shortly." });
+    }
+
+    /// <summary>
+    /// POST /api/auth/reset-password — apply a new password using the reset token.
+    /// </summary>
+    [HttpPost("reset-password")]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest model)
+    {
+        if (string.IsNullOrWhiteSpace(model.Email)
+            || string.IsNullOrWhiteSpace(model.Token)
+            || string.IsNullOrWhiteSpace(model.NewPassword))
+        {
+            return BadRequest(new { Message = "Email, token, and new password are required." });
+        }
+
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user is null)
+        {
+            // Return generic error — do not reveal that the user does not exist
+            return BadRequest(new { Message = "Invalid or expired password reset token." });
+        }
+
+        var decodedToken = Uri.UnescapeDataString(model.Token);
+        var result = await _userManager.ResetPasswordAsync(user, decodedToken, model.NewPassword);
+        if (!result.Succeeded)
+        {
+            _logger.LogWarning("Password reset failed for {Email}: {Errors}",
+                model.Email, string.Join(", ", result.Errors.Select(e => e.Description)));
+            return BadRequest(new { Message = "Invalid or expired password reset token." });
+        }
+
+        _logger.LogInformation("Password reset successfully for {Email}", model.Email);
+        return Ok(new { Message = "Password has been reset successfully. You can now sign in with your new password." });
+    }
+
     [HttpGet("test")]
     public IActionResult TestToken()
     {

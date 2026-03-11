@@ -26,9 +26,17 @@
 16. [Admin — Comments](#16-admin--comments)
 17. [Admin — Roles](#17-admin--roles)
 18. [Real-Time Chat (SignalR)](#18-real-time-chat-signalr)
-19. [Data Models Reference](#19-data-models-reference)
-20. [Error Reference](#20-error-reference)
-21. [Quick-Start Examples](#21-quick-start-examples)
+19. [Community Stats](#19-community-stats)
+20. [Search](#20-search)
+21. [User Settings](#21-user-settings)
+22. [Notifications](#22-notifications)
+23. [Direct Messages](#23-direct-messages)
+24. [Articles / CMS](#24-articles--cms)
+25. [Events](#25-events)
+26. [AI Assistant](#26-ai-assistant)
+27. [Data Models Reference](#27-data-models-reference)
+28. [Error Reference](#28-error-reference)
+29. [Quick-Start Examples](#29-quick-start-examples)
 
 ---
 
@@ -191,6 +199,7 @@ The auth endpoints are protected by a fixed-window rate limiter:
 | Policy | Applied to | Limit |
 |---|---|---|
 | `auth` | `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/oauth/login` | 10 requests per minute per client IP |
+| `auth` | `POST /api/auth/forgot-password`, `POST /api/auth/reset-password` | 10 requests per minute per client IP |
 
 When the limit is exceeded the API returns:
 
@@ -292,6 +301,60 @@ Register a new account. A confirmation email is sent automatically. **No token i
   "message": "Registration successful. Please check your email to confirm your account before signing in."
 }
 ```
+
+---
+
+### POST /api/auth/forgot-password `[Public]`
+
+Initiate a password reset. Always returns `200 OK` regardless of whether the email exists (prevents user enumeration). If the account exists, an email with a reset link is sent.
+
+**Request body:**
+
+```json
+{
+  "email": "jane@example.com"
+}
+```
+
+**Response `200 OK`:**
+
+```json
+{
+  "message": "If an account with that email exists, a password reset link has been sent."
+}
+```
+
+---
+
+### POST /api/auth/reset-password `[Public]`
+
+Complete a password reset using the token from the email link.
+
+**Request body:**
+
+```json
+{
+  "email": "jane@example.com",
+  "token": "<token-from-email>",
+  "newPassword": "NewSecurePassword1!"
+}
+```
+
+**Response `200 OK`:**
+
+```json
+{
+  "message": "Password has been reset successfully."
+}
+```
+
+**Error responses:**
+
+| Status | Reason |
+|---|---|
+| `400` | Token invalid, expired, or password does not meet requirements |
+
+> Tokens are single-use and expire as configured by ASP.NET Identity's data-protection settings (default: 1 day).
 
 ---
 
@@ -470,6 +533,40 @@ Toggle a like on a discussion.
 
 ---
 
+### POST /api/discussion/{id}/save `[Authenticated]`
+
+Toggle save/unsave a discussion. Saved discussions can be retrieved via `GET /api/discussion/saved`.
+
+**Response `200 OK`:**
+
+```json
+{ "saved": true }
+```
+
+Returns `saved: false` when the discussion was unsaved.
+
+---
+
+### GET /api/discussion/saved `[Authenticated]`
+
+Get all discussions the authenticated user has saved.
+
+**Response `200 OK`:** array of [DiscussionModel](#discussionmodel)
+
+---
+
+### POST /api/discussion/{id}/share `[Authenticated]`
+
+Record a share event. Increments the discussion's `shareCount` counter.
+
+**Response `200 OK`:**
+
+```json
+{ "shareCount": 14 }
+```
+
+---
+
 ## 9. Comments
 
 Full CRUD for post comments with owner-enforced access.
@@ -534,6 +631,18 @@ Edit your own comment. Returns `403 Forbidden` if the caller does not own the co
 Delete your own comment. Returns `403 Forbidden` if the caller does not own the comment.
 
 **Response `204 No Content`**
+
+---
+
+### POST /api/comments/{id}/like `[Authenticated]`
+
+Toggle a like on a comment.
+
+**Response `200 OK`:**
+
+```json
+{ "liked": true, "likeCount": 5 }
+```
 
 ---
 
@@ -1170,7 +1279,325 @@ connection.onclose(() => setStatus('Disconnected'));
 
 ---
 
-## 19. Data Models Reference
+## 19. Community Stats
+
+### GET /api/stats `[Public]`
+
+Returns aggregate community statistics. Results are cached for 5 minutes.
+
+**Response `200 OK`:**
+
+```json
+{
+  "totalMembers": 1240,
+  "totalDiscussions": 4821,
+  "totalArticles": 1102,
+  "totalKeywords": 318,
+  "memberGrowthThisMonth": 83
+}
+```
+
+---
+
+## 20. Search
+
+### GET /api/search `[Public]`
+
+Unified full-text search across discussions, profiles, and keywords.
+
+| Query param | Type | Default | Description |
+|---|---|---|---|
+| `q` | `string` | — | **Required.** Minimum 2 characters. |
+| `type` | `string` | `null` | Filter to `discussions`, `profiles`, or `keywords`. If omitted, all types are returned. |
+| `pageSize` | `int` | `5` | Results per type (max 50). |
+
+**Response `200 OK`:** [SearchResultModel](#searchresultmodel)
+
+**Error responses:**
+
+| Status | Reason |
+|---|---|
+| `400` | `q` missing or fewer than 2 characters |
+
+**Example:**
+
+```http
+GET /api/search?q=marketing&type=discussions&pageSize=10
+```
+
+---
+
+## 21. User Settings
+
+Manage per-user notification and privacy preferences. All endpoints require `Authorization: Bearer <token>`.
+
+### GET /api/users/{userId}/settings `[Authenticated]`
+
+Get the authenticated user's preference settings.
+
+**Response `200 OK`:** [UserSettingsModel](#usersettingsmodel)
+
+---
+
+### PUT /api/users/{userId}/settings `[Authenticated]`
+
+Update preference settings. Only the authenticated user can update their own settings.
+
+**Request body:** [UserSettingsModel](#usersettingsmodel)
+
+**Response `200 OK`:**
+
+```json
+{ "message": "Settings updated successfully." }
+```
+
+---
+
+## 22. Notifications
+
+Manage in-app notifications for the authenticated user. All endpoints require `Authorization: Bearer <token>`.
+
+### GET /api/notifications `[Authenticated]`
+
+Get paginated notifications for the authenticated user.
+
+| Query param | Type | Default | Description |
+|---|---|---|---|
+| `unreadOnly` | `bool` | `false` | Return only unread notifications |
+| `pageSize` | `int` | `20` | Per page (max 50) |
+| `pageNumber` | `int` | `1` | 1-based page number |
+
+**Response `200 OK`:** array of [NotificationModel](#notificationmodel)
+
+---
+
+### PUT /api/notifications/{id}/read `[Authenticated]`
+
+Mark a single notification as read. Returns `403 Forbidden` if the notification does not belong to the authenticated user.
+
+**Response `200 OK`:**
+
+```json
+{ "message": "Notification marked as read." }
+```
+
+---
+
+### POST /api/notifications/read-all `[Authenticated]`
+
+Mark all unread notifications for the authenticated user as read.
+
+**Response `200 OK`:**
+
+```json
+{ "markedCount": 7 }
+```
+
+---
+
+## 23. Direct Messages
+
+REST-based private messaging between users. All endpoints require `Authorization: Bearer <token>`.
+
+### GET /api/messages/conversations `[Authenticated]`
+
+Get all conversations for the authenticated user, ordered by most-recent message.
+
+**Response `200 OK`:** array of [ConversationModel](#conversationmodel)
+
+---
+
+### GET /api/messages/conversations/{conversationId} `[Authenticated]`
+
+Get paginated messages for a specific conversation. Also marks incoming unread messages as read.
+
+| Query param | Type | Default |
+|---|---|---|
+| `pageSize` | `int` | `30` |
+| `pageNumber` | `int` | `1` |
+
+**Response `200 OK`:** array of [MessageModel](#messagemodel)
+
+**Error responses:**
+
+| Status | Reason |
+|---|---|
+| `403` | User is not a participant in this conversation |
+
+---
+
+### POST /api/messages `[Authenticated]`
+
+Send a private message.
+
+**Request body:**
+
+```json
+{
+  "recipientId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "content": "Hello, I saw your post about marketing — great tips!"
+}
+```
+
+Content is trimmed of leading/trailing whitespace and must not be empty.
+
+**Response `201 Created`:** [MessageModel](#messagemodel)
+
+**Error responses:**
+
+| Status | Reason |
+|---|---|
+| `400` | Content is empty or whitespace |
+| `404` | Recipient user not found |
+
+---
+
+## 24. Articles / CMS
+
+Articles are public posts (`isPublic=true`) — they reuse the `Post` entity with an optional `category` field. All endpoints are public (`[AllowAnonymous]`).
+
+### GET /api/articles `[Public]`
+
+Paginated list of articles (content field omitted for performance).
+
+| Query param | Type | Default | Description |
+|---|---|---|---|
+| `pageNumber` | `int` | `1` | 1-based page |
+| `pageSize` | `int` | `10` | Per page (max 50) |
+| `category` | `string` | `null` | Filter by category slug |
+| `tag` | `string` | `null` | Filter by keyword/tag name |
+| `featured` | `bool` | `null` | `true` = featured only |
+
+**Response `200 OK`:** [ArticleListResult](#articlelistresult)
+
+---
+
+### GET /api/articles/featured `[Public]`
+
+Get featured articles.
+
+| Query param | Type | Default |
+|---|---|---|
+| `count` | `int` | `6` |
+
+**Response `200 OK`:** array of [ArticleModel](#articlemodel)
+
+---
+
+### GET /api/articles/categories `[Public]`
+
+Get all article categories with post counts. Cached for 15 minutes.
+
+**Response `200 OK`:**
+
+```json
+[
+  { "name": "Marketing", "slug": "marketing", "articleCount": 42 },
+  { "name": "Finance",   "slug": "finance",   "articleCount": 28 }
+]
+```
+
+---
+
+### GET /api/articles/related/{slug} `[Public]`
+
+Get related articles (same category, excluding the specified article).
+
+| Query param | Type | Default |
+|---|---|---|
+| `count` | `int` | `4` |
+
+**Response `200 OK`:** array of [ArticleModel](#articlemodel)
+
+---
+
+### GET /api/articles/{slug} `[Public]`
+
+Get a single article with full content. Increments the view counter.
+
+**Response `200 OK`:** [ArticleModel](#articlemodel) (with `content` field populated)
+
+**Error responses:**
+
+| Status | Reason |
+|---|---|
+| `404` | No public article with that slug |
+
+---
+
+## 25. Events
+
+Community events listing. All endpoints are public (`[AllowAnonymous]`).
+
+### GET /api/events `[Public]`
+
+Get upcoming events. Results are cached for 5 minutes per `from`+`count` combination.
+
+| Query param | Type | Default | Description |
+|---|---|---|---|
+| `from` | `DateTime` | today (UTC) | Start date filter (inclusive) |
+| `count` | `int` | `10` | Max events to return |
+
+**Response `200 OK`:** array of [EventModel](#eventmodel)
+
+---
+
+### GET /api/events/{id} `[Public]`
+
+Get a single event by ID.
+
+**Response `200 OK`:** [EventModel](#eventmodel)
+
+**Error responses:**
+
+| Status | Reason |
+|---|---|
+| `404` | Event not found |
+
+---
+
+## 26. AI Assistant
+
+Context-aware AI business advice (Phase 1 — curated responses; Phase 2 will integrate an LLM).
+
+### POST /api/ai/chat `[Authenticated]`
+
+Submit a question and receive structured business advice with suggestions and action items.
+
+**Request body:**
+
+```json
+{
+  "message": "How do I attract more repeat customers?",
+  "context": "retail"
+}
+```
+
+`context` is optional. Supported values: `retail`, `restaurant`, `services`, `ecommerce`. Any other value (or omitting the field) returns general small-business advice.
+
+**Response `200 OK`:**
+
+```json
+{
+  "response": "Great question about retail! ...\n\nRegarding your question...",
+  "suggestions": [
+    "Focus on customer experience over price",
+    "Build a loyalty program",
+    "Leverage social media for local awareness",
+    "Partner with complementary local businesses"
+  ],
+  "actionItems": [
+    "Audit your current customer touchpoints",
+    "Set up a simple loyalty rewards program",
+    "Create a content calendar for social media",
+    "Identify 3 local businesses to collaborate with"
+  ]
+}
+```
+
+---
+
+## 27. Data Models Reference
 
 ### UserModel
 
@@ -1188,6 +1615,9 @@ connection.onclose(() => setStatus('Disconnected'));
   "profileViewCount": 1234,
   "likeCount": 87,
   "postCount": 14,
+  "followerCount": 128,
+  "followingCount": 34,
+  "isFollowedByMe": false,
   "isEmailConfirmed": true,
   "isLockedOut": false,
   "roles": ["User", "Business"],
@@ -1196,6 +1626,8 @@ connection.onclose(() => setStatus('Disconnected'));
   "posts": []
 }
 ```
+
+`followerCount`, `followingCount`, and `isFollowedByMe` are populated in profile endpoints. `isFollowedByMe` is `null` when the request is unauthenticated.
 
 ### ProfileModel
 
@@ -1232,6 +1664,8 @@ Extends `UserModel` with:
   "isFeatured": false,
   "postType": 0,
   "postViews": 4821,
+  "shareCount": 14,
+  "isSavedByMe": false,
   "rating": 4.5,
   "published": "2026-01-15T12:00:00Z",
   "createdDate": "2026-01-14T09:30:00Z",
@@ -1244,6 +1678,8 @@ Extends `UserModel` with:
 }
 ```
 
+`isSavedByMe` is `null` when unauthenticated.
+
 ### PostCommentModel
 
 ```json
@@ -1252,6 +1688,7 @@ Extends `UserModel` with:
   "postId": 101,
   "content": "Really useful, thanks for sharing!",
   "likeCount": 3,
+  "isLikedByMe": true,
   "createdDate": "2026-02-01T10:15:00Z",
   "modifiedDate": null,
   "author": {
@@ -1263,6 +1700,8 @@ Extends `UserModel` with:
   "likes": []
 }
 ```
+
+`isLikedByMe` is `null` when unauthenticated.
 
 ### KeywordModel
 
@@ -1317,7 +1756,175 @@ Extends `UserModel` with:
 
 ---
 
-## 20. Error Reference
+### StatsModel
+
+```json
+{
+  "totalMembers": 1240,
+  "totalDiscussions": 4821,
+  "totalArticles": 1102,
+  "totalKeywords": 318,
+  "memberGrowthThisMonth": 83
+}
+```
+
+### SearchResultModel
+
+```json
+{
+  "discussions": [ /* array of DiscussionModel */ ],
+  "profiles":    [ /* array of UserModel */ ],
+  "keywords":    [ /* array of KeywordModel */ ]
+}
+```
+
+When a `type` filter is specified, the other two arrays are returned as empty (not null).
+
+### UserSettingsModel
+
+```json
+{
+  "emailNotificationsEnabled": true,
+  "notifyOnFollower": true,
+  "notifyOnComment": true,
+  "notifyOnLike": false,
+  "notifyOnDirectMessage": true,
+  "profileVisibility": "Public",
+  "showEmailOnProfile": false,
+  "allowDirectMessages": true
+}
+```
+
+### NotificationModel
+
+```json
+{
+  "id": 88,
+  "type": "NewFollower",
+  "message": "Jane Smith started following you.",
+  "isRead": false,
+  "targetId": null,
+  "targetType": null,
+  "actorId": "3fa85f64-...",
+  "actorDisplayName": "Jane Smith",
+  "actorProfilePictureUrl": "/Media/42",
+  "createdDate": "2026-03-10T14:00:00Z"
+}
+```
+
+Common `type` values: `NewFollower`, `NewComment`, `NewLike`, `NewDirectMessage`.
+
+### ConversationModel
+
+```json
+{
+  "conversationId": "aaa-user-id_bbb-user-id",
+  "otherUserId": "bbb-user-id",
+  "otherUserDisplayName": "Bob Builder",
+  "otherUserProfilePictureUrl": "/Media/55",
+  "otherUserSlug": "bob-builder",
+  "lastMessage": "Sounds great, let's connect!",
+  "lastMessageDate": "2026-03-11T08:30:00Z",
+  "unreadCount": 2
+}
+```
+
+Conversation IDs are deterministic: `min(userIdA, userIdB)_max(userIdA, userIdB)`, ensuring bidirectional messages share the same key.
+
+### MessageModel
+
+```json
+{
+  "id": 201,
+  "senderId": "aaa-user-id",
+  "content": "Hello, great to connect!",
+  "sentDate": "2026-03-11T08:29:00Z",
+  "isRead": true
+}
+```
+
+### ArticleModel
+
+```json
+{
+  "id": 101,
+  "title": "5 Marketing Strategies for Small Retailers",
+  "slug": "5-marketing-strategies-for-small-retailers",
+  "description": "A quick summary of the article.",
+  "content": "<p>Full HTML body (only in detail response)...</p>",
+  "cover": "https://images.unsplash.com/photo-xyz",
+  "category": "marketing",
+  "isFeatured": true,
+  "postViews": 3200,
+  "published": "2026-02-14T09:00:00Z",
+  "tags": ["Marketing", "Retail"],
+  "author": { "...": "partial UserModel" }
+}
+```
+
+`content` is omitted (null/empty) in list responses and populated in `GET /api/articles/{slug}`.
+
+### ArticleListResult
+
+```json
+{
+  "articles": [ /* array of ArticleModel (no content) */ ],
+  "totalCount": 128,
+  "pageNumber": 1,
+  "pageSize": 10
+}
+```
+
+### ArticleCategoryModel
+
+```json
+{
+  "name": "Marketing",
+  "slug": "marketing",
+  "articleCount": 42
+}
+```
+
+### EventModel
+
+```json
+{
+  "id": 5,
+  "title": "Small Business Networking Night",
+  "description": "Monthly meetup for local small business owners.",
+  "location": "123 Main St, Austin TX",
+  "isOnline": false,
+  "startDate": "2026-04-15T18:00:00Z",
+  "endDate": "2026-04-15T20:00:00Z",
+  "registrationUrl": "https://example.com/register",
+  "organizerId": "3fa85f64-...",
+  "organizerName": "Jane Smith"
+}
+```
+
+### AiChatResponse
+
+```json
+{
+  "response": "Here are some general strategies...\n\nRegarding your question...",
+  "suggestions": [
+    "Build genuine relationships with your customers",
+    "Focus on solving one problem exceptionally well",
+    "Use data to understand what's working",
+    "Invest in your online presence"
+  ],
+  "actionItems": [
+    "Define your ideal customer in detail",
+    "Ask your best customers what they love most about your business",
+    "Set one specific growth goal for this quarter",
+    "Review your online reviews and respond to all of them"
+  ]
+}
+```
+
+---
+
+## 28. Error Reference
 
 | Scenario | Status | Body |
 |---|---|---|
@@ -1332,7 +1939,7 @@ Extends `UserModel` with:
 
 ---
 
-## 21. Quick-Start Examples
+## 29. Quick-Start Examples
 
 ### JavaScript / React fetch utility
 
@@ -1430,6 +2037,65 @@ export const api = {
     });
   },
   removeProfilePicture: () => apiFetch('/api/media/profile', { method: 'DELETE' }),
+
+  // Community stats & search
+  getStats: () => apiFetch('/api/stats'),
+  search: (q, type = null, pageSize = 5) => {
+    const params = new URLSearchParams({ q, pageSize });
+    if (type) params.set('type', type);
+    return apiFetch(`/api/search?${params}`);
+  },
+
+  // User settings
+  getUserSettings: (userId) => apiFetch(`/api/users/${userId}/settings`),
+  updateUserSettings: (userId, settings) =>
+    apiFetch(`/api/users/${userId}/settings`, { method: 'PUT', body: JSON.stringify(settings) }),
+
+  // Notifications
+  getNotifications: (unreadOnly = false, pageSize = 20) =>
+    apiFetch(`/api/notifications?unreadOnly=${unreadOnly}&pageSize=${pageSize}`),
+  markNotificationRead: (id) =>
+    apiFetch(`/api/notifications/${id}/read`, { method: 'PUT' }),
+  markAllNotificationsRead: () =>
+    apiFetch('/api/notifications/read-all', { method: 'POST' }),
+
+  // Direct messages
+  getConversations: () => apiFetch('/api/messages/conversations'),
+  getMessages: (conversationId, pageSize = 30) =>
+    apiFetch(`/api/messages/conversations/${conversationId}?pageSize=${pageSize}`),
+  sendMessage: (recipientId, content) =>
+    apiFetch('/api/messages', { method: 'POST', body: JSON.stringify({ recipientId, content }) }),
+
+  // Discussion interactions
+  saveDiscussion: (id) => apiFetch(`/api/discussion/${id}/save`, { method: 'POST' }),
+  shareDiscussion: (id) => apiFetch(`/api/discussion/${id}/share`, { method: 'POST' }),
+  getSavedDiscussions: () => apiFetch('/api/discussion/saved'),
+  likeComment: (id) => apiFetch(`/api/comments/${id}/like`, { method: 'POST' }),
+
+  // Articles
+  getArticles: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return apiFetch(`/api/articles${q ? '?' + q : ''}`);
+  },
+  getFeaturedArticles: (count = 6) => apiFetch(`/api/articles/featured?count=${count}`),
+  getArticleCategories: () => apiFetch('/api/articles/categories'),
+  getArticle: (slug) => apiFetch(`/api/articles/${slug}`),
+  getRelatedArticles: (slug, count = 4) =>
+    apiFetch(`/api/articles/related/${slug}?count=${count}`),
+
+  // Events
+  getUpcomingEvents: (count = 10) => apiFetch(`/api/events?count=${count}`),
+  getEvent: (id) => apiFetch(`/api/events/${id}`),
+
+  // AI assistant
+  askAi: (message, context = null) =>
+    apiFetch('/api/ai/chat', { method: 'POST', body: JSON.stringify({ message, context }) }),
+
+  // Password reset
+  forgotPassword: (email) =>
+    apiFetch('/api/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+  resetPassword: (email, token, newPassword) =>
+    apiFetch('/api/auth/reset-password', { method: 'POST', body: JSON.stringify({ email, token, newPassword }) }),
 };
 ```
 
