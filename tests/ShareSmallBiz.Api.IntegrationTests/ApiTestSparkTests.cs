@@ -23,6 +23,18 @@ public sealed class ApiTestSparkTests
     }
 
     [TestMethod]
+    public async Task Harness_NeverAppearsInTheApiContract()
+    {
+        // Build-time generation can run under ASPNETCORE_ENVIRONMENT=Development (e.g. api-local.ps1)
+        using var factory = new DevelopmentFactory();
+        using var client = factory.CreateClient();
+
+        var contract = await client.GetStringAsync(new Uri("/openapi/v1.json", UriKind.Relative));
+
+        Assert.DoesNotContain("api-test-spark", contract);
+    }
+
+    [TestMethod]
     public async Task Harness_IsAbsentOutsideDevelopment()
     {
         using var factory = new ApiFactory(); // "Testing": production-shaped settings

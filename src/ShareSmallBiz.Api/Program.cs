@@ -13,6 +13,9 @@ builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.C
 builder.Services.AddValidation();
 builder.Services.AddOpenApi(options =>
 {
+    // The Development-only test harness is tooling, not API: keep it out of the contract in every environment
+    options.ShouldInclude = description =>
+        description.RelativePath?.StartsWith("api-test-spark", StringComparison.OrdinalIgnoreCase) != true;
     options.AddDocumentTransformer<BearerSecurityTransformer>();
     options.AddOperationTransformer<BearerSecurityTransformer>();
 });
