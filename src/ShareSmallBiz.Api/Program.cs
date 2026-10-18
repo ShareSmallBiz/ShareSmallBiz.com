@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using ApiTestSpark;
 using Scalar.AspNetCore;
 using ShareSmallBiz.Api.Auth;
 using ShareSmallBiz.Api.OpenApi;
@@ -45,6 +46,15 @@ app.MapScalarApiReference(options => options.WithTitle("ShareSmallBiz API"));
 app.MapHealthChecks("/health");
 app.MapAuthEndpoints();
 app.MapProfileEndpoints();
+
+// Interactive test harness at /api-test-spark/ for local validation; Development only, never on a public server
+app.MapApiTestSpark(options =>
+{
+    options.OpenApiUrl = "/openapi/v1.json";
+    options.AuthScheme = AuthConstants.BearerSchemeName;
+    options.Environments = ["Development"];
+    options.EnableDemoIntegrations = false;
+});
 
 if (!OpenApiGeneration.IsRunning && app.Configuration.GetValue("Database:MigrateOnStartup", true))
     await app.Services.MigrateDatabaseAsync();

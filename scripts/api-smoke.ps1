@@ -82,6 +82,9 @@ catch {
     exit 1
 }
 
+$harness = Invoke-Api GET '/api-test-spark/config'
+Check 'API Test Spark harness is available locally' ($harness.Status -eq 200 -and $harness.Content -match '/openapi/v1.json') "status $($harness.Status)"
+
 $contract = Invoke-Api GET '/openapi/v1.json'
 Check 'OpenAPI contract is served' ($contract.Status -eq 200 -and $null -ne $contract.Json.paths.'/api/v1/auth/login')
 

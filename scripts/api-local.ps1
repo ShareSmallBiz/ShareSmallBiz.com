@@ -35,6 +35,7 @@ if ($Reset) {
 
 Write-Host ''
 Write-Host "  API   http://localhost:$Port"
+Write-Host "  Test  http://localhost:$Port/api-test-spark/   (interactive harness)"
 Write-Host "  Docs  http://localhost:$Port/scalar/v1"
 Write-Host "  Mail  $(Join-Path $project 'dev-mail')"
 Write-Host "  Check ./scripts/api-smoke.ps1   (in a second terminal)"

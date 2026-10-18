@@ -22,6 +22,9 @@ dotnet test ShareSmallBiz.Api.slnx  # integration tests (also run by CI on every
 - `api-local.ps1` creates a random dev JWT key in user secrets on first run. Its data is local only:
   `src/ShareSmallBiz.Api/sharesmallbiz-dev.db`, with account emails written as text files to `src/ShareSmallBiz.Api/dev-mail/`.
 - `api-smoke.ps1` walks the whole account lifecycle over real HTTP. It refuses any non-localhost URL.
+- **API Test Spark** at `http://localhost:5280/api-test-spark/` is an interactive harness built from the OpenAPI contract.
+  To call secured endpoints, log in with `POST /api/v1/auth/login` and paste the `accessToken` as the Bearer token.
+  It is mapped only in Development; tests assert it returns 404 in every other environment.
 - `src/ShareSmallBiz.Api/ShareSmallBiz.Api.http` has requests for manual exploring in VS Code or Visual Studio.
 
 Nothing is deployed from this branch. CI builds and tests only. Production cutover happens only after
