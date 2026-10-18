@@ -1,0 +1,41 @@
+# Manual requests against the local API (VS Code REST Client or Visual Studio).
+# Start it with ./scripts/api-local.ps1. Confirmation and reset links land in src/ShareSmallBiz.Api/dev-mail.
+
+@api = http://localhost:5280
+@email = me@example.test
+@password = local dev password
+
+### Register (then open the newest file in dev-mail for the confirmation link)
+POST {{api}}/api/v1/auth/register
+Content-Type: application/json
+
+{ "email": "{{email}}", "password": "{{password}}", "userName": "local-dev", "displayName": "Local Dev" }
+
+### Confirm: paste userId and token from the link
+POST {{api}}/api/v1/auth/confirm-email
+Content-Type: application/json
+
+{ "userId": "", "token": "" }
+
+### Login
+# @name login
+POST {{api}}/api/v1/auth/login
+Content-Type: application/json
+
+{ "email": "{{email}}", "password": "{{password}}" }
+
+### Who am I
+GET {{api}}/api/v1/me
+Authorization: Bearer {{login.response.body.$.accessToken}}
+
+### Refresh
+POST {{api}}/api/v1/auth/refresh
+Content-Type: application/json
+
+{ "refreshToken": "{{login.response.body.$.refreshToken}}" }
+
+### Logout
+POST {{api}}/api/v1/auth/logout
+Content-Type: application/json
+
+{ "refreshToken": "{{login.response.body.$.refreshToken}}" }

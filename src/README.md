@@ -11,21 +11,21 @@ The legacy `ShareSmallBiz.Portal` beside it is reference code only and will be r
 | `tests/ShareSmallBiz.Api.IntegrationTests` | Real HTTP tests via `WebApplicationFactory` |
 | `openapi/ShareSmallBiz.Api.json` | The API contract, regenerated on every build. Commit it; CI fails if it is stale |
 
-## Run locally
+## Validate locally (nothing here touches the live site)
 
-```bash
-dotnet user-secrets set "Jwt:SigningKey" "$(openssl rand -base64 48)" --project src/ShareSmallBiz.Api
-dotnet run --project src/ShareSmallBiz.Api        # http://localhost:5280/scalar/v1
+```powershell
+./scripts/api-local.ps1 -Reset    # terminal 1: fresh API on http://localhost:5280 (docs at /scalar/v1)
+./scripts/api-smoke.ps1           # terminal 2: end-to-end acceptance checks, PASS/FAIL per check
+dotnet test ShareSmallBiz.Api.slnx  # integration tests (also run by CI on every PR)
 ```
 
-Development uses `sharesmallbiz-dev.db` (created and migrated on startup) and writes account emails,
-including confirmation and reset links, to the console.
+- `api-local.ps1` creates a random dev JWT key in user secrets on first run. Its data is local only:
+  `src/ShareSmallBiz.Api/sharesmallbiz-dev.db`, with account emails written as text files to `src/ShareSmallBiz.Api/dev-mail/`.
+- `api-smoke.ps1` walks the whole account lifecycle over real HTTP. It refuses any non-localhost URL.
+- `src/ShareSmallBiz.Api/ShareSmallBiz.Api.http` has requests for manual exploring in VS Code or Visual Studio.
 
-## Test
-
-```bash
-dotnet test ShareSmallBiz.Api.slnx
-```
+Nothing is deployed from this branch. CI builds and tests only. Production cutover happens only after
+local validation and explicit approval.
 
 ## Database migrations
 

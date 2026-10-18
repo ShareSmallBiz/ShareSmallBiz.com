@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using ShareSmallBiz.Core.Email;
 using ShareSmallBiz.Infrastructure.Data;
@@ -22,7 +23,13 @@ public static class DependencyInjection
         if (validateOnStart)
             email.ValidateOnStart();
         services.AddSingleton<IValidateOptions<EmailOptions>, EmailOptionsValidator>();
-        services.AddSingleton<IEmailSender, LoggingEmailSender>();
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton<LoggingEmailSender>();
+        services.AddSingleton<PickupDirectoryEmailSender>();
+        services.AddSingleton<IEmailSender>(sp =>
+            sp.GetRequiredService<IOptions<EmailOptions>>().Value.Provider == EmailOptions.PickupProvider
+                ? sp.GetRequiredService<PickupDirectoryEmailSender>()
+                : sp.GetRequiredService<LoggingEmailSender>());
 
         return services;
     }

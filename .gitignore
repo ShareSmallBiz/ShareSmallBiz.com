@@ -356,3 +356,4 @@ MigrationBackup/
 src/**/*.db
 src/**/*.db-shm
 src/**/*.db-wal
+src/**/dev-mail/
