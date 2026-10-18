@@ -8,29 +8,63 @@ public static class AuthEndpoints
 {
     public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
+        // Every auth endpoint validates its body and is rate-limited per IP
         var auth = app.MapGroup("/api/v1/auth")
-            .WithTags("Auth")
-            .RequireRateLimiting(RateLimitingOptions.AuthPolicy);
+            .WithTags("Account: Authentication")
+            .RequireRateLimiting(RateLimitingOptions.AuthPolicy)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status429TooManyRequests);
 
         auth.MapPost("/register", Register)
-            .WithSummary("Create an account; a confirmation email is sent. Always 202 for a well-formed request so emails cannot be enumerated.");
+            .WithName("Register")
+            .WithSummary("Create an account")
+            .WithDescription("""
+                Creates the account and emails a confirmation link. Sign-in is blocked until the email is confirmed.
+
+                Always returns **202** for a well-formed request, even when the email already has an account
+                (that owner is emailed instead), so this endpoint cannot be used to discover who is a member.
+                Returns **400** when the username is taken or a field is invalid.
+                """);
         auth.MapPost("/confirm-email", ConfirmEmail)
-            .WithSummary("Confirm an email address with the userId and token from the confirmation link.");
+            .WithName("ConfirmEmail")
+            .WithSummary("Confirm an email address")
+            .WithDescription("Send the `userId` and `token` from the confirmation link. **204** when confirmed (or already confirmed); **400** when the link is invalid or expired.");
         auth.MapPost("/resend-confirmation", ResendConfirmation)
-            .WithSummary("Send another confirmation email if the account exists and is unconfirmed. Always 202.");
+            .WithName("ResendConfirmation")
+            .WithSummary("Resend the confirmation email")
+            .WithDescription("Sends a new confirmation link if the account exists and is unconfirmed. Always **202**.");
         auth.MapPost("/login", Login)
-            .WithSummary("Exchange email and password for an access token and refresh token.")
+            .WithName("Login")
+            .WithSummary("Sign in")
+            .WithDescription("""
+                Exchanges email and password for tokens. Send `accessToken` as `Authorization: Bearer <accessToken>`;
+                keep `refreshToken` for `POST /api/v1/auth/refresh`.
+
+                - **401**: wrong email or password, or the account is locked (5 failures lock it for 15 minutes). The response is identical in every case.
+                - **403** with `code: email_not_confirmed`: the email is not confirmed yet.
+                """)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden);
         auth.MapPost("/refresh", Refresh)
-            .WithSummary("Exchange a refresh token for a new token pair. Each refresh token works once.")
+            .WithName("RefreshTokens")
+            .WithSummary("Refresh the tokens")
+            .WithDescription("""
+                Exchanges a refresh token for a new access token **and** a new refresh token. Each refresh token works once:
+                presenting one that was already used is treated as theft and ends that whole session (**401**).
+                """)
             .ProducesProblem(StatusCodes.Status401Unauthorized);
         auth.MapPost("/logout", Logout)
-            .WithSummary("End the session the refresh token belongs to.");
+            .WithName("Logout")
+            .WithSummary("Sign out of this session")
+            .WithDescription("Revokes the session the refresh token belongs to; other sessions stay signed in. Always **204**.");
         auth.MapPost("/forgot-password", ForgotPassword)
-            .WithSummary("Send a password reset email if a confirmed account exists. Always 202.");
+            .WithName("ForgotPassword")
+            .WithSummary("Request a password reset email")
+            .WithDescription("Emails a reset link if a confirmed account exists. Always **202**, so it reveals nothing about who is a member.");
         auth.MapPost("/reset-password", ResetPassword)
-            .WithSummary("Set a new password with the token from the reset email; signs out every session.");
+            .WithName("ResetPassword")
+            .WithSummary("Set a new password")
+            .WithDescription("Send the `email` and `token` from the reset link with the new password. On success (**204**) every session is signed out.");
 
         return app;
     }

@@ -2,11 +2,16 @@ using System.Text.Json.Serialization;
 using ApiTestSpark;
 using Scalar.AspNetCore;
 using ShareSmallBiz.Api.Auth;
+using ShareSmallBiz.Api.Development;
 using ShareSmallBiz.Api.OpenApi;
 using ShareSmallBiz.Api.Profiles;
 using ShareSmallBiz.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Local-only tooling (dev mailbox). Skipped during build-time OpenAPI generation so the committed
+// contract is identical whichever environment the build ran in.
+var isLocalDevelopment = builder.Environment.IsDevelopment() && !OpenApiGeneration.IsRunning;
 
 builder.Services.AddProblemDetails();
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -16,12 +21,16 @@ builder.Services.AddOpenApi(options =>
     // The Development-only test harness is tooling, not API: keep it out of the contract in every environment
     options.ShouldInclude = description =>
         description.RelativePath?.StartsWith("api-test-spark", StringComparison.OrdinalIgnoreCase) != true;
+    options.AddDocumentTransformer<ApiInfoTransformer>();
     options.AddDocumentTransformer<BearerSecurityTransformer>();
     options.AddOperationTransformer<BearerSecurityTransformer>();
+    options.AddSchemaTransformer<ExampleSchemaTransformer>();
 });
 builder.Services.AddHealthChecks();
 builder.Services.AddInfrastructure(validateOnStart: !OpenApiGeneration.IsRunning);
 builder.Services.AddApiAuth(builder.Configuration);
+if (isLocalDevelopment)
+    builder.Services.AddDevMailbox();
 
 // Thin clients authenticate with bearer tokens, not cookies, so credentials are not allowed
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -49,6 +58,8 @@ app.MapScalarApiReference(options => options.WithTitle("ShareSmallBiz API"));
 app.MapHealthChecks("/health");
 app.MapAuthEndpoints();
 app.MapProfileEndpoints();
+if (isLocalDevelopment)
+    app.MapDevMailboxEndpoints();
 
 // Interactive test harness at /api-test-spark/ for local validation; Development only, never on a public server
 app.MapApiTestSpark(options =>

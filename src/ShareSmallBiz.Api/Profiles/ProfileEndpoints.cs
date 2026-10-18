@@ -15,23 +15,39 @@ public static class ProfileEndpoints
 {
     public static IEndpointRouteBuilder MapProfileEndpoints(this IEndpointRouteBuilder app)
     {
-        var profiles = app.MapGroup("/api/v1/profiles").WithTags("Profiles");
+        var profiles = app.MapGroup("/api/v1/profiles").WithTags("Members: Profiles");
 
-        profiles.MapGet("/", ListProfiles)
-            .WithSummary("Directory of public members, newest first. Optional search on display name or username.");
+        profiles.MapGet("", ListProfiles)
+            .WithName("ListProfiles")
+            .WithSummary("Member directory")
+            .WithDescription("""
+                Public members, newest first. Only confirmed members with `Public` visibility are listed.
+
+                `search` matches display name or username (case-insensitive, contains). `%` and `_` are matched literally.
+                """)
+            .ProducesValidationProblem();
         profiles.MapGet("/{userName}", GetProfile)
-            .WithSummary("A member's public profile. 404 when the member does not exist or the profile is not public (unless it is your own).");
+            .WithName("GetProfile")
+            .WithSummary("A member's public profile")
+            .WithDescription("""
+                Looks up by username, case-insensitive. Returns **404** when the member does not exist, has not confirmed
+                their email, or set their profile to `Private`; it never reveals which. Members always see their own profile.
+                """);
 
-        app.MapGet("/api/v1/me", GetCurrentUser)
-            .WithTags("Account")
-            .WithSummary("The signed-in member's own account, including private fields.")
+        var me = app.MapGroup("/api/v1/me")
+            .WithTags("Account: Me")
             .RequireAuthorization()
             .ProducesProblem(StatusCodes.Status401Unauthorized);
-        app.MapPut("/api/v1/me/profile", UpdateProfile)
-            .WithTags("Account")
-            .WithSummary("Replace the signed-in member's editable profile fields.")
-            .RequireAuthorization()
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        me.MapGet("", GetCurrentUser)
+            .WithName("GetCurrentUser")
+            .WithSummary("Your account")
+            .WithDescription("Your own account, including private fields (email, real name, visibility). The only endpoint that returns them.");
+        me.MapPut("/profile", UpdateProfile)
+            .WithName("UpdateMyProfile")
+            .WithSummary("Update your profile")
+            .WithDescription("Replaces every editable field: omitted optional fields are cleared. Returns your updated account.")
+            .ProducesValidationProblem();
 
         return app;
     }

@@ -52,6 +52,44 @@ public sealed class ContractTests
         Assert.AreEqual(Normalize(committed), Normalize(served), "Run a build and commit openapi/ShareSmallBiz.Api.json.");
     }
 
+    /// <summary>
+    /// Conventions that make the docs and API Test Spark useful: every operation is named (stable
+    /// operationId for generated clients), summarized, described, and grouped under a "Group: Label" tag.
+    /// </summary>
+    [TestMethod]
+    public async Task EveryOperation_IsNamedSummarizedDescribedAndGrouped()
+    {
+        using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(CommittedContractPath()));
+
+        var problems = new List<string>();
+        foreach (var path in doc.RootElement.GetProperty("paths").EnumerateObject())
+        {
+            foreach (var operation in path.Value.EnumerateObject())
+            {
+                var name = $"{operation.Name.ToUpperInvariant()} {path.Name}";
+                var op = operation.Value;
+                if (!op.TryGetProperty("operationId", out _)) problems.Add($"{name}: no operationId (.WithName)");
+                if (!op.TryGetProperty("summary", out _)) problems.Add($"{name}: no summary (.WithSummary)");
+                if (!op.TryGetProperty("description", out _)) problems.Add($"{name}: no description (.WithDescription)");
+                if (!op.TryGetProperty("tags", out var tags) || !tags.EnumerateArray().All(t => t.GetString()!.Contains(": ", StringComparison.Ordinal)))
+                    problems.Add($"{name}: tags must be \"Group: Label\"");
+            }
+        }
+
+        Assert.IsEmpty(problems, string.Join(Environment.NewLine, problems));
+    }
+
+    [TestMethod]
+    public async Task CommittedContract_ContainsNoLocalOnlyTooling()
+    {
+        var committed = await File.ReadAllTextAsync(CommittedContractPath());
+
+        Assert.DoesNotContain("\"/dev/", committed);
+        Assert.DoesNotContain("api-test-spark", committed);
+    }
+
+    private static string CommittedContractPath() => Path.Combine(FindRepoRoot(), "openapi", "ShareSmallBiz.Api.json");
+
     /// <summary>Compact form without "servers", which the live document fills from the request host.</summary>
     private static string Normalize(string json)
     {

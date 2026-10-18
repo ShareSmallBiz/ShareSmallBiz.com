@@ -24,7 +24,15 @@ dotnet test ShareSmallBiz.Api.slnx  # integration tests (also run by CI on every
 - `api-smoke.ps1` walks the whole account lifecycle over real HTTP. It refuses any non-localhost URL.
 - **API Test Spark** at `http://localhost:5280/api-test-spark/` is an interactive harness built from the OpenAPI contract.
   To call secured endpoints, log in with `POST /api/v1/auth/login` and paste the `accessToken` as the Bearer token.
-  It is mapped only in Development; tests assert it returns 404 in every other environment.
+- **Dev mailbox:** `GET /dev/mailbox/latest?to=<email>&subject=confirm|reset` returns the newest email with its
+  links parsed (`links[0].query.userId` / `token` / `email`), so sign-up and password reset can be completed in the browser.
+- The harness and mailbox exist only in Development. Tests assert they return 404 elsewhere and never appear in the
+  committed contract, which is identical whichever environment the build ran in.
+
+### OpenAPI conventions (enforced by `ContractTests`)
+Every operation has `.WithName` (stable `operationId`), `.WithSummary`, `.WithDescription` (markdown) and a
+`"Group: Label"` tag, and declares its error responses. Request fields carry `[Description]` and `[OpenApiExample]`.
+Examples are chosen to work together: the register example's credentials are the login example's.
 - `src/ShareSmallBiz.Api/ShareSmallBiz.Api.http` has requests for manual exploring in VS Code or Visual Studio.
 
 Nothing is deployed from this branch. CI builds and tests only. Production cutover happens only after

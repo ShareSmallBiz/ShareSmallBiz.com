@@ -5,8 +5,8 @@
 .DESCRIPTION
     Walks the full account lifecycle (register, confirm, login, me, refresh, replay
     detection, logout, password reset) plus health, contract and CORS, reading
-    confirmation and reset links from the dev mail folder. Prints PASS/FAIL per check
-    and exits 1 if anything fails.
+    confirmation and reset links from the Development-only /dev/mailbox API.
+    Prints PASS/FAIL per check and exits 1 if anything fails.
 
     Refuses to run against anything but localhost, so it can never touch the live site.
 
@@ -15,8 +15,7 @@
     ./scripts/api-smoke.ps1            # terminal 2
 #>
 param(
-    [string]$BaseUrl = 'http://localhost:5280',
-    [string]$MailDirectory = (Join-Path (Split-Path -Parent $PSScriptRoot) 'src/ShareSmallBiz.Api/dev-mail')
+    [string]$BaseUrl = 'http://localhost:5280'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -45,24 +44,11 @@ function Check([string]$Name, [bool]$Passed, [string]$Detail = '') {
     Write-Host ("  [{0}] {1}{2}" -f $mark, $Name, $(if (-not $Passed -and $Detail) { " -- $Detail" } else { '' })) -ForegroundColor $color
 }
 
+# Reads the newest matching email from the Development-only mailbox API; returns its first link's query values
 function Get-LastLinkQuery([string]$Email, [string]$Subject) {
-    for ($i = 0; $i -lt 20; $i++) {
-        $file = Get-ChildItem $MailDirectory -Filter *.txt -ErrorAction SilentlyContinue |
-            Sort-Object Name -Descending |
-            Where-Object { (Get-Content $_.FullName -Raw) -match "To: $([regex]::Escape($Email))\r?\nSubject: [^\n]*$Subject" } |
-            Select-Object -First 1
-        if ($file) {
-            $link = [regex]::Match((Get-Content $file.FullName -Raw), 'https?://\S+').Value
-            $query = @{}
-            foreach ($pair in ([Uri]$link).Query.TrimStart('?').Split('&')) {
-                $key, $value = $pair.Split('=', 2)
-                $query[$key] = [Uri]::UnescapeDataString($value)
-            }
-            return $query
-        }
-        Start-Sleep -Milliseconds 250
-    }
-    throw "No '$Subject' email for $Email in $MailDirectory"
+    $mail = Invoke-Api GET "/dev/mailbox/latest?to=$([Uri]::EscapeDataString($Email))&subject=$Subject"
+    if ($mail.Status -ne 200) { throw "No '$Subject' email for $Email in /dev/mailbox (status $($mail.Status))" }
+    return $mail.Json.links[0].query
 }
 
 $id = [guid]::NewGuid().ToString('N').Substring(0, 12)
@@ -87,6 +73,7 @@ Check 'API Test Spark harness is available locally' ($harness.Status -eq 200 -an
 
 $contract = Invoke-Api GET '/openapi/v1.json'
 Check 'OpenAPI contract is served' ($contract.Status -eq 200 -and $null -ne $contract.Json.paths.'/api/v1/auth/login')
+Check 'Dev mailbox is listed in the local contract' ($null -ne $contract.Json.paths.'/dev/mailbox/latest')
 
 $register = Invoke-Api POST '/api/v1/auth/register' @{ email = $email; password = $password; userName = $userName; displayName = 'Smoke Test' }
 Check 'Register returns 202' ($register.Status -eq 202) "status $($register.Status)"

@@ -1,96 +1,19 @@
 {
   "openapi": "3.1.1",
   "info": {
-    "title": "ShareSmallBiz.Api | v1",
-    "version": "1.0.0"
+    "title": "ShareSmallBiz API",
+    "description": "The ShareSmallBiz API: accounts and member profiles for the ShareSmallBiz small-business community.\n\n## Getting started\n1. **Register**: `POST /api/v1/auth/register`. The response is always `202` and a confirmation email is sent.\n2. **Confirm your email**: the email links to the client's `/confirm-email?userId=…&token=…` page.\n   Send those two values to `POST /api/v1/auth/confirm-email`.\n   *Running locally?* Read the email with `GET /dev/mailbox/latest?to=<your email>`, which is available in Development only.\n3. **Sign in**: `POST /api/v1/auth/login` returns an `accessToken` (15 minutes) and a `refreshToken` (14 days).\n   Send `Authorization: Bearer <accessToken>` on secured calls; they are marked with a lock.\n4. **Stay signed in**: exchange the refresh token at `POST /api/v1/auth/refresh`. Each refresh token works **once**;\n   replaying a spent one ends the whole session.\n5. **Your profile**: `GET /api/v1/me`, then `PUT /api/v1/me/profile`. Others see it at `GET /api/v1/profiles/{userName}`.\n\n## Conventions\n- **Errors** are [RFC 9457 problem details](https://www.rfc-editor.org/rfc/rfc9457) (`application/problem+json`).\n  Validation failures carry an `errors` object keyed by field.\n- **Lists** return `{ items, page, pageSize, totalCount, totalPages }`. `page` starts at 1, and `pageSize` is at most 50.\n- **Enums** are strings, e.g. `\"Public\"`.\n- **Privacy:** only `GET /api/v1/me` returns your email and other private fields. No other response does.\n- **Rate limits:** auth endpoints allow 10 requests per minute per IP and return `429` beyond that.",
+    "version": "v1"
   },
   "paths": {
-    "/api/v1/me": {
-      "get": {
-        "tags": [
-          "Account"
-        ],
-        "summary": "The signed-in member's own account, including private fields.",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CurrentUserResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [ ]
-          }
-        ]
-      }
-    },
-    "/api/v1/me/profile": {
-      "put": {
-        "tags": [
-          "Account"
-        ],
-        "summary": "Replace the signed-in member's editable profile fields.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateProfileRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CurrentUserResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [ ]
-          }
-        ]
-      }
-    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [
-          "Auth"
+          "Account: Authentication"
         ],
-        "summary": "Create an account; a confirmation email is sent. Always 202 for a well-formed request so emails cannot be enumerated.",
+        "summary": "Create an account",
+        "description": "Creates the account and emails a confirmation link. Sign-in is blocked until the email is confirmed.\n\nAlways returns **202** for a well-formed request, even when the email already has an account\n(that owner is emailed instead), so this endpoint cannot be used to discover who is a member.\nReturns **400** when the username is taken or a field is invalid.",
+        "operationId": "Register",
         "requestBody": {
           "content": {
             "application/json": {
@@ -102,9 +25,6 @@
           "required": true
         },
         "responses": {
-          "202": {
-            "description": "Accepted"
-          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -114,6 +34,19 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted"
           }
         }
       }
@@ -121,9 +54,11 @@
     "/api/v1/auth/confirm-email": {
       "post": {
         "tags": [
-          "Auth"
+          "Account: Authentication"
         ],
-        "summary": "Confirm an email address with the userId and token from the confirmation link.",
+        "summary": "Confirm an email address",
+        "description": "Send the `userId` and `token` from the confirmation link. **204** when confirmed (or already confirmed); **400** when the link is invalid or expired.",
+        "operationId": "ConfirmEmail",
         "requestBody": {
           "content": {
             "application/json": {
@@ -135,9 +70,6 @@
           "required": true
         },
         "responses": {
-          "204": {
-            "description": "No Content"
-          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -147,6 +79,19 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -154,9 +99,11 @@
     "/api/v1/auth/resend-confirmation": {
       "post": {
         "tags": [
-          "Auth"
+          "Account: Authentication"
         ],
-        "summary": "Send another confirmation email if the account exists and is unconfirmed. Always 202.",
+        "summary": "Resend the confirmation email",
+        "description": "Sends a new confirmation link if the account exists and is unconfirmed. Always **202**.",
+        "operationId": "ResendConfirmation",
         "requestBody": {
           "content": {
             "application/json": {
@@ -168,6 +115,26 @@
           "required": true
         },
         "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "202": {
             "description": "Accepted"
           }
@@ -177,9 +144,11 @@
     "/api/v1/auth/login": {
       "post": {
         "tags": [
-          "Auth"
+          "Account: Authentication"
         ],
-        "summary": "Exchange email and password for an access token and refresh token.",
+        "summary": "Sign in",
+        "description": "Exchanges email and password for tokens. Send `accessToken` as `Authorization: Bearer <accessToken>`;\nkeep `refreshToken` for `POST /api/v1/auth/refresh`.\n\n- **401**: wrong email or password, or the account is locked (5 failures lock it for 15 minutes). The response is identical in every case.\n- **403** with `code: email_not_confirmed`: the email is not confirmed yet.",
+        "operationId": "Login",
         "requestBody": {
           "content": {
             "application/json": {
@@ -191,6 +160,26 @@
           "required": true
         },
         "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "200": {
             "description": "OK",
             "content": {
@@ -227,9 +216,11 @@
     "/api/v1/auth/refresh": {
       "post": {
         "tags": [
-          "Auth"
+          "Account: Authentication"
         ],
-        "summary": "Exchange a refresh token for a new token pair. Each refresh token works once.",
+        "summary": "Refresh the tokens",
+        "description": "Exchanges a refresh token for a new access token **and** a new refresh token. Each refresh token works once:\npresenting one that was already used is treated as theft and ends that whole session (**401**).",
+        "operationId": "RefreshTokens",
         "requestBody": {
           "content": {
             "application/json": {
@@ -241,6 +232,26 @@
           "required": true
         },
         "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "200": {
             "description": "OK",
             "content": {
@@ -267,9 +278,11 @@
     "/api/v1/auth/logout": {
       "post": {
         "tags": [
-          "Auth"
+          "Account: Authentication"
         ],
-        "summary": "End the session the refresh token belongs to.",
+        "summary": "Sign out of this session",
+        "description": "Revokes the session the refresh token belongs to; other sessions stay signed in. Always **204**.",
+        "operationId": "Logout",
         "requestBody": {
           "content": {
             "application/json": {
@@ -281,6 +294,26 @@
           "required": true
         },
         "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "204": {
             "description": "No Content"
           }
@@ -290,9 +323,11 @@
     "/api/v1/auth/forgot-password": {
       "post": {
         "tags": [
-          "Auth"
+          "Account: Authentication"
         ],
-        "summary": "Send a password reset email if a confirmed account exists. Always 202.",
+        "summary": "Request a password reset email",
+        "description": "Emails a reset link if a confirmed account exists. Always **202**, so it reveals nothing about who is a member.",
+        "operationId": "ForgotPassword",
         "requestBody": {
           "content": {
             "application/json": {
@@ -304,6 +339,26 @@
           "required": true
         },
         "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "202": {
             "description": "Accepted"
           }
@@ -313,9 +368,11 @@
     "/api/v1/auth/reset-password": {
       "post": {
         "tags": [
-          "Auth"
+          "Account: Authentication"
         ],
-        "summary": "Set a new password with the token from the reset email; signs out every session.",
+        "summary": "Set a new password",
+        "description": "Send the `email` and `token` from the reset link with the new password. On success (**204**) every session is signed out.",
+        "operationId": "ResetPassword",
         "requestBody": {
           "content": {
             "application/json": {
@@ -327,9 +384,6 @@
           "required": true
         },
         "responses": {
-          "204": {
-            "description": "No Content"
-          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -339,6 +393,19 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -346,9 +413,11 @@
     "/api/v1/profiles": {
       "get": {
         "tags": [
-          "Profiles"
+          "Members: Profiles"
         ],
-        "summary": "Directory of public members, newest first. Optional search on display name or username.",
+        "summary": "Member directory",
+        "description": "Public members, newest first. Only confirmed members with `Public` visibility are listed.\n\n`search` matches display name or username (case-insensitive, contains). `%` and `_` are matched literally.",
+        "operationId": "ListProfiles",
         "parameters": [
           {
             "name": "page",
@@ -399,6 +468,16 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -406,9 +485,11 @@
     "/api/v1/profiles/{userName}": {
       "get": {
         "tags": [
-          "Profiles"
+          "Members: Profiles"
         ],
-        "summary": "A member's public profile. 404 when the member does not exist or the profile is not public (unless it is your own).",
+        "summary": "A member's public profile",
+        "description": "Looks up by username, case-insensitive. Returns **404** when the member does not exist, has not confirmed\ntheir email, or set their profile to `Private`; it never reveals which. Members always see their own profile.",
+        "operationId": "GetProfile",
         "parameters": [
           {
             "name": "userName",
@@ -435,6 +516,100 @@
           }
         }
       }
+    },
+    "/api/v1/me": {
+      "get": {
+        "tags": [
+          "Account: Me"
+        ],
+        "summary": "Your account",
+        "description": "Your own account, including private fields (email, real name, visibility). The only endpoint that returns them.",
+        "operationId": "GetCurrentUser",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/me/profile": {
+      "put": {
+        "tags": [
+          "Account: Me"
+        ],
+        "summary": "Update your profile",
+        "description": "Replaces every editable field: omitted optional fields are cleared. Returns your updated account.",
+        "operationId": "UpdateMyProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -450,23 +625,27 @@
         "type": "object",
         "properties": {
           "tokenType": {
-            "type": "string"
+            "type": "string",
+            "description": "Always `Bearer`."
           },
           "accessToken": {
-            "type": "string"
+            "type": "string",
+            "description": "Send as `Authorization: Bearer <accessToken>`."
           },
           "accessTokenExpiresAt": {
             "type": "string",
             "format": "date-time"
           },
           "refreshToken": {
-            "type": "string"
+            "type": "string",
+            "description": "Exchange at `POST /api/v1/auth/refresh` before it expires. Single use."
           },
           "refreshTokenExpiresAt": {
             "type": "string",
             "format": "date-time"
           }
-        }
+        },
+        "description": "Issued by login and refresh."
       },
       "ConfirmEmailRequest": {
         "required": [
@@ -476,12 +655,21 @@
         "type": "object",
         "properties": {
           "userId": {
-            "type": "string"
+            "examples": [
+              "paste userId from the confirmation link"
+            ],
+            "type": "string",
+            "description": "The `userId` query value from the confirmation link."
           },
           "token": {
-            "type": "string"
+            "examples": [
+              "paste token from the confirmation link"
+            ],
+            "type": "string",
+            "description": "The `token` query value from the confirmation link, as-is."
           }
-        }
+        },
+        "description": "Values from the confirmation link (`/confirm-email?userId=…&token=…`)."
       },
       "CurrentUserResponse": {
         "required": [
@@ -552,7 +740,8 @@
               "type": "string"
             }
           }
-        }
+        },
+        "description": "Your own account, including private fields. Only ever returned to you."
       },
       "EmailRequest": {
         "required": [
@@ -561,6 +750,9 @@
         "type": "object",
         "properties": {
           "email": {
+            "examples": [
+              "owner@corner-bakery.example"
+            ],
             "maxLength": 256,
             "type": "string"
           }
@@ -621,9 +813,15 @@
         "type": "object",
         "properties": {
           "email": {
+            "examples": [
+              "owner@corner-bakery.example"
+            ],
             "type": "string"
           },
           "password": {
+            "examples": [
+              "correct horse battery"
+            ],
             "type": "string"
           }
         }
@@ -733,7 +931,8 @@
         "type": "object",
         "properties": {
           "userName": {
-            "type": "string"
+            "type": "string",
+            "description": "Profile slug, as used in `/api/v1/profiles/{userName}`."
           },
           "displayName": {
             "type": "string"
@@ -742,7 +941,8 @@
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Plain text; render as text, never as HTML."
           },
           "websiteUrl": {
             "type": [
@@ -754,7 +954,8 @@
             "type": "string",
             "format": "date-time"
           }
-        }
+        },
+        "description": "What anyone may see about a member. Never carries email, real names or account state."
       },
       "RefreshRequest": {
         "required": [
@@ -763,7 +964,11 @@
         "type": "object",
         "properties": {
           "refreshToken": {
-            "type": "string"
+            "examples": [
+              "paste refreshToken from login"
+            ],
+            "type": "string",
+            "description": "The `refreshToken` from login or the previous refresh. Works once."
           }
         }
       },
@@ -777,39 +982,64 @@
         "type": "object",
         "properties": {
           "email": {
+            "examples": [
+              "owner@corner-bakery.example"
+            ],
             "maxLength": 256,
-            "type": "string"
+            "type": "string",
+            "description": "Private sign-in email; never shown publicly."
           },
           "password": {
+            "examples": [
+              "correct horse battery"
+            ],
             "maxLength": 128,
             "minLength": 10,
-            "type": "string"
+            "type": "string",
+            "description": "At least 10 characters; a passphrase is ideal."
           },
           "userName": {
+            "examples": [
+              "corner-bakery"
+            ],
             "maxLength": 30,
             "minLength": 3,
             "pattern": "^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9]))*$",
-            "type": "string"
+            "type": "string",
+            "description": "Public profile slug used in URLs: lowercase letters, digits and single hyphens."
           },
           "displayName": {
+            "examples": [
+              "Corner Bakery"
+            ],
             "maxLength": 100,
-            "type": "string"
+            "type": "string",
+            "description": "Public name shown on posts and the profile."
           },
           "firstName": {
+            "examples": [
+              "Ada"
+            ],
             "maxLength": 100,
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Private."
           },
           "lastName": {
+            "examples": [
+              "Lovelace"
+            ],
             "maxLength": 100,
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Private."
           }
-        }
+        },
+        "description": "New member sign-up."
       },
       "ResetPasswordRequest": {
         "required": [
@@ -820,17 +1050,28 @@
         "type": "object",
         "properties": {
           "email": {
+            "examples": [
+              "owner@corner-bakery.example"
+            ],
             "type": "string"
           },
           "token": {
-            "type": "string"
+            "examples": [
+              "paste token from the reset link"
+            ],
+            "type": "string",
+            "description": "The `token` query value from the reset link, as-is."
           },
           "newPassword": {
+            "examples": [
+              "a brand new passphrase"
+            ],
             "maxLength": 128,
             "minLength": 10,
             "type": "string"
           }
-        }
+        },
+        "description": "Values from the reset link (`/reset-password?email=…&token=…`) plus the new password."
       },
       "UpdateProfileRequest": {
         "required": [
@@ -839,41 +1080,63 @@
         "type": "object",
         "properties": {
           "displayName": {
+            "examples": [
+              "Corner Bakery"
+            ],
             "maxLength": 100,
-            "type": "string"
+            "type": "string",
+            "description": "Public name shown on posts and the profile."
           },
           "firstName": {
+            "examples": [
+              "Ada"
+            ],
             "maxLength": 100,
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Private: visible only to you."
           },
           "lastName": {
+            "examples": [
+              "Lovelace"
+            ],
             "maxLength": 100,
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Private: visible only to you."
           },
           "bio": {
+            "examples": [
+              "Fresh sourdough every morning since 2009."
+            ],
             "maxLength": 2000,
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Plain text, no HTML."
           },
           "websiteUrl": {
+            "examples": [
+              "https://corner-bakery.example"
+            ],
             "maxLength": 2048,
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Absolute `http` or `https` URL."
           },
           "profileVisibility": {
+            "description": "`Private` hides the profile from everyone else (they get 404).",
             "$ref": "#/components/schemas/ProfileVisibility"
           }
-        }
+        },
+        "description": "Replaces every editable field: omitted optional fields are cleared."
       }
     },
     "securitySchemes": {
@@ -887,13 +1150,13 @@
   },
   "tags": [
     {
-      "name": "Account"
+      "name": "Account: Authentication"
     },
     {
-      "name": "Auth"
+      "name": "Members: Profiles"
     },
     {
-      "name": "Profiles"
+      "name": "Account: Me"
     }
   ]
 }
