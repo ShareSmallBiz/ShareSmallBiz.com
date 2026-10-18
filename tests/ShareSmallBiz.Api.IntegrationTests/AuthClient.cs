@@ -13,22 +13,24 @@ internal static class AuthClient
 
     public static string NewUserName() => $"user-{Guid.NewGuid():N}"[..20];
 
-    public static Task<HttpResponseMessage> RegisterAsync(HttpClient client, string email, string? userName = null, string password = Password) =>
+    public static Task<HttpResponseMessage> RegisterAsync(
+        HttpClient client, string email, string? userName = null, string password = Password, string displayName = "Test Member") =>
         client.PostAsJsonAsync("/api/v1/auth/register", new
         {
             email,
             password,
             userName = userName ?? NewUserName(),
-            displayName = "Test Member",
+            displayName,
         });
 
     public static Task<HttpResponseMessage> LoginAsync(HttpClient client, string email, string password = Password) =>
         client.PostAsJsonAsync("/api/v1/auth/login", new { email, password });
 
     /// <summary>Registers, follows the confirmation link and signs in; returns the issued tokens.</summary>
-    public static async Task<AuthTokensResponse> RegisterConfirmAndLoginAsync(HttpClient client, ApiFactory factory, string email)
+    public static async Task<AuthTokensResponse> RegisterConfirmAndLoginAsync(
+        HttpClient client, ApiFactory factory, string email, string? userName = null, string displayName = "Test Member")
     {
-        (await RegisterAsync(client, email)).EnsureSuccessStatusCode();
+        (await RegisterAsync(client, email, userName, displayName: displayName)).EnsureSuccessStatusCode();
         await ConfirmAsync(client, factory, email);
         var login = await LoginAsync(client, email);
         login.EnsureSuccessStatusCode();
@@ -46,6 +48,16 @@ internal static class AuthClient
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/me");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        return client.SendAsync(request);
+    }
+
+    public static Task<HttpResponseMessage> SendAsync(HttpClient client, HttpMethod method, string path, string? accessToken, object? body = null)
+    {
+        var request = new HttpRequestMessage(method, path);
+        if (accessToken is not null)
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        if (body is not null)
+            request.Content = JsonContent.Create(body);
         return client.SendAsync(request);
     }
 

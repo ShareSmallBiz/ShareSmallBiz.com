@@ -1,7 +1,5 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.JsonWebTokens;
 using ShareSmallBiz.Core.Users;
 
 namespace ShareSmallBiz.Api.Auth;
@@ -33,12 +31,6 @@ public static class AuthEndpoints
             .WithSummary("Send a password reset email if a confirmed account exists. Always 202.");
         auth.MapPost("/reset-password", ResetPassword)
             .WithSummary("Set a new password with the token from the reset email; signs out every session.");
-
-        app.MapGet("/api/v1/me", GetCurrentUser)
-            .WithTags("Account")
-            .WithSummary("The signed-in user's own account, including private fields.")
-            .RequireAuthorization()
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
 
         return app;
     }
@@ -161,19 +153,6 @@ public static class AuthEndpoints
         await users.ResetAccessFailedCountAsync(user);
         await tokens.RevokeAllAsync(user.Id, cancellationToken);
         return TypedResults.NoContent();
-    }
-
-    private static async Task<Results<Ok<CurrentUserResponse>, UnauthorizedHttpResult>> GetCurrentUser(
-        ClaimsPrincipal principal, UserManager<AppUser> users)
-    {
-        var userId = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
-        var user = userId is null ? null : await users.FindByIdAsync(userId);
-        if (user is null)
-            return TypedResults.Unauthorized();
-
-        var roles = await users.GetRolesAsync(user);
-        return TypedResults.Ok(new CurrentUserResponse(
-            user.Id, user.Email!, user.EmailConfirmed, user.UserName!, user.DisplayName, user.FirstName, user.LastName, [.. roles]));
     }
 
     private static ProblemHttpResult InvalidCredentials() =>

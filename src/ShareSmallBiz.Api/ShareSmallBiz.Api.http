@@ -28,6 +28,19 @@ Content-Type: application/json
 GET {{api}}/api/v1/me
 Authorization: Bearer {{login.response.body.$.accessToken}}
 
+### Update my profile (profileVisibility: Public | Private)
+PUT {{api}}/api/v1/me/profile
+Authorization: Bearer {{login.response.body.$.accessToken}}
+Content-Type: application/json
+
+{ "displayName": "Local Dev Bakery", "bio": "Fresh bread daily.", "websiteUrl": "https://example.com", "profileVisibility": "Public" }
+
+### Public profile
+GET {{api}}/api/v1/profiles/local-dev
+
+### Member directory
+GET {{api}}/api/v1/profiles?search=bakery&page=1&pageSize=20
+
 ### Refresh
 POST {{api}}/api/v1/auth/refresh
 Content-Type: application/json

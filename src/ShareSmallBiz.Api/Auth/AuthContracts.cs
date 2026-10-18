@@ -40,7 +40,7 @@ public sealed record AuthTokensResponse(
     string RefreshToken,
     DateTimeOffset RefreshTokenExpiresAt);
 
-/// <summary>The signed-in user's own account. The only response that carries private fields.</summary>
+/// <summary>The signed-in member's own account. The only response that carries private fields.</summary>
 public sealed record CurrentUserResponse(
     string Id,
     string Email,
@@ -49,4 +49,13 @@ public sealed record CurrentUserResponse(
     string DisplayName,
     string? FirstName,
     string? LastName,
-    IReadOnlyList<string> Roles);
+    string? Bio,
+    string? WebsiteUrl,
+    ProfileVisibility ProfileVisibility,
+    DateTimeOffset JoinedAt,
+    IReadOnlyList<string> Roles)
+{
+    public static CurrentUserResponse From(AppUser user, IEnumerable<string> roles) => new(
+        user.Id, user.Email!, user.EmailConfirmed, user.UserName!, user.DisplayName, user.FirstName, user.LastName,
+        user.Bio, user.WebsiteUrl, user.ProfileVisibility, user.CreatedAt, [.. roles]);
+}

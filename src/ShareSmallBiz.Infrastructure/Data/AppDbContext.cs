@@ -15,9 +15,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
 
         builder.Entity<AppUser>(user =>
         {
-            user.Property(u => u.DisplayName).HasMaxLength(100);
-            user.Property(u => u.FirstName).HasMaxLength(100);
-            user.Property(u => u.LastName).HasMaxLength(100);
+            user.Property(u => u.DisplayName).HasMaxLength(AppUser.DisplayNameMaxLength);
+            user.Property(u => u.FirstName).HasMaxLength(AppUser.NameMaxLength);
+            user.Property(u => u.LastName).HasMaxLength(AppUser.NameMaxLength);
+            user.Property(u => u.Bio).HasMaxLength(AppUser.BioMaxLength);
+            user.Property(u => u.WebsiteUrl).HasMaxLength(AppUser.WebsiteUrlMaxLength);
+            user.Property(u => u.ProfileVisibility).HasConversion<string>().HasMaxLength(20);
+            user.HasIndex(u => u.DisplayName);
         });
 
         builder.Entity<RefreshToken>(token =>

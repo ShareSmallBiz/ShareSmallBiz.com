@@ -10,7 +10,52 @@
         "tags": [
           "Account"
         ],
-        "summary": "The signed-in user's own account, including private fields.",
+        "summary": "The signed-in member's own account, including private fields.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/me/profile": {
+      "put": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Replace the signed-in member's editable profile fields.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -297,6 +342,99 @@
           }
         }
       }
+    },
+    "/api/v1/profiles": {
+      "get": {
+        "tags": [
+          "Profiles"
+        ],
+        "summary": "Directory of public members, newest first. Optional search on display name or username.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "maximum": 50,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResponseOfPublicProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profiles/{userName}": {
+      "get": {
+        "tags": [
+          "Profiles"
+        ],
+        "summary": "A member's public profile. 404 when the member does not exist or the profile is not public (unless it is your own).",
+        "parameters": [
+          {
+            "name": "userName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicProfileResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -354,6 +492,10 @@
           "displayName",
           "firstName",
           "lastName",
+          "bio",
+          "websiteUrl",
+          "profileVisibility",
+          "joinedAt",
           "roles"
         ],
         "type": "object",
@@ -384,6 +526,25 @@
               "null",
               "string"
             ]
+          },
+          "bio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "websiteUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "profileVisibility": {
+            "$ref": "#/components/schemas/ProfileVisibility"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "roles": {
             "type": "array",
@@ -467,6 +628,56 @@
           }
         }
       },
+      "PagedResponseOfPublicProfileResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalCount",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicProfileResponse"
+            }
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "ProblemDetails": {
         "type": "object",
         "properties": {
@@ -502,6 +713,46 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "ProfileVisibility": {
+        "enum": [
+          "Public",
+          "Private"
+        ]
+      },
+      "PublicProfileResponse": {
+        "required": [
+          "userName",
+          "displayName",
+          "bio",
+          "websiteUrl",
+          "joinedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "userName": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "bio": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "websiteUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -580,6 +831,49 @@
             "type": "string"
           }
         }
+      },
+      "UpdateProfileRequest": {
+        "required": [
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "firstName": {
+            "maxLength": 100,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lastName": {
+            "maxLength": 100,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bio": {
+            "maxLength": 2000,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "websiteUrl": {
+            "maxLength": 2048,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "profileVisibility": {
+            "$ref": "#/components/schemas/ProfileVisibility"
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -597,6 +891,9 @@
     },
     {
       "name": "Auth"
+    },
+    {
+      "name": "Profiles"
     }
   ]
 }

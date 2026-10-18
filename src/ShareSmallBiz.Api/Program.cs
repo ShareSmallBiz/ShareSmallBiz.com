@@ -1,11 +1,14 @@
+using System.Text.Json.Serialization;
 using Scalar.AspNetCore;
 using ShareSmallBiz.Api.Auth;
 using ShareSmallBiz.Api.OpenApi;
+using ShareSmallBiz.Api.Profiles;
 using ShareSmallBiz.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
+builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddValidation();
 builder.Services.AddOpenApi(options =>
 {
@@ -23,7 +26,13 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 
 var app = builder.Build();
 
-app.UseExceptionHandler();
+// Development rethrows malformed-request errors as BadHttpRequestException; keep their 4xx status instead of a 500
+app.UseExceptionHandler(new ExceptionHandlerOptions
+{
+    StatusCodeSelector = exception => exception is BadHttpRequestException badRequest
+        ? badRequest.StatusCode
+        : StatusCodes.Status500InternalServerError,
+});
 app.UseStatusCodePages();
 app.UseCors();
 app.UseAuthentication();
@@ -35,6 +44,7 @@ app.MapOpenApi();
 app.MapScalarApiReference(options => options.WithTitle("ShareSmallBiz API"));
 app.MapHealthChecks("/health");
 app.MapAuthEndpoints();
+app.MapProfileEndpoints();
 
 if (!OpenApiGeneration.IsRunning && app.Configuration.GetValue("Database:MigrateOnStartup", true))
     await app.Services.MigrateDatabaseAsync();

@@ -132,6 +132,27 @@ $oldLogin = Invoke-Api POST '/api/v1/auth/login' @{ email = $email; password = $
 $newLogin = Invoke-Api POST '/api/v1/auth/login' @{ email = $email; password = $newPassword }
 Check 'Old password stops working, new one works' ($oldLogin.Status -eq 401 -and $newLogin.Status -eq 200) "old $($oldLogin.Status), new $($newLogin.Status)"
 
+$token = $newLogin.Json.accessToken
+$update = Invoke-Api PUT '/api/v1/me/profile' @{ displayName = 'Smoke Bakery'; firstName = 'Private'; bio = 'Fresh bread.'; websiteUrl = 'https://smoke.example' } -Token $token
+Check 'Profile update returns the updated account' ($update.Status -eq 200 -and $update.Json.displayName -eq 'Smoke Bakery') "status $($update.Status)"
+$unsafe = Invoke-Api PUT '/api/v1/me/profile' @{ displayName = 'x'; websiteUrl = 'javascript:alert(1)' } -Token $token
+Check 'Unsafe website URL is rejected (400)' ($unsafe.Status -eq 400) "status $($unsafe.Status)"
+
+$profile = Invoke-Api GET "/api/v1/profiles/$userName"
+$profileFields = @($profile.Json.PSObject.Properties.Name) | Sort-Object
+Check 'Public profile shows only public fields' (
+    $profile.Status -eq 200 -and ($profileFields -join ',') -eq 'bio,displayName,joinedAt,userName,websiteUrl') "fields: $($profileFields -join ',')"
+
+$directory = Invoke-Api GET '/api/v1/profiles?search=Smoke%20Bakery&pageSize=5'
+Check 'Directory search finds the member' ($directory.Status -eq 200 -and ($directory.Json.items.userName -contains $userName)) "status $($directory.Status)"
+$malformed = Invoke-Api GET '/api/v1/profiles?page=abc'
+Check 'Malformed query returns 400, not 500' ($malformed.Status -eq 400) "status $($malformed.Status)"
+
+$null = Invoke-Api PUT '/api/v1/me/profile' @{ displayName = 'Smoke Bakery'; profileVisibility = 'Private' } -Token $token
+$hiddenProfile = Invoke-Api GET "/api/v1/profiles/$userName"
+$ownView = Invoke-Api GET "/api/v1/profiles/$userName" -Token $token
+Check 'Private profile is hidden from others but visible to its owner' ($hiddenProfile.Status -eq 404 -and $ownView.Status -eq 200) "anon $($hiddenProfile.Status), owner $($ownView.Status)"
+
 $corsOk = Invoke-Api OPTIONS '/api/v1/auth/login' -Headers @{ Origin = 'http://localhost:5173'; 'Access-Control-Request-Method' = 'POST' }
 $corsBad = Invoke-Api OPTIONS '/api/v1/auth/login' -Headers @{ Origin = 'https://evil.example'; 'Access-Control-Request-Method' = 'POST' }
 Check 'CORS allows the local client and rejects others' (
