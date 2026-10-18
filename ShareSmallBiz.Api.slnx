@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ShareSmallBiz.Api/ShareSmallBiz.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ShareSmallBiz.Api.IntegrationTests/ShareSmallBiz.Api.IntegrationTests.csproj" />
+  </Folder>
+</Solution>
