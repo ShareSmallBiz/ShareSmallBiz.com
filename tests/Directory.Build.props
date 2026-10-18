@@ -1,0 +1,8 @@
+<Project>
+  <Import Project="..\src\Directory.Build.props" />
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <!-- CA1707: underscores are the convention for Method_Condition_Result test names -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,45 @@
+name: API CI
+
+on:
+  pull_request:
+    paths: &api-paths
+      - "src/**"
+      - "tests/**"
+      - "openapi/**"
+      - "global.json"
+      - "ShareSmallBiz.Api.slnx"
+      - ".github/workflows/api-ci.yml"
+  push:
+    branches: [main]
+    paths: *api-paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore ShareSmallBiz.Api.slnx
+
+      - name: Build (warnings are errors; regenerates openapi/)
+        run: dotnet build ShareSmallBiz.Api.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test ShareSmallBiz.Api.slnx --no-build -c Release
+
+      - name: OpenAPI contract is committed and current
+        run: |
+          if [ -n "$(git status --porcelain -- openapi/)" ]; then
+            git --no-pager diff -- openapi/
+            echo "::error::openapi/ is out of date. Build locally and commit the regenerated contract."
+            exit 1
+          fi

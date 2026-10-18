@@ -351,3 +351,9 @@ MigrationBackup/
 .ionide/
 /.idea/.idea.WebSpark/.idea
 /ShareSmallBiz.Portal/.vscode
+
+# Local SQLite databases for the API (dev, design-time, tests)
+src/**/*.db
+src/**/*.db-shm
+src/**/*.db-wal
+src/**/dev-mail/
